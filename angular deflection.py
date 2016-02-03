@@ -21,7 +21,7 @@ def distance(C1,C2):
     dx=abs(C1['x']-C2['x'])
     dy=abs(C1['y']-C2['y'])
     l = np.sqrt(dx**2 + dy**2)
-#    l=np.linalg.norm([dx,dy])
+
     return l
 
 c=1.0
@@ -75,4 +75,4 @@ print 'l_FA:', l_FA
 
 
 
-l_FA=l_FA*1.0894305712308858
+
