@@ -29,7 +29,7 @@ c=1.0
 # Front attachment point
 F={'x':c*-0.1,'y':1.}
 # Aft attachment point
-A={'x':c*0.3,'y':-0.1}
+A={'x':c*0.3,'y':0}
 # Joint attachment point
 J={'x':c*0.0,'y':0}
 
