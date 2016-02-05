@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math 
 
 def CST(x,deltasz,A0s,A1s,c):
     """
