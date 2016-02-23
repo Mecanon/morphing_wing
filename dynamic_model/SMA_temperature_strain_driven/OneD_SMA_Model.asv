@@ -1,7 +1,15 @@
-function [sigma, MVF]=OneD_SMA_Model(plot)
+function [sigma, MVF]=OneD_SMA_Model(k, eps_current, T_0, T_final, to_plot) %k, T_inp, eps_i,
+% Modified Edwins original code to calculate just for a given T and eps
 % Ideal: [sigma, MVF]=OneD_SMA_Model(T_inp, esp_inp)
+%Inputs:
+%         - k: current iteration of epsilon
+%         - T_inp: [T0; Tmax [;T_final]]
+%         - eps_i: current SMA strain
+%         - plot: 'True' or 'False'
+
+
 % Initializing environment
-clear all; close all; clc
+%clear all; close all; clc
 
 %--------------------------------------------------------------------------
 % INPUTS
@@ -11,11 +19,15 @@ clear all; close all; clc
 n = 40; 
 
 % INPUT:
+% If list with three components:
 % Temperature and strain at the start and at the ends of each loading step
 % Linear increments strain and temperature loading step assumed
-T_inp = [55+273.15; 55+273.15; 55+273.15];
-
-eps_inp = [0; .08; 0];
+% If list with two components:
+% Temperature and strain at the start and at the ends of heating
+% Linear increments strain and temperature loading step assumed
+  T_inp = [T_0; T_final];
+% 
+ eps_inp = [0; .08];
 
 
 % MATERIAL PARAMETERS (Structure: P)
@@ -61,7 +73,7 @@ P.sig_cal=200E6;
 P.MVF_tolerance=1e-8;
 
 % Generate strain and temperature states at each increment
-% T: Temperature
+%T: Temperature
 for i = 1:(size(T_inp,1)-1)
     if i == 1
         T = linspace(T_inp(i), T_inp(i+1), n)';
@@ -71,13 +83,14 @@ for i = 1:(size(T_inp,1)-1)
 end
 
 % eps: Strain
-for i = 1:(size(eps_inp,1)-1)
-    if i == 1
-        eps = linspace(eps_inp(i), eps_inp(i+1), n)';
-    else     
-        eps = [eps; linspace(eps_inp(i), eps_inp(i+1),n)'];
-    end
-end
+eps = zeros(n,1);
+% for i = 1:(size(eps_inp,1)-1)
+%     if i == 1
+%         eps = linspace(eps_inp(i), eps_inp(i+1), n)';
+%     else     
+%         eps = [eps; linspace(eps_inp(i), eps_inp(i+1),n)'];
+%     end
+% end
 
 % Elastic Prediction Check
 % prompt = {'Will the Elastic Prediction Check be Transformation Surface Rate-informed or not (Y/N)?'};
@@ -97,7 +110,7 @@ integration_scheme = 'I';
 
 [sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( T, eps, P, elastic_check, integration_scheme );
 
-if plot == 'True'
+if strcmp(to_plot,'True')
     figure()
     box on 
     plot(eps,sigma,'b','LineWidth',1.5)

@@ -1,4 +1,4 @@
-function [ sigma, eps_t, MVF, H_cur, Phi_fwd,Phi_rev, chck ] = Elastic_Transformation_check( P,TP,eps, eps_prev, T, T_prev, T0, sigma_prev, Phi_fwd_prev, Phi_rev_prev, E, MVF, eps_t, eps_t_r, MVF_r )
+function [ sigma, eps_t, MVF, H_cur, Phi_fwd,Phi_rev, chck ] = Elastic_Transformation_check( P,TP,eps, T, T0, E, MVF, eps_t, eps_t_r, MVF_r )
 % Function to return Elastic prediction and also check for transformation
 % without using scaled projections (non-transformation surface rate-informed)
 

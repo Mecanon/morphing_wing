@@ -4,13 +4,26 @@ Created on Tue Feb 23 10:31:45 2016
 
 @author: Pedro Leal
 """
-
+import numpy as np
 import matlab.engine
 
 #Start Matlab engine
 eng = matlab.engine.start_matlab()
 #Go to directory where matlab file is
 eng.cd('SMA_temperature_strain_driven')
-#Run SMA model
-data = eng.OneD_SMA_Model('True')
 
+## Temperature
+T_0 =273.15 +55
+T_final = 273.15 +55
+# Linear strain for testing
+n = 40
+eps_inp = [0, .08]
+
+eps = np.linspace(eps_inp[0], eps_inp[1], n)
+
+#Run SMA model
+for i in range(1,n):
+    k = i+1
+    data = eng.OneD_SMA_Model(k, eps[i], T_0, T_final, 'False', nargout=3)
+
+#eps_inp = 
