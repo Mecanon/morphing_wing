@@ -1,7 +1,5 @@
-function [sigma, MVF]=OneD_SMA_Model(to_plot)
+function [sigma, MVF]=OneD_SMA_Model(plot)
 % Ideal: [sigma, MVF]=OneD_SMA_Model(T_inp, esp_inp)
-%Inputs: - plot: 'True' or 'False'
-
 % Initializing environment
 clear all; close all; clc
 
@@ -99,7 +97,7 @@ integration_scheme = 'I';
 
 [sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( T, eps, P, elastic_check, integration_scheme );
 
-if strcmp(to_plot,'True')
+if plot == 'True'
     figure()
     box on 
     plot(eps,sigma,'b','LineWidth',1.5)
