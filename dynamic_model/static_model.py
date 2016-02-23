@@ -94,7 +94,12 @@ class actuator():
             self.F = k*self.eps
         elif self.material == 'SMA':
             print "Put Edwin code here"
-
+            
+#    def calculate_initial(self, tension = "sigmaf"):
+#        """Calculate initial displacement for SMA and linear"""
+#        if self.material == "linear":
+#            if tension == "sigmaf":
+#                self.eps = self.area * self.sigmaf *(self.)
 if __name__ == '__main__':
     chord = 1.
     #Hole positioning
@@ -104,9 +109,17 @@ if __name__ == '__main__':
     A_s = {'x': 1*chord, 'y': -1*chord}
     J = {'x': 0.*chord, 'y': 0.*chord}
 
+    #Areas
+    area_l = 1.
+    area_s = 1.
+    
     #Spring coefficient
     k = 1.
-
+    
+    #SMA properties
+    E_M = 1.
+    sigma_f = 1.
+    
     #arm length to center of gravity
     a_w = 1.
     
@@ -118,46 +131,37 @@ if __name__ == '__main__':
     #Sma actuator (l)
     s = actuator(F_s, A_s, J)
     
-    l.calculate_theta()
-    l.calculate_torque()
-    s.calculate_theta()
-    s.calculate_torque()
+    #Initial condition (theta = 0)
+    l.theta = 0.
+    s.theta = 0.
     
-    counter = 0
-    damping_counter = 0
-    dampner = 0.95
-    theta = 0
+    #calculate initial SMA strain(theta=0)
+    s.eps = sigma_f/E_M
     
-    tolerance = 1e-5
-    #random high value to enter loop
-    error_eps = 100000.
-    previous_l_eps = 0.
-    print 'iteration: ', counter
-    print 'strain: ', s.eps
-    print 'angle: ', s.theta
-    print 'torque: ', s.torque
-    while error_eps > tolerance:      
-        #strain (epsilon) of linear actuator
-        l.eps = dampner*previous_l_eps + (1.-dampner)*(1./k)/(l.a_1*math.sin(theta) + l.a_2*math.cos(theta)*l.r_1 - \
-              (l.a_1*math.cos(theta) - l.a_2*math.sin(theta))*l.r_2)*(s.torque + \
-              a_w*W*math.cos(theta))
+    #calculate initial linear strain (theta=0)
+    l.eps = (area_s*sigma_f*(s.a_1*s.r_2 - s.a_2*s.r_1) + a_w*W)/(k*(l.a_2*l.r_1 - l.a_1*l.r_2))
+    
+#        #strain (epsilon) of linear actuator
+#        l.eps = dampner*previous_l_eps + (1.-dampner)*(1./k)/(l.a_1*math.sin(theta) + l.a_2*math.cos(theta)*l.r_1 - \
+#              (l.a_1*math.cos(theta) - l.a_2*math.sin(theta))*l.r_2)*(s.torque + \
+#              a_w*W*math.cos(theta))
         #update angle, r and strain at SMA actuator
-        theta = l.calculate_theta()
-        s.theta = theta
-        s.update()
-        l.update()
-        #strain of SMA actuator
-        s.calculate_force()
-        s.calculate_torque()
-        counter += 1
-        
-        #calculating error with final value 
-        error_eps = abs(previous_l_eps - l.eps)
-        #updating previous strain
-        previous_l_eps = l.eps
-#        damping_counter +=1
-        print 'iteration: ', counter
-        print 'strain: ', s.eps, l.eps
-        print 'angle: ', s.theta, l.theta
-        print 'torque: ', s.torque
-        print "error: ", error_eps
+#        theta = l.calculate_theta()
+#        s.theta = theta
+#        s.update()
+#        l.update()
+#        #strain of SMA actuator
+#        s.calculate_force()
+#        s.calculate_torque()
+#        counter += 1
+#        
+#        #calculating error with final value 
+#        error_eps = abs(previous_l_eps - l.eps)
+#        #updating previous strain
+#        previous_l_eps = l.eps
+##        damping_counter +=1
+#        print 'iteration: ', counter
+#        print 'strain: ', s.eps, l.eps
+#        print 'angle: ', s.theta, l.theta
+#        print 'torque: ', s.torque
+#        print "error: ", error_eps
