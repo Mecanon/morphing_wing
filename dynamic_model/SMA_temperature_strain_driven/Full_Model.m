@@ -1,4 +1,4 @@
-function [ sigma, MVF, eps_t, E, MVF_r, eps_t_r ] = Full_Model(k, T, eps, P, elastic_check, integration_scheme )
+function [ sigma, MVF, eps_t, E, MVF_r, eps_t_r ] = Full_Model(k, T, eps, P, elastic_check, integration_scheme, MVF_init )
 % Function to run the One Dimensional, strain-driven, implicit integration
 % scheme
 
@@ -47,7 +47,7 @@ if k == 2
     H_cur(1,1) = P.H_min;
     eps_t(1,1) = 0;
     sigma(1,1) = 0;
-    MVF(1,1) = 0;
+    MVF(1,1) = MVF_init; %0;
     E(1,1)=P.E_A;
 else
     load('data.mat',  'sigma','MVF', 'eps_t', 'E', 'MVF_r', 'eps_t_r', 'H_cur', 'Phi_fwd', 'Phi_rev')

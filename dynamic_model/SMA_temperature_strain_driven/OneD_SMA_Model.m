@@ -1,4 +1,4 @@
-function [sigma, MVF, T]=OneD_SMA_Model(k, eps_current, T_0, T_final, to_plot) %k, T_inp, eps_i,
+function [sigma, MVF, T]=OneD_SMA_Model(k, eps_current, T_0, T_final, MVF_init, to_plot) %k, T_inp, eps_i,
 % Modified Edwins original code to calculate just for a given T and eps
 % Ideal: [sigma, MVF]=OneD_SMA_Model(T_inp, esp_inp)
 %Inputs:
@@ -25,7 +25,6 @@ n = 40;
 % If list with two components:
 % Temperature and strain at the start and at the ends of heating
 % Linear increments strain and temperature loading step assumed
-
 
 % MATERIAL PARAMETERS (Structure: P)
 % Young's Modulus for Austenite and Martensite 
@@ -99,7 +98,7 @@ elastic_check = 'N';
 % Integration Scheme
 integration_scheme = 'I';
 
-[sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( k, T, eps, P, elastic_check, integration_scheme );
+[sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( k, T, eps, P, elastic_check, integration_scheme, MVF_init );
 
 if strcmp(to_plot,'True')
     figure()

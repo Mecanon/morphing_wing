@@ -1,4 +1,4 @@
-function [sigma, MVF]=OneD_SMA_Model(k, eps_current, T_0, T_final, to_plot) %k, T_inp, eps_i,
+function [sigma, MVF, T]=OneD_SMA_Model(k, eps_current, T_0, T_final, to_plot) %k, T_inp, eps_i,
 % Modified Edwins original code to calculate just for a given T and eps
 % Ideal: [sigma, MVF]=OneD_SMA_Model(T_inp, esp_inp)
 %Inputs:
@@ -25,9 +25,6 @@ n = 40;
 % If list with two components:
 % Temperature and strain at the start and at the ends of heating
 % Linear increments strain and temperature loading step assumed
-  T_inp = [T_0; T_final];
-% 
- eps_inp = [0; .08];
 
 
 % MATERIAL PARAMETERS (Structure: P)
@@ -74,43 +71,37 @@ P.MVF_tolerance=1e-8;
 
 % Generate strain and temperature states at each increment
 %T: Temperature
-for i = 1:(size(T_inp,1)-1)
-    if i == 1
-        T = linspace(T_inp(i), T_inp(i+1), n)';
-    else     
-        T = [T; linspace(T_inp(i), T_inp(i+1),n)'];
+if k == 2
+  T_inp = [T_0; T_final];
+    for i = 1:(size(T_inp,1)-1)
+        if i == 1
+            T = linspace(T_inp(i), T_inp(i+1), n)';
+        else     
+            T = [T; linspace(T_inp(i), T_inp(i+1),n)'];
+        end
     end
+else
+    load('data.mat', 'T')
 end
-
 % eps: Strain
-eps = zeros(n,1);
-% for i = 1:(size(eps_inp,1)-1)
-%     if i == 1
-%         eps = linspace(eps_inp(i), eps_inp(i+1), n)';
-%     else     
-%         eps = [eps; linspace(eps_inp(i), eps_inp(i+1),n)'];
-%     end
-% end
+% if first iteration create list, otherwise load previous and update it
+if k == 2
+    eps = ones(n,1);
+else
+    load('data.mat', 'eps')
+end
+eps(k) = eps_current;
+
 
 % Elastic Prediction Check
-% prompt = {'Will the Elastic Prediction Check be Transformation Surface Rate-informed or not (Y/N)?'};
-% dlg_title = '1D SMA Model Elastic Prediction Check';
-% num_lines = 1;
-% defaultans = {'N','hsv'};
-% elastic_check = inputdlg(prompt,dlg_title,num_lines,defaultans);
 elastic_check = 'N';
 
 % Integration Scheme
-% prompt2 = {'Integration Scheme (Implicit/Explicit, I/E):'};
-% dlg_title = '1D SMA Model Integration Scheme';
-% num_lines = 1;
-% defaultans2 = {'I','hsv'};
-% integration_scheme = inputdlg(prompt2,dlg_title,num_lines,defaultans2);
 integration_scheme = 'I';
 
-[sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( T, eps, P, elastic_check, integration_scheme );
+[sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( k, T, eps, P, elastic_check, integration_scheme );
 
-if strcmp(to_plot,'True')
+if strcmp(to_plot,'True') and 
     figure()
     box on 
     plot(eps,sigma,'b','LineWidth',1.5)
