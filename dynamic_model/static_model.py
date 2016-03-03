@@ -21,7 +21,7 @@ class actuator():
     - material: linear or SMA
     """
     #
-    def __init__(self, F, A, J, material = 'linear'):
+    def __init__(self, F, A, J, area, zero_stress_length, material = 'linear'):
         """
         Initiate class and it's basic atributes:
         - f_1 and f_2: are the x & y coordinates of the forwards end in the
@@ -45,6 +45,13 @@ class actuator():
         self.theta = 0
         self.update()
         self.F = 0.
+        self.sigma = None
+        
+        #Cross section area
+        self.area = area
+        
+        #actuator original length
+        self.zero_stress_length = zero_stress_length
 
 
     def calculate_theta(self):
@@ -88,13 +95,17 @@ class actuator():
                        self.a_1*math.sin(self.theta))*F_1    
         return self.torque
      
-    def calculate_force(self):
-        if self.material == 'linear':
-            k= 1.
-            self.F = k*self.eps
-        elif self.material == 'SMA':
-            print "Put Edwin code here"
-            
+    def calculate_force(self, source = 'strain'):
+        
+        if source == 'strain':
+            if self.material == 'linear':
+                k= 1.
+                self.F = k*self.eps
+            elif self.material == 'SMA':
+                print "Put Edwin code here"
+        #Calculate force from stress and cross section
+        elif source == 'sigma':
+            self.F = self.area * self.sigma
 #    def calculate_initial(self, tension = "sigmaf"):
 #        """Calculate initial displacement for SMA and linear"""
 #        if self.material == "linear":
@@ -102,6 +113,10 @@ class actuator():
 #                self.eps = self.area * self.sigmaf *(self.)
 if __name__ == '__main__':
     chord = 1.
+
+#==============================================================================
+# Design variables
+#==============================================================================
     #Hole positioning
     F_l = {'x': -1*chord, 'y': 1*chord}
     A_l = {'x': 1*chord, 'y': 1*chord}
@@ -109,38 +124,55 @@ if __name__ == '__main__':
     A_s = {'x': 1*chord, 'y': -1*chord}
     J = {'x': 0.*chord, 'y': 0.*chord}
 
+    #SMA Pre-stress
+    sigma_o = 300e6
+#==============================================================================
+# Design constants
+#==============================================================================
     #Areas
     area_l = 1.
     area_s = 1.
+    
+    #original wire/spring length
+    length_s = 1.
+    length_l = 1.
     
     #Spring coefficient
     k = 1.
     
     #SMA properties
     E_M = 1.
-    sigma_f = 1.
+    sigma_crit = 1.
+    H_max = 0.04
+    H_min = 0.
+    k = 0.021
     
     #arm length to center of gravity
     a_w = 1.
     
     #Aicraft weight
     W = 1.
-    
+#==============================================================================
+# Initial conditions   
+#==============================================================================
     #Linear actuator (s)
-    l = actuator(F_l, A_l, J)
+    l = actuator(F_l, A_l, J, area_l, length_l)
     #Sma actuator (l)
-    s = actuator(F_s, A_s, J)
-    
-    #Initial condition (theta = 0)
-    l.theta = 0.
-    s.theta = 0.
-    
-    #calculate initial SMA strain(theta=0)
-    s.eps = sigma_f/E_M
-    
-    #calculate initial linear strain (theta=0)
-    l.eps = (area_s*sigma_f*(s.a_1*s.r_2 - s.a_2*s.r_1) + a_w*W)/(k*(l.a_2*l.r_1 - l.a_1*l.r_2))
-    
+    s = actuator(F_s, A_s, J, area_s, length_s)
+
+    s.sigma = sigma_o
+    s.eps = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
+
+    s.calculate_force()
+    #calculate designed initial linear strain (theta=0)
+    l.eps = (s.F*(s.a_1*s.r_2 - s.a_2*s.r_1) + a_w*W)/(k*(l.a_2*l.r_1 - l.a_1*l.r_2))
+
+    s.theta = l.calculate_theta()
+    s.update() #calculates the new SMA strain
+    l.update()
+    #strain of SMA actuator
+    s.calculate_force()
+    s.calculate_torque()    
 #        #strain (epsilon) of linear actuator
 #        l.eps = dampner*previous_l_eps + (1.-dampner)*(1./k)/(l.a_1*math.sin(theta) + l.a_2*math.cos(theta)*l.r_1 - \
 #              (l.a_1*math.cos(theta) - l.a_2*math.sin(theta))*l.r_2)*(s.torque + \
