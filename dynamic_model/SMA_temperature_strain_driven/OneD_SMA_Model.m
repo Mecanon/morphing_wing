@@ -1,10 +1,11 @@
-function [sigma, MVF, T, eps_t]=OneD_SMA_Model(k, eps_current, T_0, T_final, MVF_init, eps_t_0, to_plot) %k, T_inp, eps_i,
+function [sigma, MVF, T, eps_t]=OneD_SMA_Model(k, eps_current, T_0, T_final, MVF_init, eps_t_0, sigma_0, n, to_plot) %k, T_inp, eps_i,
 % Modified Edwins original code to calculate just for a given T and eps
 % Ideal: [sigma, MVF]=OneD_SMA_Model(T_inp, esp_inp)
 %Inputs:
 %         - k: current iteration of epsilon
 %         - T_inp: [T0; Tmax [;T_final]]
 %         - eps_i: current SMA strain
+%         - n: Maximum Number of increments n per loading step
 %         - plot: 'True' or 'False'
 
 
@@ -15,8 +16,6 @@ function [sigma, MVF, T, eps_t]=OneD_SMA_Model(k, eps_current, T_0, T_final, MVF
 % INPUTS
 %--------------------------------------------------------------------------
 
-% Maximum Number of increments n per loading step
-n = 40; 
 
 % INPUT:
 % If list with three components:
@@ -43,7 +42,7 @@ P.C_A = 7.8E6;
 P.C_M = 7.3e6;
 
 % Maximum and minimum transformation strain
-P.H_min = 0.007;
+P.H_min = 0.00;
 P.H_sat = 0.047;
 
 P.k = 0.021E-6;
@@ -99,7 +98,7 @@ elastic_check = 'N';
 % Integration Scheme
 integration_scheme = 'I';
 
-[sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( k, T, eps, P, elastic_check, integration_scheme, MVF_init, eps_t_0 );
+[sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( k, T, eps, P, elastic_check, integration_scheme, MVF_init, eps_t_0, sigma_0 );
 
 if strcmp(to_plot,'True')
     figure()
