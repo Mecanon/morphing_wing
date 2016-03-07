@@ -28,36 +28,36 @@ n = 40;
 
 % MATERIAL PARAMETERS (Structure: P)
 % Young's Modulus for Austenite and Martensite 
-P.E_A = 44.420E9;
-P.E_M = 31.628E9;
+P.E_A = 60E9;
+P.E_M = 60E9;
 % Transformation temperatures (M:Martensite, A:
 % Austenite), (s:start,f:final)
-P.M_s = 327.;
-P.M_f = 302.15;
-P.A_s = 342.;
-P.A_f = 367.;
+P.M_s = 333.;
+P.M_f = 220;
+P.A_s = 274.;
+P.A_f = 370.;
 
 % Slopes of transformation boundarings into austenite (C_A) and
 % martensite (C_M) at Calibration Stress 
-P.C_A = 9.522E6;
-P.C_M = 8.623e6;
+P.C_A = 7.8E6;
+P.C_M = 7.3e6;
 
 % Maximum and minimum transformation strain
-P.H_min = 0.0;
-P.H_sat = 0.0405;
+P.H_min = 0.007;
+P.H_sat = 0.047;
 
-P.k = 0.391E-9;
-P.sig_crit = 0;
+P.k = 0.021E-6;
+P.sig_crit = 140E6;
 
 % Coefficient of thermal expansion
-P.alpha = 10E-6;
+P.alpha = 10E-5;
 
 % Smoothn hardening parameters 
 % NOTE: smoothness parameters must be 1 for explicit integration scheme
-P.n1 = 1; %0.618;
-P.n2 = 1; %0.313;
-P.n3 = 1; %0.759;
-P.n4 = 1; %0.358;
+P.n1 = 0.06; %0.618;
+P.n2 = 0.06; %0.313;
+P.n3 = 0.06; %0.759;
+P.n4 = 0.06; %0.358;
 
 % Algorithmic delta for modified smooth hardening function
 P.delta=1e-5;
