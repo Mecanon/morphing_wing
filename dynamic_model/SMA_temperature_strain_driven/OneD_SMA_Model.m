@@ -1,4 +1,4 @@
-function [sigma, MVF, T, eps_t]=OneD_SMA_Model(k, eps_current, T_0, T_final, MVF_init, eps_t_0, sigma_0, n, to_plot) %k, T_inp, eps_i,
+function [sigma, MVF, T, eps_t, eps]=OneD_SMA_Model(k, eps_current, T_0, T_final, MVF_init, eps_t_0, sigma_0, eps_0,n, to_plot) %k, T_inp, eps_i,
 % Modified Edwins original code to calculate just for a given T and eps
 % Ideal: [sigma, MVF]=OneD_SMA_Model(T_inp, esp_inp)
 %Inputs:
@@ -49,7 +49,7 @@ P.k = 0.021E-6;
 P.sig_crit = 140E6;
 
 % Coefficient of thermal expansion
-P.alpha = 10E-5;
+P.alpha = 0; %10E-5;
 
 % Smoothn hardening parameters 
 % NOTE: smoothness parameters must be 1 for explicit integration scheme
@@ -85,7 +85,7 @@ end
 % if first iteration create list, otherwise load previous and update it
 if k == 2
     eps = zeros(n,1);
-    eps(1) = eps_current;
+    eps(1) = eps_0;
 else
     load('data.mat', 'eps')
 end

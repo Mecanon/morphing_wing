@@ -5,13 +5,13 @@ Created on Tue Feb 23 10:31:45 2016
 @author: Pedro Leal
 """
 import numpy as np
-import matlab.engine
+#import matlab.engine
 import math 
 
-#Start Matlab engine
-eng = matlab.engine.start_matlab()
-#Go to directory where matlab file is
-eng.cd('SMA_temperature_strain_driven')
+##Start Matlab engine
+#eng = matlab.engine.start_matlab()
+##Go to directory where matlab file is
+#eng.cd('SMA_temperature_strain_driven')
 
 H_max = 0.047
 H_min = 0.
@@ -53,7 +53,7 @@ def run(T_0, T_final, MVF_init, n, eps, eps_t_0, sigma_0, plot = 'True'):
             data = eng.OneD_SMA_Model(k, eps[i], T_0, T_final, MVF_init,
                                       eps_t_0, sigma_0, n, 'False', nargout=4)
         if k != n:
-            eps[k] = data[0][i][0]/E_M + eps_t_0
+            eps[k] = data[0][i][0]/E_M + data[3][i][0]#eps_t_0
     return data
 
 data = run(T_0, T_final, MVF_init, n, eps, eps_t_0, sigma_0, plot = 'False')

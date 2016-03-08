@@ -106,8 +106,7 @@ class actuator():
         self.r_2 = self.y_p*math.cos(self.theta) + \
                    self.x_p*math.sin(self.theta) - self.y_n
         self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
-        self.eps = self.length_r/self.zero_stress_length - 1.
-                  
+        self.eps = self.length_r/self.zero_stress_length - 1.                  
     def calculate_torque(self):
         """Calculate torque given the actuator force: r \times F (where a is 
         global coordinates)"""
@@ -141,7 +140,8 @@ class actuator():
 #                self.eps = self.area * self.sigmaf *(self.)
 if __name__ == '__main__':
     chord = 1.
-
+    #number of decimal for eps(specifically SMA strain)
+    decimals_eps = 10
 #==============================================================================
 # Design variables
 #==============================================================================
@@ -204,56 +204,83 @@ if __name__ == '__main__':
     #Calculate initial torques
     s.calculate_torque()    
     l.calculate_torque()
-
+    
 #==============================================================================
-# Matlab simulation
+# Test of deformation per theta
+#==============================================================================
+#    import numpy as np
+#    import matplotlib.pyplot as plt
+#    
+#    theta_list = np.linspace(0, -math.pi/4.)
+#    eps_s_list = []
+#    eps_l_list = []
+#    
+#    for theta in theta_list:
+#        s.theta = theta
+#        l.theta = theta
+#        
+#        s.update()
+#        l.update()
+#        
+#        eps_s_list.append(s.eps)
+#        eps_l_list.append(l.eps)
+#    plt.plot(theta_list, eps_s_list, 'r', theta_list, eps_l_list, 'b')  
+#    plt.xlabel('$\\theta (rad)$')
+#    plt.ylabel('$\epsilon$')
 ##==============================================================================
-#    import matlab.engine
-#
-#    #Start Matlab engine
-#    eng = matlab.engine.start_matlab()
-#    #Go to directory where matlab file is
-#    eng.cd('SMA_temperature_strain_driven')
+## Matlab simulation
+###==============================================================================
+    import matlab.engine
+
+    #Start Matlab engine
+    eng = matlab.engine.start_matlab()
+    #Go to directory where matlab file is
+    eng.cd('SMA_temperature_strain_driven')
     
     ## Temperature
     T_0 = 200.15
-    T_final = 200.15
+    T_final = 370.15
      
     #Initial martensitic volume fraction
     MVF_init = 1.
     
     # Number of steps
-    n = 40
+    n = 20
 
-    def run(T_0, T_final, MVF_init, i, n, eps, eps_t_0, sigma_0 = 0, plot = 'True'):
+    def run(T_0, T_final, MVF_init, i, n, eps, eps_t_0, sigma_0 = 0,
+            eps_0 = 0, plot = 'True'):
         """Run SMA model
         
         - all inputs are scalars"""
         k = i+1
         if k == n:
             data = eng.OneD_SMA_Model(k, eps, T_0, T_final, MVF_init, 
-                                      eps_t_0, sigma_0, n, plot, nargout=4) 
+                                      eps_t_0, sigma_0, eps_0, n, plot, nargout=5) 
         else:
             data = eng.OneD_SMA_Model(k, eps, T_0, T_final, MVF_init,
-                                      eps_t_0, sigma_0, n, 'False', nargout=4)
-        return data    
-        
-    for i in range(1,10):
-        #calculate new SMA stress
-        data = run(T_0, T_final, MVF_init, i, n, s.eps, eps_t_0, sigma_o, plot = 'False')
-        s.sigma = data[0][i][0]
-        print 'SMA stress: ', s.sigma
-        s.calculate_force(source = 'sigma')
-        s.calculate_torque()        
+                                      eps_t_0, sigma_0, eps_0, n, 'False', nargout=5)
+        return data     
+    for i in range(1,n):
+    
         #Calculate new linear strain and theta for new force
-        conv_tol = 1e-5
+        conv_tol = 1e-1
         conv_error = 1.
         it_counter = 0
         dampner = 0.
         while conv_error > conv_tol:
-
+            prev_sigma = s.sigma  
+            
+            #calculate new SMA stress
+            data = run(T_0, T_final, MVF_init, i, n, s.eps, eps_t_0, sigma_o, eps_0, plot = 'False')
+            s.sigma = round(data[0][i][0], 1)
+            print 'SMA stress: ', s.sigma
+            s.calculate_force(source = 'sigma')
+            s.calculate_torque()  
+            
             prev_theta = l.theta
             prev_eps = l.eps
+            prev_eps_s = s.eps
+           
             cos = math.cos(l.theta)
             sin = math.sin(l.theta)
             l.eps = dampner*prev_eps + (1-dampner)*((s.F/s.length_r)*((s.x_p*cos - s.y_p*sin)*s.r_2 - \
@@ -261,20 +288,25 @@ if __name__ == '__main__':
                     ((l.x_p*sin + l.y_p*cos)*l.r_1 - (l.x_p*cos - \
                     l.y_p*sin)*l.r_2)) 
 
-            print "strain", l.eps
             #Calculate new theta
             l.calculate_theta()
             s.theta = l.theta
             #update all values related to theta
+
             l.update()
             s.update()
             s.calculate_torque()
             
-            conv_error = abs(prev_theta - l.theta)
+            s.eps = s.eps
+            conv_error = abs(prev_sigma- s.sigma)
+            print it_counter, l.eps, s.eps
             it_counter += 1
             if it_counter == 10:
                 break
+
         print i, 's_eps: ', s.eps, 'l_eps: ', l.eps, 'theta: ', l.theta, 'sigma: ', s.sigma, 'error: ', conv_error, it_counter
+        
+        
         #update angle, r and strain at SMA actuator
 #        theta = l.calculate_theta()
 #        s.theta = theta
