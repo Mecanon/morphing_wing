@@ -230,22 +230,15 @@ if __name__ == '__main__':
 ##==============================================================================
 ## Matlab simulation
 ###==============================================================================
-    import matlab.engine
-
-    #Start Matlab engine
-    eng = matlab.engine.start_matlab()
-    #Go to directory where matlab file is
-    eng.cd('SMA_temperature_strain_driven')
-    
-    ## Temperature
-    T_0 = 200.15
-    T_final = 370.15
-     
-    #Initial martensitic volume fraction
-    MVF_init = 1.
-    
-    # Number of steps
-    n = 20
+#    import matlab.engine
+#    from scipy.optimize import newton
+#    #If the derivate for the newton function is not defined, it uses the
+#    #secant method
+#    
+#    #Start Matlab engine
+#    eng = matlab.engine.start_matlab()
+#    #Go to directory where matlab file is
+#    eng.cd('SMA_temperature_strain_driven')
 
     def run(T_0, T_final, MVF_init, i, n, eps, eps_t_0, sigma_0 = 0,
             eps_0 = 0, plot = 'True'):
@@ -259,52 +252,95 @@ if __name__ == '__main__':
         else:
             data = eng.OneD_SMA_Model(k, eps, T_0, T_final, MVF_init,
                                       eps_t_0, sigma_0, eps_0, n, 'False', nargout=5)
-        return data     
-    for i in range(1,n):
+        return data
+
+    ## Temperature
+    T_0 = 200.15
+    T_final = 370.15
+     
+    #Initial martensitic volume fraction
+    MVF_init = 1.
     
-        #Calculate new linear strain and theta for new force
-        conv_tol = 1e-1
-        conv_error = 1.
-        it_counter = 0
-        dampner = 0.
-        while conv_error > conv_tol:
-            prev_sigma = s.sigma  
-            
-            #calculate new SMA stress
-            data = run(T_0, T_final, MVF_init, i, n, s.eps, eps_t_0, sigma_o, eps_0, plot = 'False')
-            s.sigma = round(data[0][i][0], 1)
-            print 'SMA stress: ', s.sigma
-            s.calculate_force(source = 'sigma')
-            s.calculate_torque()  
-            
-            prev_theta = l.theta
-            prev_eps = l.eps
-            prev_eps_s = s.eps
-           
-            cos = math.cos(l.theta)
-            sin = math.sin(l.theta)
-            l.eps = dampner*prev_eps + (1-dampner)*((s.F/s.length_r)*((s.x_p*cos - s.y_p*sin)*s.r_2 - \
-                    (s.x_p*sin + s.y_p*cos)*s.r_1) + a_w*W)/(l.k* \
-                    ((l.x_p*sin + l.y_p*cos)*l.r_1 - (l.x_p*cos - \
-                    l.y_p*sin)*l.r_2)) 
-
-            #Calculate new theta
-            l.calculate_theta()
-            s.theta = l.theta
-            #update all values related to theta
-
-            l.update()
-            s.update()
-            s.calculate_torque()
-            
-            s.eps = s.eps
-            conv_error = abs(prev_sigma- s.sigma)
-            print it_counter, l.eps, s.eps
-            it_counter += 1
-            if it_counter == 10:
-                break
-
-        print i, 's_eps: ', s.eps, 'l_eps: ', l.eps, 'theta: ', l.theta, 'sigma: ', s.sigma, 'error: ', conv_error, it_counter
+    # Number of steps
+    n = 20        
+    def equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_0,
+                   i, n, a_w, W):
+        """Calculates the moment equilibrium. Function used for the 
+        secant method.
+        """
+        #calculate new theta for eps_s and update all the parameter
+        #of the actuator class
+        s.eps = eps_s
+        s.calculate_theta()
+        s.update()
+        
+        l.theta = s.theta
+        l.update()
+        
+        #SMA (Constitutive equation: coupling via sigma)
+        data = run(T_0, T_final, MVF_init, i, n, eps_s, eps_t_0, sigma_0,
+                   s.eps_0, plot = 'False')
+        s.sigma = round(data[0][i][0], 1)
+        
+        tau_s = s.calculate_torque()
+        
+        #Linear (Geometric equation: coupling via theta)
+        tau_l = l.calculate_torque()
+        
+        #weight (Geometric equation: coupling via theta)
+        tau_w = - a_w*W*math.cos(l.theta)
+        
+        return tau_s + tau_l + tau_w
+    eps_s = eps_0
+    
+    for i in range(1,2):
+        result = newton(equlibrium, x0 = eps_s, args = ((s, l, T_0, T_final, MVF_init, sigma_o,
+                                   i, n, a_w, W,)))
+#        result = equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_o,
+#                   i, n, a_w, W)
+#        #Calculate new linear strain and theta for new force
+#        conv_tol = 1e-1
+#        conv_error = 1.
+#        it_counter = 0
+#        dampner = 0.
+#        while conv_error > conv_tol:
+#            prev_sigma = s.sigma  
+#            
+#            #calculate new SMA stress
+#            data = run(T_0, T_final, MVF_init, i, n, s.eps, eps_t_0, sigma_o, eps_0, plot = 'False')
+#            s.sigma = round(data[0][i][0], 1)
+#            print 'SMA stress: ', s.sigma
+#            s.calculate_force(source = 'sigma')
+#            s.calculate_torque()  
+#            
+#            prev_theta = l.theta
+#            prev_eps = l.eps
+#            prev_eps_s = s.eps
+#           
+#            cos = math.cos(l.theta)
+#            sin = math.sin(l.theta)
+#            l.eps = dampner*prev_eps + (1-dampner)*((s.F/s.length_r)*((s.x_p*cos - s.y_p*sin)*s.r_2 - \
+#                    (s.x_p*sin + s.y_p*cos)*s.r_1) + a_w*W)/(l.k* \
+#                    ((l.x_p*sin + l.y_p*cos)*l.r_1 - (l.x_p*cos - \
+#                    l.y_p*sin)*l.r_2)) 
+#
+#            #Calculate new theta
+#            l.calculate_theta()
+#            s.theta = l.theta
+#            #update all values related to theta
+#
+#            l.update()
+#            s.update()
+#            s.calculate_torque()
+#            
+#            s.eps = s.eps
+#            conv_error = abs(prev_sigma- s.sigma)
+#            print it_counter, l.eps, s.eps
+#            it_counter += 1
+#            if it_counter == 10:
+#                break
+#
+#        print i, 's_eps: ', s.eps, 'l_eps: ', l.eps, 'theta: ', l.theta, 'sigma: ', s.sigma, 'error: ', conv_error, it_counter
         
         
         #update angle, r and strain at SMA actuator
