@@ -17,7 +17,7 @@ H_max = 0.047
 H_min = 0.
 ## Temperature
 T_0 = 200.15
-T_final = 200.15
+T_final = 400.15
  
 #Initial martensitic volume fraction
 MVF_init = 1.

@@ -222,8 +222,12 @@ if __name__ == '__main__':
 #        s.update()
 #        l.update()
 #        
+#        s.calculate_force()
+#        l.calculate_force()
+#        
 #        eps_s_list.append(s.eps)
 #        eps_l_list.append(l.eps)
+#        
 #    plt.plot(theta_list, eps_s_list, 'r', theta_list, eps_l_list, 'b')  
 #    plt.xlabel('$\\theta (rad)$')
 #    plt.ylabel('$\epsilon$')
@@ -239,7 +243,7 @@ if __name__ == '__main__':
 #    eng = matlab.engine.start_matlab()
 #    #Go to directory where matlab file is
 #    eng.cd('SMA_temperature_strain_driven')
-
+#
     def run(T_0, T_final, MVF_init, i, n, eps, eps_t_0, sigma_0 = 0,
             eps_0 = 0, plot = 'True'):
         """Run SMA model
@@ -256,18 +260,19 @@ if __name__ == '__main__':
 
     ## Temperature
     T_0 = 200.15
-    T_final = 370.15
+    T_final = 450.15
      
     #Initial martensitic volume fraction
     MVF_init = 1.
     
     # Number of steps
-    n = 20        
+    n = 300        
     def equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_0,
                    i, n, a_w, W):
         """Calculates the moment equilibrium. Function used for the 
         secant method.
         """
+        
         #calculate new theta for eps_s and update all the parameter
         #of the actuator class
         s.eps = eps_s
@@ -280,11 +285,13 @@ if __name__ == '__main__':
         #SMA (Constitutive equation: coupling via sigma)
         data = run(T_0, T_final, MVF_init, i, n, eps_s, eps_t_0, sigma_0,
                    s.eps_0, plot = 'False')
-        s.sigma = round(data[0][i][0], 1)
         
+        s.sigma = data[0][i][0]
+        s.calculate_force(source = 'sigma')
         tau_s = s.calculate_torque()
         
         #Linear (Geometric equation: coupling via theta)
+        l.calculate_force()
         tau_l = l.calculate_torque()
         
         #weight (Geometric equation: coupling via theta)
@@ -292,12 +299,15 @@ if __name__ == '__main__':
         
         return tau_s + tau_l + tau_w
     eps_s = eps_0
-    
-    for i in range(1,2):
-        result = newton(equlibrium, x0 = eps_s, args = ((s, l, T_0, T_final, MVF_init, sigma_o,
-                                   i, n, a_w, W,)))
+    eps_s_list = [eps_s]
+    for i in range(1, n):
+        eps_s = newton(equlibrium, x0 = eps_s, args = ((s, l, T_0, T_final, MVF_init, sigma_o,
+                                   i, n, a_w, W,)), maxiter = 500, tol = 1.0e-6)
+        eps_s_list.append(eps_s)
+#        print i, eps_s
 #        result = equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_o,
 #                   i, n, a_w, W)
+
 #        #Calculate new linear strain and theta for new force
 #        conv_tol = 1e-1
 #        conv_error = 1.
