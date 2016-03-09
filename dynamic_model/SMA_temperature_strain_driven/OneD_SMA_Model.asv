@@ -103,9 +103,9 @@ integration_scheme = 'I';
 if strcmp(to_plot,'True')
     figure()
     box on 
-    plot(T,eps,'b','LineWidth',1.5)
-    xlabel('Temperature')
-    ylabel('Strain')
+    plot(eps,sigma,'b','LineWidth',1.5)
+    xlabel('Strain')
+    ylabel('Temperature')
     title('One D SMA Models')
     set(gca,'FontName','Times New Roman','fontsize', 20,'linewidth',1.15)
     set(gca,'XMinorTick','on','YMinorTick','on')

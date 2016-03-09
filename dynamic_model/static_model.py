@@ -47,6 +47,8 @@ class actuator():
         self.y_n = positions['y-'] - J['y']
         self.x_p = positions['x+'] - J['x']
         self.y_p = positions['y+'] - J['y']
+        self.x_J = J['x']
+        self.y_J = J['y']
         self.material = material
         
         # Projections of original wire length r
@@ -134,23 +136,39 @@ class actuator():
                       (self.y_p*math.cos(self.theta) + \
                        self.x_p*math.sin(self.theta))*F_1    
         return self.torque
-
+    def plot_actuator(self):
+        if self.material == 'linear':
+            colour = 'b'
+        elif self.material == 'SMA':
+            colour = 'r'
+        plt.figure(1)
+        plt.axes().set_aspect('equal')
+        plt.scatter([self.x_n + self.x_J, self.x_p + self.x_J], 
+                    [self.y_n + self.y_J, self.y_p + self.y_J], 
+                    c=colour)
+        plt.scatter([self.x_J],[self.y_J], c = 'g')
+        plt.plot([self.x_n + self.x_J, self.x_p + self.x_J], 
+                 [self.y_n + self.y_J, self.y_p + self.y_J],
+                 colour)
 #    def calculate_initial(self, tension = "sigmaf"):
 #        """Calculate initial displacement for SMA and linear"""
 #        if self.material == "linear":
 #            if tension == "sigmaf":
 #                self.eps = self.area * self.sigmaf *(self.)
 if __name__ == '__main__':
-    chord = 1.
+    import matplotlib.pyplot as plt
+    
+    chord = 0.6175
     #number of decimal for eps(specifically SMA strain)
     decimals_eps = 10
 #==============================================================================
 # Design variables
 #==============================================================================
     #Hole positioning
-    sma = {'x-': -1*chord, 'y-': -2*chord, 'x+': 1*chord, 'y+': 1*chord }
-    linear = {'x-': -1.*chord, 'y-':-2*chord, 'x+': 1*chord, 'y+': -1*chord}
-    J = {'x':0., 'y':0.}
+    J = {'x':0.25, 'y':0.}
+    sma = {'x-': J['x'], 'y-': -0.02, 'x+': 0.1225 + J['x'], 'y+': 0.0135 }
+    linear = {'x-': J['x'], 'y-': 0.032, 'x+': 0.146 + J['x'], 'y+': -0.0135}
+
     #SMA Pre-stress
     sigma_o = 300e6
 #==============================================================================
@@ -158,10 +176,10 @@ if __name__ == '__main__':
 #==============================================================================
     #Areas
     area_l = 0.001
-    area_s = 0.001
+    area_s = math.pi*0.00025**2
     
     #original bias spring length
-    length_l = 2.
+    length_l = 0.06 #
     
     #SMA properties
     E_M = 60E9
@@ -170,11 +188,13 @@ if __name__ == '__main__':
     H_min = 0.
     k = 0.021e-6
     
+    #If I change the value of the material young modulus, need to update k
+    k = k*E_M/60E9
     #arm length to center of gravity
-    a_w = 1.
+    r_w = 0.15
     
     #Aicraft weight
-    W = 1.
+    W = 0.1
     
 #==============================================================================
 # Initial conditions   
@@ -188,6 +208,10 @@ if __name__ == '__main__':
     #Sma actuator (l)
     s = actuator(sma, J, area_s, eps_0 = eps_0, material = 'SMA')
 
+#    plt.figure(1)
+#    s.plot_actuator()
+#    l.plot_actuator()
+
     print 'linear', l.length_r, l.eps 
     print 'sma', s.length_r, s.eps
     
@@ -198,7 +222,7 @@ if __name__ == '__main__':
     # TODO: For now K is calculated in function of the rest. Afterwards it will
     # be an input
 
-    l.k = ((s.F/s.length_r)*(s.x_p*s.r_2 - s.y_p*s.r_1) + a_w*W)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
+    l.k = ((s.F/s.length_r)*(s.x_p*s.r_2 - s.y_p*s.r_1) + r_w*W)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
     l.calculate_force(source = 'strain')
     
     s.theta = l.calculate_theta()
@@ -207,108 +231,118 @@ if __name__ == '__main__':
     s.calculate_torque()    
     l.calculate_torque()
     
-##==============================================================================
-## Test of deformation per theta
-##==============================================================================
-    import numpy as np
-    import matplotlib.pyplot as plt
-    
-    theta_list = np.linspace(0, -math.pi/4.)
-    eps_s_list = []
-    eps_l_list = []
-    
-    for theta in theta_list:
-        s.theta = theta
-        l.theta = theta
-        
-        s.update()
-        l.update()
-        
-#        s.calculate_force()
-        l.calculate_force()
-        
-        eps_s_list.append(s.eps)
-        eps_l_list.append(l.eps)
-    plt.figure()    
-    plt.plot(np.degrees(theta_list), eps_s_list, 'r', np.degrees(theta_list), eps_l_list, 'b')  
-    plt.xlabel('$\\theta (degrees)$')
-    plt.ylabel('$\epsilon$')
-###==============================================================================
-### Matlab simulation
-####==============================================================================
-##    import matlab.engine
-##    from scipy.optimize import newton
-##    #If the derivate for the newton function is not defined, it uses the
-##    #secant method
-##    
-##    #Start Matlab engine
-##    eng = matlab.engine.start_matlab()
-##    #Go to directory where matlab file is
-##    eng.cd('SMA_temperature_strain_driven')
-##
-#    def run(T_0, T_final, MVF_init, i, n, eps, eps_t_0, sigma_0 = 0,
-#            eps_0 = 0, plot = 'True'):
-#        """Run SMA model
-#        
-#        - all inputs are scalars"""
-#        k = i+1
-#        if k == n:
-#            data = eng.OneD_SMA_Model(k, eps, T_0, T_final, MVF_init, 
-#                                      eps_t_0, sigma_0, eps_0, n, plot, nargout=5) 
-#        else:
-#            data = eng.OneD_SMA_Model(k, eps, T_0, T_final, MVF_init,
-#                                      eps_t_0, sigma_0, eps_0, n, 'False', nargout=5)
-#        return data
-#
-#    ## Temperature
-#    T_0 = 200.15
-#    T_final = 450.15
-#     
-#    #Initial martensitic volume fraction
-#    MVF_init = 1.
+#==============================================================================
+# Test of deformation per theta
+#==============================================================================
+#    import numpy as np
+#    import matplotlib.pyplot as plt
 #    
-#    # Number of steps
-#    n = 400        
-#    def equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_0,
-#                   i, n, a_w, W):
-#        """Calculates the moment equilibrium. Function used for the 
-#        secant method.
-#        """
+#    theta_list = np.linspace(0, -math.pi/4.)
+#    eps_s_list = []
+#    eps_l_list = []
+#    
+#    for theta in theta_list:
+#        s.theta = theta
+#        l.theta = theta
 #        
-#        #calculate new theta for eps_s and update all the parameter
-#        #of the actuator class
-#        s.eps = eps_s
-#        s.calculate_theta()
 #        s.update()
-#        
-#        l.theta = s.theta
 #        l.update()
 #        
-#        #SMA (Constitutive equation: coupling via sigma)
-#        data = run(T_0, T_final, MVF_init, i, n, eps_s, eps_t_0, sigma_0,
-#                   s.eps_0, plot = 'False')
-#        
-#        s.sigma = data[0][i][0]
-#        s.calculate_force(source = 'sigma')
-#        tau_s = s.calculate_torque()
-#        
-#        #Linear (Geometric equation: coupling via theta)
+##        s.calculate_force()
 #        l.calculate_force()
-#        tau_l = l.calculate_torque()
 #        
-#        #weight (Geometric equation: coupling via theta)
-#        tau_w = - a_w*W*math.cos(l.theta)
-#        
-#        return tau_s + tau_l + tau_w
-#    eps_s = eps_0
-#    eps_s_list = [eps_s]
-#    for i in range(1, n):
-#        eps_s = newton(equlibrium, x0 = eps_s, args = ((s, l, T_0, T_final, MVF_init, sigma_o,
-#                                   i, n, a_w, W,)), maxiter = 500, tol = 1.0e-6)
-#        eps_s_list.append(eps_s)
-##        print i, eps_s
+#        eps_s_list.append(s.eps)
+#        eps_l_list.append(l.eps)
+#    plt.figure()    
+#    plt.plot(np.degrees(theta_list), eps_s_list, 'r', np.degrees(theta_list), eps_l_list, 'b')  
+#    plt.xlabel('$\\theta (degrees)$')
+#    plt.ylabel('$\epsilon$')
+#    BREAK
+##==============================================================================
+# Matlab simulation
+##==============================================================================
+    import matlab.engine
+    from scipy.optimize import newton
+    #If the derivate for the newton function is not defined, it uses the
+    #secant method
+    
+    #Start Matlab engine
+    eng = matlab.engine.start_matlab()
+    #Go to directory where matlab file is
+    eng.cd('SMA_temperature_strain_driven')
+
+    def run(T_0, T_final, MVF_init, i, n, eps, eps_t_0, sigma_0 = 0,
+            eps_0 = 0, plot = 'True'):
+        """Run SMA model
+        
+        - all inputs are scalars"""
+        k = i+1
+        if k == n:
+            data = eng.OneD_SMA_Model(k, eps, T_0, T_final, MVF_init, 
+                                      eps_t_0, sigma_0, eps_0, n, plot, nargout=5) 
+        else:
+            data = eng.OneD_SMA_Model(k, eps, T_0, T_final, MVF_init,
+                                      eps_t_0, sigma_0, eps_0, n, 'False', nargout=5)
+        return data
+
+    ## Temperature
+    T_0 = 220.15
+    T_final = 400.15
+     
+    #Initial martensitic volume fraction
+    MVF_init = 1.
+    
+    # Number of steps
+    n = 200        
+    def equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_0,
+                   i, n, r_w, W):
+        """Calculates the moment equilibrium. Function used for the 
+        secant method.
+        """
+        
+        #calculate new theta for eps_s and update all the parameter
+        #of the actuator class
+        s.eps = eps_s
+        s.calculate_theta()
+        s.update()
+        
+        l.theta = s.theta
+        l.update()
+        
+        #SMA (Constitutive equation: coupling via sigma)
+        data = run(T_0, T_final, MVF_init, i, n, eps_s, eps_t_0, sigma_0,
+                   s.eps_0, plot = 'False')
+        
+        s.sigma = data[0][i][0]
+        s.calculate_force(source = 'sigma')
+        tau_s = s.calculate_torque()
+        
+        #Linear (Geometric equation: coupling via theta)
+        l.calculate_force()
+        tau_l = l.calculate_torque()
+        
+        #weight (Geometric equation: coupling via theta)
+        tau_w = - r_w*W*math.cos(l.theta)
+        
+        return tau_s + tau_l + tau_w
+    eps_s = eps_0
+    eps_s_list = [eps_s]
+    theta_list = [s.theta]
+    for i in range(1, n):
+        eps_s = newton(equlibrium, x0 = eps_s, args = ((s, l, T_0, T_final, MVF_init, sigma_o,
+                                   i, n, r_w, W,)), maxiter = 500, tol = 1.0e-6)
+        eps_s_list.append(eps_s)
+        s.eps = eps_s
+        theta_list.append(math.degrees(s.calculate_theta()))
+        print i, eps_s
+    #Extra run with prescribed deformation (which has already been calculated)
+    # to get all the properties
+    for i in range(1, n):
+        data = run(T_0, T_final, MVF_init, i, n, eps_s_list[i], eps_t_0, sigma_0 = sigma_o,
+                eps_0 = eps_0, plot = 'True')
+
 ##        result = equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_o,
-##                   i, n, a_w, W)
+##                   i, n, r_w, W)
 #
 ##        #Calculate new linear strain and theta for new force
 ##        conv_tol = 1e-1
@@ -332,7 +366,7 @@ if __name__ == '__main__':
 ##            cos = math.cos(l.theta)
 ##            sin = math.sin(l.theta)
 ##            l.eps = dampner*prev_eps + (1-dampner)*((s.F/s.length_r)*((s.x_p*cos - s.y_p*sin)*s.r_2 - \
-##                    (s.x_p*sin + s.y_p*cos)*s.r_1) + a_w*W)/(l.k* \
+##                    (s.x_p*sin + s.y_p*cos)*s.r_1) + r_w*W)/(l.k* \
 ##                    ((l.x_p*sin + l.y_p*cos)*l.r_1 - (l.x_p*cos - \
 ##                    l.y_p*sin)*l.r_2)) 
 ##
