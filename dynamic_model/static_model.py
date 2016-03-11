@@ -50,6 +50,7 @@ class actuator():
         self.y_p = positions['y+'] - J['y']
         self.x_J = J['x']
         self.y_J = J['y']
+        self.Radius_J = J['Radius']
         self.material = material
         
         # Projections of original wire length r
@@ -111,15 +112,12 @@ class actuator():
         self.theta = newton(eq, theta_0, diff_eq, maxiter = 200)
         return self.theta
         
-    def update(self):
+    def update(self,theta): 
         """If vector length r or theta is changed, new coordinates are 
         calculated"""
-        self.r_1 = self.x_p*math.cos(self.theta) - \
-                   self.y_p*math.sin(self.theta) - self.x_n
-        self.r_2 = self.y_p*math.cos(self.theta) + \
-                   self.x_p*math.sin(self.theta) - self.y_n
-        self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
-        self.eps = self.length_r/self.zero_stress_length - 1. 
+        self.eps = math.radians(theta)*self.Radius_J
+        self.r_1 = self.x_n - self.x_p + self.eps
+        self.r_2 = self.x_n - self.x_p - self.eps         
      
     def calculate_force(self, source = 'strain'):
         
@@ -175,9 +173,10 @@ if __name__ == '__main__':
 # Design variables
 #==============================================================================
     #Hole positioning
-    J = {'x':0.25, 'y':0.}
+    J = {'x':0.25, 'y':0, 'Radius':0.01}
     sma = {'x-': J['x'], 'y-': -0.02, 'x+': 0.1225 + J['x'], 'y+': 0.0135 }
     linear = {'x-': J['x'], 'y-': 0.032, 'x+': 0.146 + J['x'], 'y+': -0.0135}
+    R = 0.1
 
     #SMA Pre-stress
     sigma_o = 300e6
