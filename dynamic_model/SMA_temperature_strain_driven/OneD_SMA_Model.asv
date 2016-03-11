@@ -27,8 +27,8 @@ function [sigma, MVF, T, eps_t, eps]=OneD_SMA_Model(k, eps_current, T_0, T_final
 
 % MATERIAL PARAMETERS (Structure: P)
 % Young's Modulus for Austenite and Martensite 
-P.E_A = 60E9;
-P.E_M = 60E9;
+P.E_A = 60E1; %E9;
+P.E_M = 60E1; %E9;
 % Transformation temperatures (M:Martensite, A:
 % Austenite), (s:start,f:final)
 P.M_s = 333.;
@@ -38,7 +38,7 @@ P.A_f = 370.;
 
 % Slopes of transformation boundarings into austenite (C_A) and
 % martensite (C_M) at Calibration Stress 
-P.C_A = 7.8E6;
+P.C_A = 7.8E6 ;
 P.C_M = 7.3e6;
 
 % Maximum and minimum transformation strain
@@ -103,9 +103,9 @@ integration_scheme = 'I';
 if strcmp(to_plot,'True')
     figure()
     box on 
-    plot(eps,sigma,'b','LineWidth',1.5)
-    xlabel('Strain')
-    ylabel('Temperature')
+    plot(T,eps,'b','LineWidth',1.5)
+    xlabel('Temperature')
+    ylabel('Strain')
     title('One D SMA Models')
     set(gca,'FontName','Times New Roman','fontsize', 20,'linewidth',1.15)
     set(gca,'XMinorTick','on','YMinorTick','on')
