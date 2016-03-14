@@ -60,3 +60,5 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+*.mat
+dynamic_model/Cp_flapped_0000

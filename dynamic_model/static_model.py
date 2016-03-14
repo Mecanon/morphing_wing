@@ -255,9 +255,13 @@ if __name__ == '__main__':
     xf.call(airfoil, output='Coordinates')
     filename = xf.file_name(airfoil, output='Coordinates')
     Data = xf.output_reader(filename, output='Coordinates', header = ['x','y'])
-    x = Data['x']
-    y = Data['y']
-
+    #The coordinates from Xfoil are normalized, hence we have to multiply
+    #by the chord
+    x = []
+    y = []
+    for i in range(len(Data['x'])):
+        x.append( Data['x'][i]*chord )
+        y.append( Data['y'][i]*chord )
 
 ##==========================================================================
 ## Test of deformation per theta
@@ -291,15 +295,17 @@ if __name__ == '__main__':
 ##==============================================================================
 # Matlab simulation
 ##==============================================================================
-    import matlab.engine
-    from scipy.optimize import newton
-    #If the derivate for the newton function is not defined, it uses the
-    #secant method
-    
-    #Start Matlab engine
-    eng = matlab.engine.start_matlab()
-    #Go to directory where matlab file is
-    eng.cd('SMA_temperature_strain_driven')
+#    import matlab.engine
+#    from scipy.optimize import newton
+#    import numpy as np
+#    
+#    #If the derivate for the newton function is not defined, it uses the
+#    #secant method
+#    
+#    #Start Matlab engine
+#    eng = matlab.engine.start_matlab()
+#    #Go to directory where matlab file is
+#    eng.cd('SMA_temperature_strain_driven')
 
     def constitutive_model(T_0, T_final, MVF_init, i, n, eps, eps_t_0, sigma_0 = 0,
             eps_0 = 0, plot = 'True'):
@@ -355,13 +361,18 @@ if __name__ == '__main__':
         
         #weight (Geometric equation: coupling via theta)
         tau_w = - r_w*W*math.cos(l.theta)
-        
+        print 'theta', l.theta
         #aerodynamic (Panel method: coupling via theta)
         if aero_loads:
-            Cm = calculate_flap_moment(x, y, alpha, J['x'], l.theta)
+            # The deflection considered for the flap is positivite in
+            # the clockwise, contrary to the dynamic system. Hence we need
+            # to multiply it by -1.
+            Cm = calculate_flap_moment(x, y, alpha, J['x'], - l.theta,
+                                       unit_deflection = 'rad')
             tau_a = Cm*q*chord**2
         else:
             tau_a = 0.
+        print 'theta', l.theta
         print 'tau', tau_s, tau_l, tau_w, tau_a
         return tau_s + tau_l + tau_w + tau_a
         
@@ -369,7 +380,8 @@ if __name__ == '__main__':
     eps_s_list = [eps_s]
     eps_l_list = [l.eps]
     theta_list = [s.theta]
-    for i in range(1, n):
+    T_list = np.linspace(T_0, T_final, n)
+    for i in range(1, 10):
         eps_s = newton(equlibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
                        MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
                        q, chord, J['x'], True,)), maxiter = 500, 
