@@ -31,7 +31,7 @@ class actuator():
     """
     #
     def __init__(self, positions, J, area = None, zero_stress_length = None,
-                 eps_0 = None, k = None, material = 'linear'):
+                 eps_0 = None, k = None, material = 'linear', design = 'C'):
         """
         Initiate class and it's basic atributes:
         - x_n and y_n: are the x & y coordinates of the forwards end in the
@@ -51,6 +51,7 @@ class actuator():
         self.x_J = J['x']
         self.y_J = J['y']
         self.material = material
+        self.design = design
         
         # Projections of original wire length r
         self.r_1_0 = self.x_p - self.x_n
@@ -111,16 +112,21 @@ class actuator():
         self.theta = newton(eq, theta_0, diff_eq, maxiter = 200)
         return self.theta
         
-    def update(self):
+    def update(self, theta = None ):
         """If vector length r or theta is changed, new coordinates are 
         calculated"""
-        self.r_1 = self.x_p*math.cos(self.theta) - \
-                   self.y_p*math.sin(self.theta) - self.x_n
-        self.r_2 = self.y_p*math.cos(self.theta) + \
-                   self.x_p*math.sin(self.theta) - self.y_n
-        self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
-        self.eps = self.length_r/self.zero_stress_length - 1. 
-     
+        if theta != None:
+            s.theta = theta
+        else:
+            if self.design == 'C':
+                self.r_1 = self.x_p*math.cos(self.theta) - \
+                        self.y_p*math.sin(self.theta) - self.x_n
+                self.r_2 = self.y_p*math.cos(self.theta) + \
+                        self.x_p*math.sin(self.theta) - self.y_n
+            
+            self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
+            self.eps = self.length_r/self.zero_stress_length - 1. 
+         
     def calculate_force(self, source = 'strain'):
         
         if source == 'strain':
