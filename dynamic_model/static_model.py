@@ -295,17 +295,17 @@ if __name__ == '__main__':
 ##==============================================================================
 # Matlab simulation
 ##==============================================================================
-#    import matlab.engine
-#    from scipy.optimize import newton
-#    import numpy as np
-#    
-#    #If the derivate for the newton function is not defined, it uses the
-#    #secant method
-#    
-#    #Start Matlab engine
-#    eng = matlab.engine.start_matlab()
-#    #Go to directory where matlab file is
-#    eng.cd('SMA_temperature_strain_driven')
+    import matlab.engine
+    from scipy.optimize import newton
+    import numpy as np
+    
+    #If the derivate for the newton function is not defined, it uses the
+    #secant method
+    
+    #Start Matlab engine
+    eng = matlab.engine.start_matlab()
+    #Go to directory where matlab file is
+    eng.cd('SMA_temperature_strain_driven')
 
     def constitutive_model(T_0, T_final, MVF_init, i, n, eps, eps_t_0, sigma_0 = 0,
             eps_0 = 0, plot = 'True'):
@@ -381,7 +381,7 @@ if __name__ == '__main__':
     eps_l_list = [l.eps]
     theta_list = [s.theta]
     T_list = np.linspace(T_0, T_final, n)
-    for i in range(1, 10):
+    for i in range(1, n):
         eps_s = newton(equlibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
                        MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
                        q, chord, J['x'], True,)), maxiter = 500, 
