@@ -14,10 +14,13 @@ Created on Wed Feb 17 13:10:30 2016
 """
 import math
 from scipy.optimize import newton
-
+import numpy as np
+    
 from AeroPy import calculate_flap_moment
 from aero_module import air_properties
+from airfoil_module import Naca00XX
 import xfoil_module as xf
+
 class actuator():
     """
     Actuator object where inputs:
@@ -33,7 +36,7 @@ class actuator():
     - material: linear or SMA
     """
     #
-    def __init__(self, positions, J, area = None, zero_stress_length = None,
+    def __init__(self, geo_props, J, area = None, zero_stress_length = None,
                  eps_0 = None, k = None, material = 'linear'):
         """
         Initiate class and it's basic atributes:
@@ -47,10 +50,10 @@ class actuator():
         - k: linear spring elastic coefficient
         """
         #Storing inputs in local coordinate system
-        self.x_n= positions['x-'] - J['x']
-        self.y_n = positions['y-'] - J['y']
-        self.x_p = positions['x+'] - J['x']
-        self.y_p = positions['y+'] - J['y']
+        self.x_n= geo_props['x-'] - J['x']
+        self.y_n = geo_props['y-'] - J['y']
+        self.x_p = geo_props['x+'] - J['x']
+        self.y_p = geo_props['y+'] - J['y']
         self.x_J = J['x']
         self.y_J = J['y']
         self.material = material
@@ -69,7 +72,7 @@ class actuator():
         self.theta = 0
         self.F = 0.
         #Cross section area
-        self.area = area
+        self.area = geo_props['area']
         self.sigma = None
         
         #In case zero_stress_length is not defined and initial strain is
@@ -153,6 +156,7 @@ class actuator():
         return self.torque
         
     def plot_actuator(self):
+        import matplotlib.pyplot as plt
         if self.material == 'linear':
             colour = 'b'
         elif self.material == 'SMA':
@@ -167,146 +171,34 @@ class actuator():
                  [self.y_n + self.y_J, self.y_p + self.y_J],
                  colour)
 
-if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    
-    chord = 0.6175
 
-#==============================================================================
-# Design variables
-#==============================================================================
-    #Hole positioning
-    J = {'x':0.25, 'y':0.}
-    sma = {'x-': J['x'], 'y-': -0.02, 'x+': 0.1225 + J['x'], 'y+': 0.0135 }
-    linear = {'x-': J['x'], 'y-': 0.032, 'x+': 0.146 + J['x'], 'y+': -0.0135}
 
-    #SMA Pre-stress
-    sigma_o = 300e6
-#==============================================================================
-# Design constants
-#==============================================================================
-    #Areas
-    area_l = 0.001
-    area_s = math.pi*0.00025**2
-    
-    #original bias spring length
-    length_l = 0.06 #
-    
-    #SMA properties
-    E_M = 60E9
-    sigma_crit = 140e6
-    H_max = 0.04
-    H_min = 0.
-    k = 0.021e-6
-    
-    #If I change the value of the material young modulus, need to update k
-    k = k
-    #arm length to center of gravity
-    r_w = 0.15
-    
-    #Aicraft weight (mass times gravity)
-    W = 0.06*9.8
-    alpha = 0.
-    V = 10 #m/s
-    Air_props= air_properties(10000, unit='feet')
-    rho = Air_props['Density']
-    q = 0.5*rho*V**2
-    
-#==============================================================================
-# Initial conditions   
-#==============================================================================
-    #Initial transformation strain
-    eps_t_0 = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
-    #Define initial strain
-    eps_0 = eps_t_0 + sigma_o/E_M
-    #Linear actuator (s)
-    l = actuator(linear, J, area_l, zero_stress_length = length_l, material = 'linear')
-    #Sma actuator (l)
-    s = actuator(sma, J, area_s, eps_0 = eps_0, material = 'SMA')
+def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
+         altitude, alpha, T_0, T_final, MVF_init, n, all_outputs = False,
+         import_matlab = True, eng = None):
+    """
+    solve actuation problem for flap driven by an antagonistic mechanism
+    using SMA and linear actuators
+    :param J: dictionary with coordinates of Joint
+    :param T_0: initial temperature
+    :param T_final: final temperature
+    :param MVF_init: initial martensitic volume fraction
+    :param n: number of steps in simulation"""
 
-#    plt.figure(1)
-#    s.plot_actuator()
-#    l.plot_actuator()
-
-    print 'linear', l.length_r, l.eps 
-    print 'sma', s.length_r, s.eps
     
-    #Input initial stress   
-    s.sigma = sigma_o
-    s.calculate_force(source = 'sigma')
-    
-    # TODO: For now K is calculated in function of the rest. Afterwards it will
-    # be an input
-    if alpha != 0.:
-        raise Exception('The initial equilibirum equation only works for alpha qual to zero!!')
-    l.k = ((s.F/s.length_r)*(s.x_p*s.r_2 - s.y_p*s.r_1) + r_w*W)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
-    l.calculate_force(source = 'strain')
-    
-    s.theta = l.calculate_theta()
+    from scipy.optimize import newton    
 
-    #Calculate initial torques
-    s.calculate_torque()    
-    l.calculate_torque()
-
-#===========================================================================
-# Generate airfoil (NACA0012)
-#===========================================================================
-    airfoil = "naca0012"
-    xf.call(airfoil, output='Coordinates')
-    filename = xf.file_name(airfoil, output='Coordinates')
-    Data = xf.output_reader(filename, output='Coordinates', header = ['x','y'])
-    #The coordinates from Xfoil are normalized, hence we have to multiply
-    #by the chord
-    x = []
-    y = []
-    for i in range(len(Data['x'])):
-        x.append( Data['x'][i]*chord )
-        y.append( Data['y'][i]*chord )
-
-##==========================================================================
-## Test of deformation per theta
-##==========================================================================
-#    import numpy as np
-#    import matplotlib.pyplot as plt
-#    
-#    theta_list = np.linspace(0, -math.pi/4.)
-#    eps_s_list = []
-#    eps_l_list = []
-#    
-#    for theta in theta_list:
-#        s.theta = theta
-#        l.theta = theta
-#        
-#        s.update()
-#        l.update()
-#        
-##        s.calculate_force()
-#        l.calculate_force()
-#        
-#        eps_s_list.append(s.eps)
-#        eps_l_list.append(l.eps)
-##    plt.figure()    
-##    plt.plot(np.degrees(theta_list), eps_s_list, 'r', np.degrees(theta_list), eps_l_list, 'b')  
-##    plt.xlabel('$\\theta (degrees)$')
-##    plt.ylabel('$\epsilon$')
-##    BREAK
-#    eps_s_list_test = eps_s_list
-#    theta_list_test = theta_list
-##==============================================================================
-# Matlab simulation
-##==============================================================================
-    import matlab.engine
-    from scipy.optimize import newton
-    import numpy as np
-    
-    #If the derivate for the newton function is not defined, it uses the
-    #secant method
-    
-    #Start Matlab engine
-    eng = matlab.engine.start_matlab()
-    #Go to directory where matlab file is
-    eng.cd('SMA_temperature_strain_driven')
-
+    if import_matlab:
+        import matlab.engine
+        #Start Matlab engine
+        eng = matlab.engine.start_matlab()
+        #Go to directory where matlab file is
+        if import_matlab:
+            eng.cd(' ..')
+            eng.cd('SMA_temperature_strain_driven')
+        else:
+            eng.cd('SMA_temperature_strain_driven')
+            
     def constitutive_model(T_0, T_final, MVF_init, i, n, eps, eps_t_0, sigma_0 = 0,
             eps_0 = 0, plot = 'True'):
         """Run SMA model
@@ -321,16 +213,6 @@ if __name__ == '__main__':
                                       eps_t_0, sigma_0, eps_0, n, 'False', nargout=5)
         return data
 
-    ## Temperature
-    T_0 = 220.15
-    T_final = 400.15
-     
-    #Initial martensitic volume fraction
-    MVF_init = 1.
-    
-    # Number of steps
-    n = 200     
-    
     def equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_0,
                    i, n, r_w, W, x = None, y = None, alpha = 0.,
                    q = 1., chord = 1., x_hinge = 0.25, aero_loads = False):
@@ -361,7 +243,7 @@ if __name__ == '__main__':
         
         #weight (Geometric equation: coupling via theta)
         tau_w = - r_w*W*math.cos(l.theta)
-        print 'theta', l.theta
+        
         #aerodynamic (Panel method: coupling via theta)
         if aero_loads:
             # The deflection considered for the flap is positivite in
@@ -372,15 +254,104 @@ if __name__ == '__main__':
             tau_a = Cm*q*chord**2
         else:
             tau_a = 0.
-        print 'theta', l.theta
+            
         print 'tau', tau_s, tau_l, tau_w, tau_a
         return tau_s + tau_l + tau_w + tau_a
         
+    def deformation_theta(theta = -math.pi/4., plot = False):
+        """Return lists of deformation os SMA actuator per theta"""
+        
+        theta_list = np.linspace(0, theta)
+        eps_s_list = []
+        eps_l_list = []
+        
+        for theta in theta_list:
+            s.theta = theta
+            l.theta = theta
+            
+            s.update()
+            l.update()
+            
+            l.calculate_force()
+            
+            eps_s_list.append(s.eps)
+            eps_l_list.append(l.eps)
+        if plot:
+            import matplotlib.pyplot as plt
+            plt.figure()    
+            plt.plot(np.degrees(theta_list), eps_s_list, 'r', np.degrees(theta_list), eps_l_list, 'b')  
+            plt.xlabel('$\\theta (degrees)$')
+            plt.ylabel('$\epsilon$')
+    
+        return eps_s_list, theta_list
+
+#==============================================================================
+# Material and flow properties
+#==============================================================================
+    #SMA properties
+    E_M = 60E9
+    sigma_crit = 140e6
+    H_max = 0.04
+    H_min = 0.
+    k = 0.021e-6
+    
+    Air_props= air_properties(altitude, unit='feet')
+    rho = Air_props['Density']
+    q = 0.5*rho*V**2
+    
+#==============================================================================
+# Initial conditions   
+#==============================================================================
+    #Initial transformation strain
+    eps_t_0 = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
+    #Define initial strain
+    eps_0 = eps_t_0 + sigma_o/E_M
+    #Linear actuator (s)
+    l = actuator(linear, J, zero_stress_length = length_l, material = 'linear')
+    #Sma actuator (l)
+    s = actuator(sma, J, eps_0 = eps_0, material = 'SMA')
+    
+    #Input initial stress   
+    s.sigma = sigma_o
+    s.calculate_force(source = 'sigma')
+    
+    # TODO: For now K is calculated in function of the rest. Afterwards it will
+    # be an input
+    if alpha != 0.:
+        raise Exception('The initial equilibirum equation only makes sense for alpha equal to zero!!')
+    l.k = ((s.F/s.length_r)*(s.x_p*s.r_2 - s.y_p*s.r_1) + r_w*W)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
+    print 'stiffness: ', l.k
+
+    l.calculate_force(source = 'strain')
+    
+    s.theta = l.calculate_theta()
+
+    #Calculate initial torques
+    s.calculate_torque()    
+    l.calculate_torque()
+
+#===========================================================================
+# Generate airfoil (NACA0012)
+#===========================================================================
+    xf.call(airfoil, output='Coordinates')
+    filename = xf.file_name(airfoil, output='Coordinates')
+    Data = xf.output_reader(filename, output='Coordinates', header = ['x','y'])
+    #The coordinates from Xfoil are normalized, hence we have to multiply
+    #by the chord
+    x = []
+    y = []
+    for i in range(len(Data['x'])):
+        x.append( Data['x'][i]*chord )
+        y.append( Data['y'][i]*chord )
+
+##==============================================================================
+# Matlab simulation
+##==============================================================================         
     eps_s = eps_0
     eps_s_list = [eps_s]
     eps_l_list = [l.eps]
     theta_list = [s.theta]
-    T_list = np.linspace(T_0, T_final, n)
+
     for i in range(1, n):
         eps_s = newton(equlibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
                        MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
@@ -395,18 +366,154 @@ if __name__ == '__main__':
         eps_l_list.append(l.eps)
         theta_list.append(math.degrees(s.theta))
         print i, eps_s, s.theta
+    
     #Extra run with prescribed deformation (which has already been calculated)
     # to get all the properties
     for i in range(1, n):
         data = constitutive_model(T_0, T_final, MVF_init, i, n, 
                                   eps_s_list[i], eps_t_0, sigma_0 = sigma_o,
                                   eps_0 = eps_0, plot = 'False')
+    delta_xi = 1. - data[1][-1][0]
+    
+    if all_outputs:
+        sigma_list = []
+        for i in range(len(data[0])):
+            sigma_list.append(data[0][i][0])
+        MVF_list = []
+        for i in range(len(data[1])):
+            MVF_list.append(data[1][i][0])    
+        T_list = []
+        for i in range(len(data[2])):
+            T_list.append(data[2][i][0])    
+        eps_t_list = []
+        for i in range(len(data[3])):
+            eps_t_list.append(data[3][i][0])
+        return eps_s_list, theta_list, sigma_list, MVF_list, T_list, eps_t_list
+    else:
+        return delta_xi, s.theta
+
+def run(inputs, parameters = None):
+    """Function to be callled by DOE and optimization. Design Variables are 
+        the only inputs.
         
-#    for eps_s in eps_s_list:
-#        s.eps = eps_s
-#        s.calculate_theta()
-#        s.update()
-#        theta_list.append(s.theta)
-#        print eps_s, math.degrees(s.theta)
-##        result = equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_o,
-##                   i, n, r_w, W)
+        :param inputs: {'sma', 'linear', 'sigma_o'}"""
+    def thickness(x, t, chord):
+        y = Naca00XX(chord, t, [x], return_dict = 'y')
+        thickness_at_x = y['u'] - y['l']
+        return thickness_at_x 
+
+    if parameters != None:
+        eng = parameters[0]
+        import_matlab = False
+    else:
+        eng = None
+        import_matlab = True
+        
+    sma = inputs['sma']
+    linear = inputs['linear']
+    sigma_o = inputs['sigma_o']
+           
+    airfoil = "naca0012"
+    chord = 0.6175
+    t = 0.12*chord
+
+    J = {'x':0.25, 'y':0.}
+    
+    # need to transform normalized coordiantes in to global coordinates
+    sma['y+'] = sma['y+']*thickness(sma['x+'], t, chord)/2.
+    sma['y-'] = sma['y-']*thickness(sma['x-'], t, chord)/2.
+    
+    linear['y+'] = linear['y+']*thickness(linear['x+'], t, chord)/2.
+    linear['y-'] =  linear['y-']*thickness(linear['x-'], t, chord)/2.
+    
+    #Adding the area key to the dictionaries
+    sma['area'] = math.pi*0.00025**2
+    linear['area'] = 0.001
+    
+    # Design constants
+
+    #original bias spring length
+    length_l = 0.06 #
+    
+
+    #arm length to center of gravity
+    r_w = 0.15
+    
+    #Aicraft weight (mass times gravity)
+    W = 0.06*9.8
+    alpha = 0.
+    V = 10 #m/s
+    altitude = 10000. #feet
+    
+
+    
+    ## Temperature
+    T_0 = 220.15
+    T_final = 400.15
+     
+    #Initial martensitic volume fraction
+    MVF_init = 1.
+    
+    # Number of steps
+    n = 200
+    
+    delta_xi, theta = flap(airfoil, chord, J, sma, linear, sigma_o, 
+                           length_l, W, r_w, V, altitude, alpha, T_0, 
+                           T_final, MVF_init, n, all_outputs = False,
+                           import_matlab = import_matlab, eng=eng)
+    
+    return {'delta_xi': delta_xi, 'theta': theta}
+    
+if __name__ == '__main__':
+    J = {'x':0.25, 'y':0.}
+    # Position coordinates from holes. y coordinates are a fraction of thickness/2.
+    sma = {'x-': J['x'], 'y-': -0.02*2/0.0441137488474, 'x+': 0.1225 + J['x'],
+           'y+': 0.0135*2/0.0345972364185}
+    linear = {'x-': J['x'], 'y-': 0.032*2/0.0441137488474, 'x+': 0.146 + J['x'], 
+              'y+': -0.0135*2/0.0321083851839}
+
+    #SMA Pre-stress
+    sigma_o = 300e6
+    data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o}, import_matlab = True)
+    print 'delta_xi', data['delta_xi'], 'theta: ', data['theta']
+##==============================================================================
+## Run withou run function
+##==============================================================================
+#    #Hole positioning
+#    J = {'x':0.25, 'y':0.}
+#    #y coordinates are percentual
+#    sma = {'x-': J['x'], 'y-': -0.02*2, 'x+': 0.1225 + J['x'],
+#           'y+': 0.0135*2, 'area':math.pi*0.00025**2}
+#    linear = {'x-': J['x'], 'y-': 0.032*2, 'x+': 0.146 + J['x'], 
+#              'y+': -0.0135*2, 'area':0.001}
+#    
+#    #original bias spring length
+#    length_l = 0.06 #
+#    
+#    #arm length to center of gravity
+#    r_w = 0.15
+#    
+#    #Aicraft weight (mass times gravity)
+#    W = 0.06*9.8
+#    alpha = 0.
+#    V = 10 #m/s
+#    altitude = 10000. #feet
+#    
+#    airfoil = "naca0012"
+#    chord = 0.6175
+#    
+#    ## Temperature
+#    T_0 = 220.15
+#    T_final = 400.15
+#     
+#    #Initial martensitic volume fraction
+#    MVF_init = 1.
+#    
+#    # Number of steps
+#    n = 200
+#    
+#    data = flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w,
+#                V, altitude, alpha, T_0, T_final, MVF_init, n,
+#                all_outputs = True)
+    
+        

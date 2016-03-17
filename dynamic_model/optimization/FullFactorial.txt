@@ -1,0 +1,1 @@
+Au0		Al0		Au1		Al1	t_spar	t_spar_box	t_rib	t_skin		n_ribs		Weight		Lift		Drag		MaxMises		DispTip		EigenValue	Velocity

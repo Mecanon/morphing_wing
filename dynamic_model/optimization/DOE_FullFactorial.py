@@ -6,17 +6,18 @@ Created on Fri Jul 24 18:36:06 2015
 """
 import pickle
 import time
+import os, sys
+import matplotlib.pyplot as plt
 
-import xfoil_tools as xf
+import xfoil_module as xf
 
-try:
-    from template import Wing_model
-    in_Abaqus = True
-except:
-    in_Abaqus = False
+#adding path to static model
+lib_path = os.path.abspath(os.path.join('..'))
+sys.path.append(lib_path)
 
-if not in_Abaqus:
-    import matplotlib.pyplot as plt
+import static_model as model 
+
+in_Abaqus = False
 
 class DOE:
     """Create a Design of Experiences Environment."""
@@ -79,20 +80,22 @@ class DOE:
                     dummy.append(lower + scale*(upper-lower) / (levels-1.))
             self.domain[self.variables[j]['name']] = dummy
         
-    def run(self, function, cte_input=None, dependent_variables = None):
+    def run(self, function, inputs = None, cte_input=None,
+            dependent_variables = None, parameters = None):
         """Runs and saves the results for the configurations obtained in define_points
         method.
-        
+        - inputs: if defined will define the format with which the inputs 
+                  will be passed to the main function.
         - cte_input : if defined, is a dictionary containing the constant
           inputs.
         - dependent_variables: if defined, it creates a relationship between
           different variables such as {'t_spar':'t_rib'}
+        - parameters: some main functions need extra parameters. this is a list
         """
-        DataFile = open('FullFactorial.txt','w')
-        DataFile.write('Au0\t\tAl0\t\tAu1\t\tAl1\tt_spar\tt_spar_box\tt_rib\tt_skin\t\tn_ribs\t\tWeight\t\tLift\t\tDrag\t\tMaxMises\t\tDispTip\t\tEigenValue\tVelocity\n')
-        DataFile.close()
+        DataFile = open('iteration.txt','w')
+
         
-        def set_input(self,run):
+        def set_input(self, run):
             output = {}
             for key in self.domain:
                 output[key] = self.domain[key][run]
@@ -107,15 +110,31 @@ class DOE:
                 for key_dependent in dependent_variables:
                     key_independent = dependent_variables[key_dependent]
                     input.update({key_dependent : input[key_independent]})
-            result = function(input)
+            if inputs != None:
+                new_input = {}
+                for key_input in inputs:
+                    if type(inputs[key_input]) == dict:
+                        new_input[key_input] = {}
+                        for key_var in inputs[key_input]:
+                            new_input[key_input][key_var] = input[inputs[key_input][key_var]]
+                    else:
+                       new_input[key_input]= input[inputs[key_input]] 
+                input = new_input
+            if parameters == None:
+                result = function(input)
+            else:
+                result = function(input, parameters = parameters)
             if i == 0:
                 # We will save the name of the putputs for plotting and etc
                 self.output_names = [key for key in result]
                 self.output = {}
-                for key in self.output_name:
+                for key in self.output_names:
                     self.output[key] = []
             for key in self.output_names:
                 self.output[key].append(result[key])
+                
+            DataFile.write(str(i) + '\n')
+        DataFile.close()
 
     def find_influences(self, not_zero=False):
         """ Calculate average influence of each variable over the
@@ -448,34 +467,51 @@ class DOE:
                     
         
 if __name__ == "__main__":
-    problem = DOE(levels=5, driver='Full Factorial')
-#    problem.add_variable('Al0', lower=0.04, upper=0.2, type=float)
-#    problem.add_variable('Al1', lower=-0.4, upper=0.1, type=float)
-#    problem.define_points()
-#    
-#    t_spar= 0.0068 #0.004473234920038927
-#    t_rib= 0.0046 #0.005127943532786699
-#    t_skin= 0.0018 #0.006486394197009234
-#    n_ribs= 19
-#    t_spar_box= 0.0061 #0.006531976101000104
-#    
-#    problem.run(Wing_model, cte_input={'t_spar':t_spar,'t_rib':t_rib,
-#           't_skin':t_skin, 'n_ribs':n_ribs, 't_spar_box':t_spar_box}) #, cte_input={'n_ribs':19}
-#    
-#    timestr = time.strftime('%Y%m%d')
-#    #fileObject = open('DOE_'+ self.driver + '_' + timestr,'wb') 
+    import matlab.engine
+    
+    #Start Matlab engine
+    eng = matlab.engine.start_matlab()
+    #Go to directory where matlab file is
+    eng.cd('..')
+    eng.cd('SMA_temperature_strain_driven')
+    
+    chord = 0.6175
+    x_hinge = 0.25
+    
+    safety = 0.05*chord
+    
+    problem = DOE(levels=2, driver='Full Factorial')
+    problem.add_variable('xs-', lower = 0.0 + safety , upper = x_hinge - safety, type=float)
+    problem.add_variable('ys-', lower = -1. + safety, upper = 1. - safety, type=float)
+    problem.add_variable('xs+', lower = x_hinge + safety, upper = chord - safety, type=float)
+    problem.add_variable('ys+', lower = -1 + safety, upper = 1. - safety, type=float)
+    problem.add_variable('xl-', lower = 0.0 + safety, upper = x_hinge - safety, type=float)
+    problem.add_variable('yl-', lower = -1. + safety, upper = 1. - safety, type=float)
+    problem.add_variable('xl+', lower = x_hinge + safety, upper = chord - safety, type=float)
+    problem.add_variable('yl+', lower = -1. + safety, upper = 1. - safety, type=float)
+    problem.add_variable('sigma_o', lower = 140e6, upper = 400e6, type=float)
+    problem.define_points()
+    
+    #inputs [sma, linear, sigma_o]
+    inputs = {'sma':{'x-':'xs-', 'y-':'ys-', 'x+':'xs+', 'y+':'ys+'},
+              'linear':{'x-':'xs-', 'y-':'ys-', 'x+':'xs+', 'y+':'ys+'},
+              'sigma_o':'sigma_o'}
+    problem.run(model.run, inputs = inputs, parameters = [eng])
+    
+    timestr = time.strftime('%Y%m%d')
+    fileObject = open('DOE_'+ problem.driver + '_' + timestr,'wb') 
 #    fileObject = open('DOE_FullFactorial_20150828','wb') 
-#    pickle.dump(problem, fileObject)   
-#    fileObject.close()   
+    pickle.dump(problem, fileObject)   
+    fileObject.close()   
         
-    problem.load(filename='FullFactorial.txt', 
-                 variables_names= ['Al0', 'Al1'],
-                 outputs_names = ['Weight', 'Lift', 'Drag', 'MaxMises', 'DispTip', 'EigenValue', 'Velocity'])
+#    problem.load(filename='FullFactorial.txt', 
+#                 variables_names= ['Al0', 'Al1'],
+#                 outputs_names = ['Weight', 'Lift', 'Drag', 'MaxMises', 'DispTip', 'EigenValue', 'Velocity'])
     problem.find_influences(not_zero=True)
     problem.find_nadir_utopic(not_zero=True)
     print 'Nadir: ', problem.nadir
     print 'Utopic: ', problem.utopic
-    problem.plot(xlabel = ['$A_{l_0}$', '$A_{l_1}$'],
-                 ylabel = ['Weight(N)', 'Lift(N)', 'Drag(N)', 'MaxMises(Pa)',
-                           'Displacement(m)','Eigenvalue', 'Velocity(m/s)'])
+#    problem.plot(xlabel = ['$A_{l_0}$', '$A_{l_1}$'],
+#                 ylabel = ['Weight(N)', 'Lift(N)', 'Drag(N)', 'MaxMises(Pa)',
+#                           'Displacement(m)','Eigenvalue', 'Velocity(m/s)'])
 #    print problem.influences
