@@ -114,8 +114,8 @@ class actuator():
             r_2 = self.y_p*cos + self.x_p*sin - self.y_n
 
             return r_1**2 + r_2**2 - (eta*self.length_r_0)**2
-
-        self.theta = newton(eq, theta_0, diff_eq, maxiter = 200)
+        print self.eps, self.eps_0
+        self.theta = newton(eq, theta_0, diff_eq, maxiter = 1000)
         return self.theta
         
     def update(self):
@@ -170,16 +170,62 @@ class actuator():
         plt.plot([self.x_n + self.x_J, self.x_p + self.x_J], 
                  [self.y_n + self.y_J, self.y_p + self.y_J],
                  colour)
+   
+    def find_limits(self, t = 0.12, c = 1., theta_0 = 0):
+        """Because there is no physical sense of an actuator that has any
+        part of it outside of the aircraft. We need to find the maximum
+        theta and eps the actuator can have without this taking place.
+        """
+        y = Naca00XX(c, t, [self.x_J], return_dict = 'y')
+        a = (y['l'] - self.y_n)/(self.x_J - self.x_n)
+        
+        def diff_eq(theta):
+            sin = math.sin(theta)
+            cos = math.cos(theta)
+            
+            diff = -a*(-self.x_p*sin - self.x_p*cos) + self.x_p*cos - self.y_p*sin
+            
+            return diff
+        
+        def eq_lower(theta):
+            sin = math.sin(theta)
+            cos = math.cos(theta)
+            
+            return -a*(self.x_p*cos - self.x_n + self.x_J - self.y_p*sin) + \
+                    self.x_p*sin + self.y_p*cos - self.y_n + y['l']
 
+        def eq_upper(theta):
+            sin = math.sin(theta)
+            cos = math.cos(theta)
+            
+            return -a*(self.x_p*cos - self.x_n + self.x_J - self.y_p*sin) + \
+                    self.x_p*sin + self.y_p*cos - self.y_n + y['u']
+        
+        self.max_theta = newton(eq_lower, theta_0, diff_eq, maxiter = 1000)
+        r_1 = self.x_p*math.cos(self.max_theta) - \
+                   self.y_p*math.sin(self.max_theta) - self.x_n
+        r_2 = self.y_p*math.cos(self.max_theta) + \
+                   self.x_p*math.sin(self.max_theta) - self.y_n
+        length_r = math.sqrt(r_1**2 + r_2**2)
+        self.max_eps = length_r/self.zero_stress_length - 1. 
 
-
-def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
+        self.min_theta = newton(eq_upper, theta_0, diff_eq, maxiter = 1000)
+        r_1 = self.x_p*math.cos(self.min_theta) - \
+                   self.y_p*math.sin(self.min_theta) - self.x_n
+        r_2 = self.y_p*math.cos(self.min_theta) + \
+                   self.x_p*math.sin(self.min_theta) - self.y_n
+        length_r = math.sqrt(r_1**2 + r_2**2)
+        self.min_eps = length_r/self.zero_stress_length - 1. 
+        
+def flap(airfoil, chord, J, sma, linear, sigma_o = None, length_l, W, r_w, V,
          altitude, alpha, T_0, T_final, MVF_init, n, all_outputs = False,
-         import_matlab = True, eng = None):
+         import_matlab = True, eng = None, aero_loads = True):
     """
     solve actuation problem for flap driven by an antagonistic mechanism
     using SMA and linear actuators
     :param J: dictionary with coordinates of Joint
+    :param sigma_o: pre-stress, if not defined, it calculates the biggest
+                    one respecting the constraints (max is H_max)
     :param T_0: initial temperature
     :param T_final: final temperature
     :param MVF_init: initial martensitic volume fraction
@@ -215,7 +261,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
 
     def equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_0,
                    i, n, r_w, W, x = None, y = None, alpha = 0.,
-                   q = 1., chord = 1., x_hinge = 0.25, aero_loads = False):
+                   q = 1., chord = 1., x_hinge = 0.25, aero_loads = aero_loads):
         """Calculates the moment equilibrium. Function used for the 
         secant method.
         """
@@ -255,7 +301,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         else:
             tau_a = 0.
             
-        print 'tau', tau_s, tau_l, tau_w, tau_a
+        print 'tau', tau_s, tau_l, tau_w, tau_a, tau_s + tau_l + tau_w + tau_a
         return tau_s + tau_l + tau_w + tau_a
         
     def deformation_theta(theta = -math.pi/4., plot = False):
@@ -298,37 +344,6 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     Air_props= air_properties(altitude, unit='feet')
     rho = Air_props['Density']
     q = 0.5*rho*V**2
-    
-#==============================================================================
-# Initial conditions   
-#==============================================================================
-    #Initial transformation strain
-    eps_t_0 = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
-    #Define initial strain
-    eps_0 = eps_t_0 + sigma_o/E_M
-    #Linear actuator (s)
-    l = actuator(linear, J, zero_stress_length = length_l, material = 'linear')
-    #Sma actuator (l)
-    s = actuator(sma, J, eps_0 = eps_0, material = 'SMA')
-    
-    #Input initial stress   
-    s.sigma = sigma_o
-    s.calculate_force(source = 'sigma')
-    
-    # TODO: For now K is calculated in function of the rest. Afterwards it will
-    # be an input
-    if alpha != 0.:
-        raise Exception('The initial equilibirum equation only makes sense for alpha equal to zero!!')
-    l.k = ((s.F/s.length_r)*(s.x_p*s.r_2 - s.y_p*s.r_1) + r_w*W)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
-    print 'stiffness: ', l.k
-
-    l.calculate_force(source = 'strain')
-    
-    s.theta = l.calculate_theta()
-
-    #Calculate initial torques
-    s.calculate_torque()    
-    l.calculate_torque()
 
 #===========================================================================
 # Generate airfoil (NACA0012)
@@ -343,7 +358,66 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     for i in range(len(Data['x'])):
         x.append( Data['x'][i]*chord )
         y.append( Data['y'][i]*chord )
+        
+#==============================================================================
+# Initial conditions   
+#==============================================================================
+    #Initial transformation strain
+    eps_t_0 = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
+    #Define initial strain
+    eps_0 = eps_t_0 + sigma_o/E_M
+    #Linear actuator (s)
+    l = actuator(linear, J, zero_stress_length = length_l, material = 'linear')
+    #Sma actuator (l)
+    s = actuator(sma, J, eps_0 = eps_0, material = 'SMA')
+    
+    s.find_limits()
+    def eq_eps_t_0(eps_t_0):
+        sigma_o = sigma_crit - (1./k)*math.log(1 - (eps_t_0 - H_min)/(H_max - H_min))
+        return - eps_t_0 + eps_0 - sigma_o/E_M
+    
+    if s.max_eps < eps_0:
+        s.eps_0 = s.max_eps
+        s.eps_t_0 = eps_0 - sigma_o/E_M
+        s.eps_t_0 = newton(eq_eps_t_0, s.eps_t_0)
+    #Input initial stress   
+    s.sigma = sigma_o
+    s.calculate_force(source = 'sigma')
+    
+    # TODO: For now K is calculated in function of the rest. Afterwards it will
+    # be an input
+    if alpha != 0.:
+        raise Exception('The initial equilibirum equation only makes sense for alpha equal to zero!!')
+    #aerodynamic (Panel method: coupling via theta)
+    if aero_loads:
+        # The deflection considered for the flap is positivite in
+        # the clockwise, contrary to the dynamic system. Hence we need
+        # to multiply it by -1.
+        Cm = calculate_flap_moment(x, y, alpha, J['x'], - l.theta,
+                                   unit_deflection = 'rad')
+        tau_a = Cm*q*chord**2
+    else:
+        tau_a = 0.
+    
+    l.k = ((s.F/s.length_r)*(s.x_p*s.r_2 - s.y_p*s.r_1) + r_w*W + tau_a)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
+    print 'stiffness: ', l.k
 
+    l.calculate_force(source = 'strain')
+    
+    s.theta = l.calculate_theta()
+
+    #Calculate initial torques
+    s.calculate_torque()    
+    l.calculate_torque()
+
+#    s.plot_actuator()
+#    l.plot_actuator()
+
+    s.find_limits(t = 0.12*chord, c = chord, theta_0 = 0)
+    l.find_limits(t = 0.12*chord, c = chord, theta_0 = 0)
+    print s.max_eps, s.max_theta, s.min_eps, s.min_theta
+    print l.max_eps, l.max_theta, l.min_eps, l.min_theta
+    BREAK
 ##==============================================================================
 # Matlab simulation
 ##==============================================================================         
@@ -355,7 +429,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     for i in range(1, n):
         eps_s = newton(equlibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
                        MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                       q, chord, J['x'], True,)), maxiter = 500, 
+                       q, chord, J['x'], True)), maxiter = 500, 
                        tol = 1.0e-6)
 
         s.eps = eps_s
@@ -390,7 +464,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             eps_t_list.append(data[3][i][0])
         return eps_s_list, theta_list, sigma_list, MVF_list, T_list, eps_t_list
     else:
-        return delta_xi, s.theta
+        return delta_xi, s.theta, l.k
 
 def run(inputs, parameters = None):
     """Function to be callled by DOE and optimization. Design Variables are 
@@ -457,12 +531,12 @@ def run(inputs, parameters = None):
     # Number of steps
     n = 200
     
-    delta_xi, theta = flap(airfoil, chord, J, sma, linear, sigma_o, 
+    delta_xi, theta, k = flap(airfoil, chord, J, sma, linear, sigma_o, 
                            length_l, W, r_w, V, altitude, alpha, T_0, 
                            T_final, MVF_init, n, all_outputs = False,
                            import_matlab = import_matlab, eng=eng)
     
-    return {'delta_xi': delta_xi, 'theta': theta}
+    return {'delta_xi': delta_xi, 'theta': theta, 'k': k}
     
 if __name__ == '__main__':
     J = {'x':0.25, 'y':0.}
@@ -474,7 +548,7 @@ if __name__ == '__main__':
 
     #SMA Pre-stress
     sigma_o = 300e6
-    data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o}, import_matlab = True)
+    data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
     print 'delta_xi', data['delta_xi'], 'theta: ', data['theta']
 ##==============================================================================
 ## Run withou run function

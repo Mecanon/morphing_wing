@@ -49,7 +49,7 @@ P.k = 0.021E-6;
 P.sig_crit = 140E6;
 
 % Coefficient of thermal expansion
-P.alpha = 1E-5;
+P.alpha = 0; %1E-5;
 
 % Smoothn hardening parameters 
 % NOTE: smoothness parameters must be 1 for explicit integration scheme

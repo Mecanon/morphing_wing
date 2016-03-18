@@ -120,6 +120,7 @@ class DOE:
                     else:
                        new_input[key_input]= input[inputs[key_input]] 
                 input = new_input
+            print input
             if parameters == None:
                 result = function(input)
             else:
@@ -481,20 +482,20 @@ if __name__ == "__main__":
     safety = 0.05*chord
     
     problem = DOE(levels=2, driver='Full Factorial')
-    problem.add_variable('xs-', lower = 0.0 + safety , upper = x_hinge - safety, type=float)
-    problem.add_variable('ys-', lower = -1. + safety, upper = 1. - safety, type=float)
+    problem.add_variable('xs-', lower = 0.0 + safety , upper = x_hinge, type=float)
+    problem.add_variable('ys-', lower = -1. + safety, upper = 0. - safety, type=float)
     problem.add_variable('xs+', lower = x_hinge + safety, upper = chord - safety, type=float)
-    problem.add_variable('ys+', lower = -1 + safety, upper = 1. - safety, type=float)
-    problem.add_variable('xl-', lower = 0.0 + safety, upper = x_hinge - safety, type=float)
-    problem.add_variable('yl-', lower = -1. + safety, upper = 1. - safety, type=float)
+    problem.add_variable('ys+', lower = 0. + safety, upper = 1. - safety, type=float)
+    problem.add_variable('xl-', lower = 0.0 + safety, upper = x_hinge, type=float)
+    problem.add_variable('yl-', lower = 0. + safety, upper = 1. - safety, type=float)
     problem.add_variable('xl+', lower = x_hinge + safety, upper = chord - safety, type=float)
-    problem.add_variable('yl+', lower = -1. + safety, upper = 1. - safety, type=float)
+    problem.add_variable('yl+', lower = -1. + safety, upper = 0. - safety, type=float)
     problem.add_variable('sigma_o', lower = 140e6, upper = 400e6, type=float)
     problem.define_points()
     
     #inputs [sma, linear, sigma_o]
     inputs = {'sma':{'x-':'xs-', 'y-':'ys-', 'x+':'xs+', 'y+':'ys+'},
-              'linear':{'x-':'xs-', 'y-':'ys-', 'x+':'xs+', 'y+':'ys+'},
+              'linear':{'x-':'xl-', 'y-':'yl-', 'x+':'xl+', 'y+':'yl+'},
               'sigma_o':'sigma_o'}
     problem.run(model.run, inputs = inputs, parameters = [eng])
     
