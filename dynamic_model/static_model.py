@@ -18,7 +18,7 @@ import numpy as np
     
 from AeroPy import calculate_flap_moment
 from aero_module import air_properties
-from airfoil_module import Naca00XX
+import airfoil_module as af
 import xfoil_module as xf
 
 class actuator():
@@ -50,12 +50,12 @@ class actuator():
         - k: linear spring elastic coefficient
         """
         #Storing inputs in local coordinate system
-        self.x_n= geo_props['x-'] - J['x']
-        self.y_n = geo_props['y-'] - J['y']
-        self.x_p = geo_props['x+'] - J['x']
-        self.y_p = geo_props['y+'] - J['y']
-        self.x_J = J['x']
-        self.y_J = J['y']
+        self.x_n= geo_props['x-'] - J['x']  #Local Coordinates
+        self.y_n = geo_props['y-'] - J['y'] #Local Coordinates
+        self.x_p = geo_props['x+'] - J['x'] #Local Coordinates
+        self.y_p = geo_props['y+'] - J['y'] #Local Coordinates
+        self.x_J = J['x']                   #Global Coordinates
+        self.y_J = J['y']                   #Global Coordinates
         self.material = material
         
         # Projections of original wire length r
@@ -67,6 +67,10 @@ class actuator():
         self.r_1 = self.r_1_0
         self.r_2 = self.r_2_0
         self.length_r = self.length_r_0
+        
+        #calculate rigid body distances
+        self.r_n = math.sqrt(self.x_n**2 + self.y_n**2)
+        self.r_p = math.sqrt(self.x_p**2 + self.y_p**2)
         
         #define initial values for r, theta and force
         self.theta = 0
@@ -163,12 +167,12 @@ class actuator():
             colour = 'r'
         plt.figure(1)
         plt.axes().set_aspect('equal')
-        plt.scatter([self.x_n + self.x_J, self.x_p + self.x_J], 
-                    [self.y_n + self.y_J, self.y_p + self.y_J], 
+        plt.scatter([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
+                    [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2], 
                     c=colour)
         plt.scatter([self.x_J],[self.y_J], c = 'g')
-        plt.plot([self.x_n + self.x_J, self.x_p + self.x_J], 
-                 [self.y_n + self.y_J, self.y_p + self.y_J],
+        plt.plot([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
+                 [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2],
                  colour)
    
     def find_limits(self, t = 0.12, c = 1., theta_0 = 0):
@@ -182,29 +186,19 @@ class actuator():
             The maximum and minimum theta is defined by the smallest of
             theta_A and theta_B
         """
-        y = Naca00XX(c, t, [self.x_J], return_dict = 'y')
+        y = af.Naca00XX(c, t, [self.x_J], return_dict = 'y')
         
         def diff_eq(theta):
             sin = math.sin(theta)
             cos = math.cos(theta)
-            
-            diff = -a*(-self.x_p*sin - self.x_p*cos) + self.x_p*cos - self.y_p*sin
-            
+            diff = -a*(-self.x_p*sin - self.y_p*cos) + self.x_p*cos - self.y_p*sin
             return diff
         
-        def eq_lower(theta):
+        def eq_theta_A(theta):
             sin = math.sin(theta)
             cos = math.cos(theta)
-            
-            return -a*(self.x_p*cos - self.x_n + self.x_J - self.y_p*sin) + \
-                    self.x_p*sin + self.y_p*cos - self.y_n + y['l']
-
-        def eq_upper(theta):
-            sin = math.sin(theta)
-            cos = math.cos(theta)
-            
-            return -a*(self.x_p*cos - self.x_n + self.x_J - self.y_p*sin) + \
-                    self.x_p*sin + self.y_p*cos - self.y_n + y['u']
+            return -a*(self.x_p*cos - self.y_p*sin - self.x_n) + \
+                    self.x_p*sin + self.y_p*cos - self.y_n 
         
         def eq_theta_B():
             A = 2. - math.sqrt(self.x_p**2 + self.y_p**2)/math.sqrt(self.x_n**2 + self.y_n**2)
@@ -223,39 +217,44 @@ class actuator():
         else:
             self.min_theta_B = self.max_theta_B + 2*math.pi
         
-        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        #MAX
-        #Since theta has negative sign, we use max to find the one with
-        #smallest magnitude
-        a = (y['l'] - self.y_n)/(self.x_J - self.x_n)
-        self.max_theta_A = newton(eq_lower, theta_0, diff_eq, maxiter = 1000)
-        self.max_theta = max(self.max_theta_A, self.max_theta_B)
-#        print 'max', self.max_theta_A, self.max_theta_B
+        # Constraint A
+        #Avoid division by zero for when x_n is the origin
+        print 'comparison', self.r_p, y['l']
+        if abs(self.x_n) > 1e-4:
+            a = (y['l'] - self.y_n)/(0. - self.x_n)
+            self.max_theta_A = newton(eq_theta_A, theta_0,  maxiter = 1000)
+            a = (y['u'] - self.y_n)/(0. - self.x_n)
+            self.min_theta_A = newton(eq_theta_A, theta_0,  maxiter = 1000)
+        else:
+            self.max_theta_A = -math.pi/4.
+            self.min_theta_A = math.pi/4.
 
-        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        #MIN
-        a = (y['u'] - self.y_n)/(self.x_J - self.x_n)
-        self.min_theta_A = newton(eq_upper, theta_0, diff_eq, maxiter = 1000)
-        
-        self.min_theta = min(self.min_theta_A, self.min_theta_B)
+        if self.r_n >= self.r_p:
+            self.max_theta = max(self.max_theta_A, self.max_theta_B)
+            self.min_theta = min(self.min_theta_A, self.min_theta_B)
+        else:
+            self.max_theta = self.max_theta_A
+            self.min_theta = self.min_theta_A           
 #        print 'min', self.min_theta_A, self.min_theta_B
-        
-#        r_1 = self.x_p*math.cos(self.max_theta) - \
-#                   self.y_p*math.sin(self.max_theta) - self.x_n
-#        r_2 = self.y_p*math.cos(self.max_theta) + \
-#                   self.x_p*math.sin(self.max_theta) - self.y_n
-#        length_r = math.sqrt(r_1**2 + r_2**2)
-#        self.max_eps = length_r/self.zero_stress_length - 1. 
-        
+
+        #In case of full transformation, we have the maximum eps        
+        r_1 = self.x_p*math.cos(self.max_theta) - \
+                   self.y_p*math.sin(self.max_theta) - self.x_n
+        r_2 = self.y_p*math.cos(self.max_theta) + \
+                   self.x_p*math.sin(self.max_theta) - self.y_n
+        length_r = math.sqrt(r_1**2 + r_2**2)
+        self.max_eps = length_r/self.zero_stress_length - 1. 
         
 
+        r_1 = self.x_p*math.cos(self.min_theta) - \
+                   self.y_p*math.sin(self.min_theta) - self.x_n
+        r_2 = self.y_p*math.cos(self.min_theta) + \
+                   self.x_p*math.sin(self.min_theta) - self.y_n
+        length_r = math.sqrt(r_1**2 + r_2**2)
+        self.min_eps = length_r/self.zero_stress_length - 1. 
         
-#        r_1 = self.x_p*math.cos(self.min_theta) - \
-#                   self.y_p*math.sin(self.min_theta) - self.x_n
-#        r_2 = self.y_p*math.cos(self.min_theta) + \
-#                   self.x_p*math.sin(self.min_theta) - self.y_n
-#        length_r = math.sqrt(r_1**2 + r_2**2)
-#        self.min_eps = length_r/self.zero_stress_length - 1. 
+        print 'theta_A', self.max_theta_A, self.min_theta_A
+        print 'theta_B', self.max_theta_B, self.min_theta_B
         
 def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
          altitude, alpha, T_0, T_final, MVF_init, n, all_outputs = False,
@@ -299,7 +298,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
                                       eps_t_0, sigma_0, eps_0, n, 'False', nargout=5)
         return data
 
-    def equlibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_0,
+    def equilibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_0,
                    i, n, r_w, W, x = None, y = None, alpha = 0.,
                    q = 1., chord = 1., x_hinge = 0.25, aero_loads = aero_loads):
         """Calculates the moment equilibrium. Function used for the 
@@ -309,12 +308,14 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         #calculate new theta for eps_s and update all the parameter
         #of the actuator class
         s.eps = eps_s
+        print s.eps, s.eps_0, s.r_1, s.r_2, s.r_1_0, s.r_2_0, s.max_eps, s.min_eps
+        print s.min_theta, s.max_theta
         s.calculate_theta()
         s.update()
         
         l.theta = s.theta
         l.update()
-        
+
         #SMA (Constitutive equation: coupling via sigma)
         data = constitutive_model(T_0, T_final, MVF_init, i, n, eps_s,
                                   eps_t_0, sigma_0, s.eps_0, plot = 'False')
@@ -344,7 +345,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         print 'tau', tau_s, tau_l, tau_w, tau_a, tau_s + tau_l + tau_w + tau_a
         return tau_s + tau_l + tau_w + tau_a
         
-    def deformation_theta(theta = -math.pi/4., plot = False):
+    def deformation_theta(theta = -math.pi/2., plot = False):
         """Return lists of deformation os SMA actuator per theta"""
         
         theta_list = np.linspace(0, theta)
@@ -371,6 +372,55 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     
         return eps_s_list, theta_list
 
+    def plot_flap(x, y, x_J, theta):
+        """
+        Plot flap with actuators. theta is clockwise positive.
+        @Author: Endryws (modified by Pedro Leal)
+        
+        Created on Fri Mar 18 14:26:54 2016
+        """
+        import matplotlib.pyplot as plt
+        plt.figure()
+        x_dict, y_dict = af.separate_upper_lower(x, y)
+        
+        # Below I create the dictionarys used to pass to the function find_hinge
+        upper = {'x': x_dict['upper'], 'y': y_dict['upper']} # x and y upper points
+        lower = {'x': x_dict['lower'], 'y': y_dict['lower']} # x and y lower points
+        hinge = af.find_hinge(x_J, upper, lower) 
+        
+        #=======================================================================
+        # With the Joint (hinge) point, i can use the find flap function to
+        # found the points of the flap in the airfoil.
+        #=======================================================================
+        
+        data = {'x': x, 'y': y}
+        static_data, flap_data = af.find_flap(data, hinge)
+        R = hinge['y_upper']
+        theta_list = np.linspace(3*math.pi/2, math.pi/2, 50)
+        x_circle_list = hinge['x'] + R*np.cos(theta_list)
+        y_circle_list = hinge['y'] + R*np.sin(theta_list)
+
+        n_upper = len(flap_data['x'])/2
+        
+        # Ploting the flap in the original position
+        plt.plot(flap_data['x'][:n_upper],flap_data['y'][:n_upper],'k--')
+        plt.plot(flap_data['x'][n_upper:],flap_data['y'][n_upper:],'k--')         
+        # Rotate and plot
+        upper = {'x': np.concatenate((flap_data['x'][:n_upper], x_circle_list)),
+                 'y': np.concatenate((flap_data['y'][:n_upper], y_circle_list))}
+        lower = {'x':(flap_data['x'][n_upper:]),
+                 'y':(flap_data['y'][n_upper:])}
+                
+        rotated_upper, rotated_lower = af.rotate(upper, lower, hinge, theta, 
+                                                 unit_theta = 'rad')
+        plt.plot(static_data['x'], static_data['y'],'k')
+        
+        plt.plot(rotated_upper['x'], rotated_upper['y'],'k')
+        plt.plot(rotated_lower['x'], rotated_lower['y'],'k')
+        plt.axes().set_aspect('equal')
+        
+        s.plot_actuator()
+        l.plot_actuator()
 #==============================================================================
 # Material and flow properties
 #==============================================================================
@@ -399,7 +449,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     for i in range(len(Data['x'])):
         x.append( Data['x'][i]*chord )
         y.append( Data['y'][i]*chord )
-        
+
 #==============================================================================
 # Initial conditions   
 #==============================================================================
@@ -441,6 +491,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         # The deflection considered for the flap is positivite in
         # the clockwise, contrary to the dynamic system. Hence we need
         # to multiply it by -1.
+        
         Cm = calculate_flap_moment(x, y, alpha, J['x'], - l.theta,
                                    unit_deflection = 'rad')
         tau_a = Cm*q*chord**2
@@ -453,7 +504,8 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     l.calculate_force(source = 'strain')
     
     s.theta = l.calculate_theta()
-
+    l.theta = s.theta
+    
     #Calculate initial torques
     s.calculate_torque()    
     l.calculate_torque()
@@ -465,7 +517,17 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     l.find_limits(t = 0.12*chord, c = chord, theta_0 = 0)
 #    print s.max_theta, s.min_theta
 #    print l.max_theta, l.min_theta
+    print 's: limits', s.max_theta, s.min_theta
+    print 'l: limits', l.max_theta, l.min_theta
+    s.theta = s.max_theta
+    s.update()
+    l.theta = s.max_theta
+    l.update()
+    
+#    deformation_theta(theta = -math.pi/2., plot = True)
+    plot_flap(x, y, J['x'], -s.theta)
 
+    BREAK
 ##==============================================================================
 # Matlab simulation
 ##==============================================================================         
@@ -478,7 +540,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     #the number of steps is smaller than n
     n_real = 1
     for i in range(1, n):
-        eps_s = newton(equlibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
+        eps_s = newton(equilibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
                        MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
                        q, chord, J['x'], True)), maxiter = 500, 
                        tol = 1.0e-6)
@@ -494,7 +556,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         eps_s_list.append(eps_s)
         eps_l_list.append(l.eps)
         theta_list.append(math.degrees(s.theta))
-        print i, eps_s, s.theta
+        print i, eps_s, eps_0, s.theta
     
     #Extra run with prescribed deformation (which has already been calculated)
     # to get all the properties
@@ -519,7 +581,8 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             eps_t_list.append(data[3][i][0])
         return eps_s_list, theta_list, sigma_list, MVF_list, T_list, eps_t_list
     else:
-        return delta_xi, s.theta, l.k
+        T = data[2][n_real][0]
+        return delta_xi, s.theta, l.k, T
 
 def run(inputs, parameters = None):
     """Function to be callled by DOE and optimization. Design Variables are 
@@ -527,7 +590,7 @@ def run(inputs, parameters = None):
         
         :param inputs: {'sma', 'linear', 'sigma_o'}"""
     def thickness(x, t, chord):
-        y = Naca00XX(chord, t, [x], return_dict = 'y')
+        y = af.Naca00XX(chord, t, [x], return_dict = 'y')
         thickness_at_x = y['u'] - y['l']
         return thickness_at_x 
 
@@ -540,7 +603,7 @@ def run(inputs, parameters = None):
         
     sma = inputs['sma']
     linear = inputs['linear']
-    sigma_o = inputs['sigma_o']
+    sigma_o = 400e6
            
     airfoil = "naca0012"
     chord = 0.6175
@@ -586,12 +649,12 @@ def run(inputs, parameters = None):
     # Number of steps
     n = 200
     
-    delta_xi, theta, k = flap(airfoil, chord, J, sma, linear, sigma_o, 
+    delta_xi, theta, k, T = flap(airfoil, chord, J, sma, linear, sigma_o, 
                            length_l, W, r_w, V, altitude, alpha, T_0, 
                            T_final, MVF_init, n, all_outputs = False,
                            import_matlab = import_matlab, eng=eng)
     
-    return {'delta_xi': delta_xi, 'theta': theta, 'k': k}
+    return {'delta_xi': delta_xi, 'theta': theta, 'k': k, 'T':T}
     
 if __name__ == '__main__':
     J = {'x':0.25, 'y':0.}
