@@ -487,16 +487,14 @@ if __name__ == "__main__":
     problem.add_variable('xs+', lower = x_hinge + safety, upper = chord - safety, type=float)
     problem.add_variable('ys+', lower = 0. + safety, upper = 1. - safety, type=float)
     problem.add_variable('xl-', lower = 0.0 + safety, upper = x_hinge, type=float)
-    problem.add_variable('yl-', lower = 0. + safety, upper = 1. - safety, type=float)
+    problem.add_variable('yl-', lower = -1. + safety, upper = 1. - safety, type=float)
     problem.add_variable('xl+', lower = x_hinge + safety, upper = chord - safety, type=float)
     problem.add_variable('yl+', lower = -1. + safety, upper = 0. - safety, type=float)
-    problem.add_variable('sigma_o', lower = 140e6, upper = 400e6, type=float)
     problem.define_points()
     
     #inputs [sma, linear, sigma_o]
     inputs = {'sma':{'x-':'xs-', 'y-':'ys-', 'x+':'xs+', 'y+':'ys+'},
-              'linear':{'x-':'xl-', 'y-':'yl-', 'x+':'xl+', 'y+':'yl+'},
-              'sigma_o':'sigma_o'}
+              'linear':{'x-':'xl-', 'y-':'yl-', 'x+':'xl+', 'y+':'yl+'}}
     problem.run(model.run, inputs = inputs, parameters = [eng])
     
     timestr = time.strftime('%Y%m%d')
