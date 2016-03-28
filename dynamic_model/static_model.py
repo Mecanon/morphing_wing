@@ -13,7 +13,7 @@ Created on Wed Feb 17 13:10:30 2016
 @author: Pedro Leal
 """
 import math
-from scipy.optimize import newton
+from scipy.optimize import newton, bisect
 import numpy as np
     
 from AeroPy import calculate_flap_moment
@@ -222,7 +222,7 @@ class actuator():
         # Constraint A
         #Avoid division by zero for when x_n is the origin
         if abs(self.x_n) > 1e-4:
-            print 'comparison', self.r_p, abs(y['l'])
+#            print 'comparison', self.r_p, abs(y['l'])
             if self.r_p >= abs(y['l']):
                 a = (y['l'] - self.y_n)/(0. - self.x_n)
                 self.max_theta_A = newton(eq_theta_A, theta_0,  maxiter = 1000)
@@ -266,24 +266,24 @@ class actuator():
 #        print 'theta_B', self.max_theta_B, self.min_theta_B
 
         #To constraint the secant method, I need to know the global
-        #maximum strain
-        def diff_eps(theta):
-            sin = math.sin(theta)
-            cos = math.cos(theta)
-            
-            diff = (2.*self.x_p*cos - 2.*self.y_p*sin)*(self.x_p*sin + \
-                    self.y_p*cos - self.y_n) - (2.*self.x_p*sin + \
-                    2.*self.y_p*cos)*(self.x_p*cos - self.x_n - self.y_p*sin) 
-            
-            return diff
-            
-        self.theta_max_eps = newton(diff_eps, self.eps_0)
-        r_1 = self.x_p*math.cos(self.theta) - \
-                   self.y_p*math.sin(self.theta) - self.x_n
-        r_2 = self.y_p*math.cos(self.theta) + \
-                   self.x_p*math.sin(self.theta) - self.y_n
-        length_r = math.sqrt(r_1**2 + r_2**2)
-        self.global_max_eps = length_r/self.zero_stress_length - 1. 
+        
+#        def diff_eps(theta):
+#            sin = math.sin(theta)
+#            cos = math.cos(theta)
+#            
+#            diff = (2.*self.x_p*cos - 2.*self.y_p*sin)*(self.x_p*sin + \
+#                    self.y_p*cos - self.y_n) - (2.*self.x_p*sin + \
+#                    2.*self.y_p*cos)*(self.x_p*cos - self.x_n - self.y_p*sin) 
+#            
+#            return diff
+#            
+#        self.theta_max_eps = newton(diff_eps, self.eps_0)
+#        r_1 = self.x_p*math.cos(self.theta) - \
+#                   self.y_p*math.sin(self.theta) - self.x_n
+#        r_2 = self.y_p*math.cos(self.theta) + \
+#                   self.x_p*math.sin(self.theta) - self.y_n
+#        length_r = math.sqrt(r_1**2 + r_2**2)
+#        self.global_max_eps = length_r/self.zero_stress_length - 1. 
         
 def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
          altitude, alpha, T_0, T_final, MVF_init, n, all_outputs = False,
@@ -301,7 +301,10 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
 
     
     from scipy.optimize import newton    
-
+    from scipy.interpolate import interp1d
+    import pickle
+    import os.path
+ 
     if import_matlab and eng == None:
         import matlab.engine
         #Start Matlab engine
@@ -337,9 +340,10 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         #calculate new theta for eps_s and update all the parameter
         #of the actuator class
         s.eps = eps_s
-        print s.eps, s.eps_0, s.r_1, s.r_2, s.r_1_0, s.r_2_0, s.max_eps, s.min_eps
-        print s.min_theta, s.max_theta
+#        print s.eps, s.eps_0, s.r_1, s.r_2, s.r_1_0, s.r_2_0, s.max_eps, s.min_eps
+#        print s.min_theta, s.max_theta
 #        try:
+#        print eps_s
         s.calculate_theta(theta_0 = s.theta)
 #        except:
 #            s.theta = max(s.max_theta, l.max_theta)
@@ -373,13 +377,18 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             # The deflection considered for the flap is positivite in
             # the clockwise, contrary to the dynamic system. Hence we need
             # to multiply it by -1.
-            Cm = calculate_flap_moment(x, y, alpha, J['x'], - l.theta,
-                                       unit_deflection = 'rad')
+#            print alpha, x_hinge, l.theta
+            Cm = Cm_function(l.theta)
+#            Cm = calculate_flap_moment(x, y, alpha, x_hinge, - l.theta,
+#                                       unit_deflection = 'rad')
             tau_a = Cm*q*chord**2
         else:
             tau_a = 0.
             
-        print 'tau', tau_s, tau_l, tau_w, tau_a, tau_s + tau_l + tau_w + tau_a
+#        print 'tau', tau_s, tau_l, tau_w, tau_a, tau_s + tau_l + tau_w + tau_a
+        f = open('data', 'a')
+        f.write('\t Inner loop \t'+ str( eps_s) + '\t' + str( tau_s + tau_l + tau_w + tau_a)+ '\t' + str(l.theta)  + '\n')
+        f.close()
         return tau_s + tau_l + tau_w + tau_a
         
     def deformation_theta(theta = -math.pi/2., plot = False):
@@ -487,6 +496,13 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         x.append( Data['x'][i]*chord )
         y.append( Data['y'][i]*chord )
 
+    theta_list = np.linspace(-math.pi/2., math.pi/2., 100)
+    Cm_list = []
+    for theta in theta_list:
+        Cm = calculate_flap_moment(x, y, alpha, J['x'], - theta,
+                                   unit_deflection = 'rad')
+        Cm_list.append(Cm)
+    Cm_function = interp1d(theta_list, Cm_list)   
 #==============================================================================
 # Initial conditions   
 #==============================================================================
@@ -523,28 +539,36 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     # be an input
     if alpha != 0.:
         raise Exception('The initial equilibirum equation only makes sense for alpha equal to zero!!')
+
+    
+#    print 'stiffness: ', l.k
+
+
+    s.theta = l.calculate_theta()
+    l.theta = s.theta
+    l.update()
+    s.update()
+   
+    #Calculate initial torques
+    s.calculate_torque()   
+    
+    tau_w = - r_w*W 
     #aerodynamic (Panel method: coupling via theta)
     if aero_loads:
         # The deflection considered for the flap is positivite in
         # the clockwise, contrary to the dynamic system. Hence we need
         # to multiply it by -1.
         
-        Cm = calculate_flap_moment(x, y, alpha, J['x'], - l.theta,
-                                   unit_deflection = 'rad')
+#        Cm = calculate_flap_moment(x, y, alpha, J['x'], - l.theta,
+#                                   unit_deflection = 'rad')
+        Cm = Cm_function(l.theta)
         tau_a = Cm*q*chord**2
     else:
         tau_a = 0.
+        
+    l.k = - (s.torque + tau_w + tau_a)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
     
-    l.k = ((s.F/s.length_r)*(s.x_p*s.r_2 - s.y_p*s.r_1) + r_w*W + tau_a)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
-#    print 'stiffness: ', l.k
-
     l.calculate_force(source = 'strain')
-    
-    s.theta = l.calculate_theta()
-    l.theta = s.theta
-    
-    #Calculate initial torques
-    s.calculate_torque()    
     l.calculate_torque()
 
 #    s.plot_actuator()
@@ -555,10 +579,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     
     s.find_limits(y_J, theta_0 = 0)
     l.find_limits(y_J, theta_0 = 0)
-    print s.global_max_eps
-    BREAK
-#    print s.max_theta, s.min_theta
-#    print l.max_theta, l.min_theta
+
     print 's: limits', s.max_theta, s.min_theta
     print 'l: limits', l.max_theta, l.min_theta
     
@@ -569,7 +590,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
 #    l.theta = max_theta
 #    l.update()
 #    
-    deformation_theta(theta = -math.pi/2., plot = True)
+#    deformation_theta(theta = -math.pi/2., plot = True)
 #    plot_flap(x, y, J['x'], -s.theta)
 #    import matplotlib.pyplot as plt
 #    plt.scatter(J['x'] , y_J['l'])
@@ -585,15 +606,48 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     #Because of the constraint of the maximum deflection, it is possible that
     #the number of steps is smaller than n
     n_real = 1
+    
+    #Create new data file and erase everything inside
+    f = open('data', 'w')
+    f.close()
+    
+    
     for i in range(1, n):
-        print 'before', eps_s
-        eps_s = newton(equilibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
-                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                       q, chord, J['x'], True)), maxiter = 500, 
-                       tol = 1.0e-6, maxval = s.global_max_eps)
+#        print 'before', eps_s
+
+        equilibrium_0 = equilibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_o,
+                   i, n, r_w, W, x, y, alpha, q, chord, J['x'], True)
+        f = open('data', 'a')
+        f.write(str(equilibrium_0) + '\t' + str(eps_0) + '\n')
+        f.close()
+        if not abs(equilibrium_0) < 1e-4:
+            if 1.1*eps_s> eps_0:
+                eps_s = bisect(equilibrium, eps_s*0.9, eps_0, args=((s, l, T_0, T_final, 
+                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                               q, chord, J['x'], True)), rtol = 1e-6)
+            else:
+                try:
+                    eps_s = bisect(equilibrium, eps_s*0.9, 1.1*eps_s, args=((s, l, T_0, T_final, 
+                                   MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                   q, chord, J['x'], True)), rtol = 1e-6)
+                except:
+                    #In case the sings are not contrary, try using the secant method
+                    eps_s = bisect(equilibrium, 0, eps_0, args=((s, l, T_0, T_final, 
+                                   MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                   q, chord, J['x'], True)), rtol = 1e-6)
+
+#        eps_s = newton(equilibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
+#                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+#                       q, chord, J['x'], True)), maxiter = 500, 
+#                       tol = 1.0e-6)
 
         s.eps = eps_s
         s.calculate_theta()
+        s.update()
+        
+        f = open('data', 'a')
+        f.write('Outer loop \t'+ str(i)  + '\t'+ str(eps_s) + '\t'+ str(s.theta)+ '\n')
+        f.close()
         if s.theta <= max_theta:
             break
         else:
@@ -603,7 +657,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         eps_s_list.append(eps_s)
         eps_l_list.append(l.eps)
         theta_list.append(math.degrees(s.theta))
-        print i, eps_s, eps_0, s.theta
+#        print i, eps_s, eps_0, s.theta
     
     #Extra run with prescribed deformation (which has already been calculated)
     # to get all the properties
@@ -683,8 +737,8 @@ def run(inputs, parameters = None):
     altitude = 10000. #feet
     
     # Temperature
-    T_0 = 220.15
-    T_final = 400.15
+    T_0 = 220.
+    T_final = 400.
      
     #Initial martensitic volume fraction
     MVF_init = 1.
