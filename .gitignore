@@ -71,3 +71,4 @@ naca*
 flapped
 *.mat
 *.asv
+dynamic_model/optimization/data

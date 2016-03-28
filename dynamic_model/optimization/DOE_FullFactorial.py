@@ -482,11 +482,11 @@ if __name__ == "__main__":
     safety = 0.05*chord
     
     problem = DOE(levels=2, driver='Full Factorial')
-    problem.add_variable('xs-', lower = 0.0 + safety , upper = x_hinge, type=float)
+    problem.add_variable('xs-', lower = x_hinge/2. , upper = x_hinge, type=float)
     problem.add_variable('ys-', lower = -1. + safety, upper = 0. - safety, type=float)
     problem.add_variable('xs+', lower = x_hinge + safety, upper = chord - safety, type=float)
     problem.add_variable('ys+', lower = 0. + safety, upper = 1. - safety, type=float)
-    problem.add_variable('xl-', lower = 0.0 + safety, upper = x_hinge, type=float)
+    problem.add_variable('xl-', lower = x_hinge/2., upper = x_hinge, type=float)
     problem.add_variable('yl-', lower = -1. + safety, upper = 1. - safety, type=float)
     problem.add_variable('xl+', lower = x_hinge + safety, upper = chord - safety, type=float)
     problem.add_variable('yl+', lower = -1. + safety, upper = 0. - safety, type=float)
