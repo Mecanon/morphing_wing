@@ -92,8 +92,14 @@ class DOE:
           different variables such as {'t_spar':'t_rib'}
         - parameters: some main functions need extra parameters. this is a list
         """
-        DataFile = open('iteration.txt','w')
-
+        
+        DataFile = open('all_data.txt','w')
+        key_list = ['xs-', 'ys-', 'xs+', 'ys+', 'xl-', 'yl-', 'xl+', 'yl+']
+        output_list = ['delta_xi', 'theta', 'T', 'k']
+        for key in ['i'] + key_list + output_list:
+            DataFile.write(key + '\t')
+        DataFile.write('\n')
+        DataFile.close()
         
         def set_input(self, run):
             output = {}
@@ -110,6 +116,13 @@ class DOE:
                 for key_dependent in dependent_variables:
                     key_independent = dependent_variables[key_dependent]
                     input.update({key_dependent : input[key_independent]})
+            
+            DataFile = open('all_data.txt','a')
+            DataFile.write(str(i))
+            for key in key_list:
+                DataFile.write( '\t' + str(input[key]))
+            DataFile.close()
+            
             if inputs != None:
                 new_input = {}
                 for key_input in inputs:
@@ -121,10 +134,12 @@ class DOE:
                        new_input[key_input]= input[inputs[key_input]] 
                 input = new_input
             print input
+
             if parameters == None:
                 result = function(input)
             else:
                 result = function(input, parameters = parameters)
+            
             if i == 0:
                 # We will save the name of the putputs for plotting and etc
                 self.output_names = [key for key in result]
@@ -133,10 +148,12 @@ class DOE:
                     self.output[key] = []
             for key in self.output_names:
                 self.output[key].append(result[key])
-                
-            DataFile.write(str(i) + '\n')
-        DataFile.close()
-
+            
+            DataFile = open('all_data.txt','a')
+            for output in output_list:
+                DataFile.write( '\t' + str(self.output[output][-1]))    
+            DataFile.write('\n')
+            DataFile.close()
     def find_influences(self, not_zero=False):
         """ Calculate average influence of each variable over the
         objective functions. If refinement_criteria is defined, certain points
@@ -483,13 +500,13 @@ if __name__ == "__main__":
     
     problem = DOE(levels=2, driver='Full Factorial')
     problem.add_variable('xs-', lower = x_hinge/2. , upper = x_hinge, type=float)
-    problem.add_variable('ys-', lower = -1. + safety, upper = 0. - safety, type=float)
+    problem.add_variable('ys-', lower = -.9, upper = -0., type=float)
     problem.add_variable('xs+', lower = x_hinge + safety, upper = chord - safety, type=float)
-    problem.add_variable('ys+', lower = 0. + safety, upper = 1. - safety, type=float)
+    problem.add_variable('ys+', lower = 0., upper = .9, type=float)
     problem.add_variable('xl-', lower = x_hinge/2., upper = x_hinge, type=float)
-    problem.add_variable('yl-', lower = -1. + safety, upper = 1. - safety, type=float)
+    problem.add_variable('yl-', lower = -.9, upper = 0.9, type=float)
     problem.add_variable('xl+', lower = x_hinge + safety, upper = chord - safety, type=float)
-    problem.add_variable('yl+', lower = -1. + safety, upper = 0. - safety, type=float)
+    problem.add_variable('yl+', lower = -.9, upper = 0.9, type=float)
     problem.define_points()
     
     #inputs [sma, linear, sigma_o]

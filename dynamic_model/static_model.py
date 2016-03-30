@@ -13,7 +13,7 @@ Created on Wed Feb 17 13:10:30 2016
 @author: Pedro Leal
 """
 import math
-from scipy.optimize import newton, bisect
+from scipy.optimize import newton, brentq, minimize_scalar
 import numpy as np
     
 from AeroPy import calculate_flap_moment
@@ -123,6 +123,9 @@ class actuator():
             return r_1**2 + r_2**2 - (eta*self.length_r_0)**2
 #        print self.eps, self.eps_0
         self.theta = newton(eq, theta_0, diff_eq, maxiter = 100)
+        
+        if abs(self.theta) > math.pi:
+            self.theta = self.theta % (2.*math.pi)
         return self.theta
         
     def update(self):
@@ -209,16 +212,21 @@ class actuator():
             return math.atan2(sin, cos)
 
         # Constraint B
-        self.max_theta_B = math.atan2(self.y_n*self.x_p - self.x_n*self.y_p,
-                                      self.x_n*self.x_p - self.y_n*self.y_p)
-        if abs(self.max_theta_B) > 2*math.pi:
-            self.max_theta_B = self.max_theta_B % 2*math.pi
-        if self.max_theta_B > 0.:
-            self.min_theta_B = self.max_theta_B
-            self.max_theta_B = self.max_theta_B - 2*math.pi
-        else:
-            self.min_theta_B = self.max_theta_B + 2*math.pi
+        if self.r_n > self.r_p:
+            self.max_theta_B = math.atan2(self.y_n*self.x_p - self.x_n*self.y_p,
+                                          self.x_n*self.x_p - self.y_n*self.y_p)
+            self.max_theta_B = np.sign(self.max_theta_B) * (self.max_theta_B % (2*math.pi))
+            print 'max_theta_B', self.max_theta_B
+            if self.max_theta_B > 0.:
+                self.min_theta_B = self.max_theta_B
+                self.max_theta_B = self.max_theta_B - 2*math.pi
+            else:
+                self.min_theta_B = self.max_theta_B + 2*math.pi
 
+        else:
+            self.max_theta_B = -math.pi/2.
+            self.min_theta_B = math.pi/2.
+            
         # Constraint A
         #Avoid division by zero for when x_n is the origin
         if abs(self.x_n) > 1e-4:
@@ -238,13 +246,12 @@ class actuator():
             self.max_theta_A = -math.pi/2.
             self.min_theta_A = math.pi/2.
 
-        if self.r_n >= self.r_p:
-            self.max_theta = max(self.max_theta_A, self.max_theta_B)
-            self.min_theta = min(self.min_theta_A, self.min_theta_B)
-        else:
-            self.max_theta = self.max_theta_A
-            self.min_theta = self.min_theta_A           
-#        print 'min', self.min_theta_A, self.min_theta_B
+    
+        self.max_theta_A = np.sign(self.max_theta_A) * (self.max_theta_A % (2*math.pi))
+        self.min_theta_A = np.sign(self.min_theta_A) * (self.min_theta_A % (2*math.pi))
+
+        self.max_theta = max(self.max_theta_A, self.max_theta_B)
+        self.min_theta = min(self.min_theta_A, self.min_theta_B)         
 
         #In case of full transformation, we have the maximum eps        
         r_1 = self.x_p*math.cos(self.max_theta) - \
@@ -261,7 +268,16 @@ class actuator():
                    self.x_p*math.sin(self.min_theta) - self.y_n
         length_r = math.sqrt(r_1**2 + r_2**2)
         self.min_eps = length_r/self.zero_stress_length - 1. 
+    
+    def check_crossing_joint(self, tol = 1e-3):
+        """Does the actuator cross the joint? Should not happen"""
+        B = (self.y_p - self.y_n)/(self.x_p - self.x_n)
+        y_at_J = self.y_n - B* self.x_n
         
+        if abs(y_at_J) < tol:
+            return True
+        else:
+            return False
 #        print 'theta_A', self.max_theta_A, self.min_theta_A
 #        print 'theta_B', self.max_theta_B, self.min_theta_B
 
@@ -298,9 +314,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     :param T_final: final temperature
     :param MVF_init: initial martensitic volume fraction
     :param n: number of steps in simulation"""
-
     
-    from scipy.optimize import newton    
     from scipy.interpolate import interp1d
     import pickle
     import os.path
@@ -356,7 +370,6 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         
         l.theta = s.theta
         l.update()
-
         #SMA (Constitutive equation: coupling via sigma)
         data = constitutive_model(T_0, T_final, MVF_init, i, n, eps_s,
                                   eps_t_0, sigma_0, s.eps_0, plot = 'False')
@@ -371,7 +384,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         
         #weight (Geometric equation: coupling via theta)
         tau_w = - r_w*W*math.cos(l.theta)
-        
+        print eps_s, s.theta
         #aerodynamic (Panel method: coupling via theta)
         if aero_loads:
             # The deflection considered for the flap is positivite in
@@ -495,14 +508,24 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     for i in range(len(Data['x'])):
         x.append( Data['x'][i]*chord )
         y.append( Data['y'][i]*chord )
-
-    theta_list = np.linspace(-math.pi/2., math.pi/2., 100)
-    Cm_list = []
-    for theta in theta_list:
-        Cm = calculate_flap_moment(x, y, alpha, J['x'], - theta,
-                                   unit_deflection = 'rad')
-        Cm_list.append(Cm)
-    Cm_function = interp1d(theta_list, Cm_list)   
+    
+    filename = airfoil + '_' + str(int(100*J['x'])) + '_' + str(int(100*chord)) + '.p'
+    if os.path.isfile(filename):
+        with open(filename, "rb") as f:
+            Cm_list = pickle.load( f )
+            theta_list = pickle.load( f )
+    else:
+        theta_list = np.linspace(-3.*math.pi/4., 3*math.pi/4., 100)
+        Cm_list = []
+        for theta in theta_list:
+            Cm = calculate_flap_moment(x, y, alpha, J['x'], - theta,
+                                       unit_deflection = 'rad')
+            Cm_list.append(Cm)
+        with open(filename, "wb") as f:
+            pickle.dump( Cm_list, f )
+            pickle.dump( theta_list, f )
+        
+    Cm_function = interp1d(theta_list, Cm_list)
 #==============================================================================
 # Initial conditions   
 #==============================================================================
@@ -514,176 +537,203 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     l = actuator(linear, J, zero_stress_length = length_l, material = 'linear')
     #Sma actuator (l)
     s = actuator(sma, J, eps_0 = eps_0, material = 'SMA')
-    
-#===========================================================================
-# Although commented this part can be used to calculate sigma_0 for full transformation
-#============================================================================
-#    def diff_eq_sigma(sigma_o):
-#        return  1./E_M + (H_max - H_min)*k*math.exp(-k*(abs(sigma_o) - sigma_crit))
-#        
-#    def eq_sigma(sigma_o):
-#        s.eps_t_0 = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
-#        return - s.eps_0 + s.eps_t_0 + sigma_o/E_M
-#    
-#    if s.max_eps < eps_0:
-#        s.eps_0 = s.max_eps
-#        s.sigma = newton(eq_sigma, sigma_o, diff_eq_sigma)
 
-    #Input initial stress   
-    s.sigma = sigma_o
-    s.calculate_force(source = 'sigma')
-    s.eps_t_0 = eps_t_0
-#    print s.eps_0, s.eps_t_0, s.sigma, s.max_theta,
-
-    # TODO: For now K is calculated in function of the rest. Afterwards it will
-    # be an input
-    if alpha != 0.:
-        raise Exception('The initial equilibirum equation only makes sense for alpha equal to zero!!')
-
-    
-#    print 'stiffness: ', l.k
-
-
-    s.theta = l.calculate_theta()
-    l.theta = s.theta
-    l.update()
-    s.update()
-   
-    #Calculate initial torques
-    s.calculate_torque()   
-    
-    tau_w = - r_w*W 
-    #aerodynamic (Panel method: coupling via theta)
-    if aero_loads:
-        # The deflection considered for the flap is positivite in
-        # the clockwise, contrary to the dynamic system. Hence we need
-        # to multiply it by -1.
-        
-#        Cm = calculate_flap_moment(x, y, alpha, J['x'], - l.theta,
-#                                   unit_deflection = 'rad')
-        Cm = Cm_function(l.theta)
-        tau_a = Cm*q*chord**2
+    #Check if crossing joint. If True do nothing
+    if s.check_crossing_joint(tol = 0.01) or l.check_crossing_joint(tol = 0.01):
+        return 0., s.theta, 0., 200.
     else:
-        tau_a = 0.
         
-    l.k = - (s.torque + tau_w + tau_a)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
+    #===========================================================================
+    # Although commented this part can be used to calculate sigma_0 for full transformation
+    #============================================================================
+    #    def diff_eq_sigma(sigma_o):
+    #        return  1./E_M + (H_max - H_min)*k*math.exp(-k*(abs(sigma_o) - sigma_crit))
+    #        
+    #    def eq_sigma(sigma_o):
+    #        s.eps_t_0 = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
+    #        return - s.eps_0 + s.eps_t_0 + sigma_o/E_M
+    #    
+    #    if s.max_eps < eps_0:
+    #        s.eps_0 = s.max_eps
+    #        s.sigma = newton(eq_sigma, sigma_o, diff_eq_sigma)
     
-    l.calculate_force(source = 'strain')
-    l.calculate_torque()
-
-#    s.plot_actuator()
-#    l.plot_actuator()
-    t = 0.12
+        #Input initial stress   
+        s.sigma = sigma_o
+        s.calculate_force(source = 'sigma')
+        s.eps_t_0 = eps_t_0
+    #    print s.eps_0, s.eps_t_0, s.sigma, s.max_theta,
     
-    y_J = af.Naca00XX(chord, t, [J['x']], return_dict = 'y')
+        # TODO: For now K is calculated in function of the rest. Afterwards it will
+        # be an input
+        if alpha != 0.:
+            raise Exception('The initial equilibirum equation only makes sense for alpha equal to zero!!')
     
-    s.find_limits(y_J, theta_0 = 0)
-    l.find_limits(y_J, theta_0 = 0)
-
-    print 's: limits', s.max_theta, s.min_theta
-    print 'l: limits', l.max_theta, l.min_theta
-    
-    max_theta = max(s.max_theta, l.max_theta)
-    #The following code is good for plotting the airfoil and etc
-#    s.theta = max_theta
-#    s.update()
-#    l.theta = max_theta
-#    l.update()
-#    
-#    deformation_theta(theta = -math.pi/2., plot = True)
-#    plot_flap(x, y, J['x'], -s.theta)
-#    import matplotlib.pyplot as plt
-#    plt.scatter(J['x'] , y_J['l'])
-
-##==============================================================================
-# Matlab simulation
-##==============================================================================         
-    eps_s = eps_0
-    eps_s_list = [eps_s]
-    eps_l_list = [l.eps]
-    theta_list = [s.theta]
-
-    #Because of the constraint of the maximum deflection, it is possible that
-    #the number of steps is smaller than n
-    n_real = 1
-    
-    #Create new data file and erase everything inside
-    f = open('data', 'w')
-    f.close()
-    
-    
-    for i in range(1, n):
-#        print 'before', eps_s
-
-        equilibrium_0 = equilibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_o,
-                   i, n, r_w, W, x, y, alpha, q, chord, J['x'], True)
-        f = open('data', 'a')
-        f.write(str(equilibrium_0) + '\t' + str(eps_0) + '\n')
-        f.close()
-        if not abs(equilibrium_0) < 1e-4:
-            if 1.1*eps_s> eps_0:
-                eps_s = bisect(equilibrium, eps_s*0.9, eps_0, args=((s, l, T_0, T_final, 
-                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                               q, chord, J['x'], True)), rtol = 1e-6)
-            else:
-                try:
-                    eps_s = bisect(equilibrium, eps_s*0.9, 1.1*eps_s, args=((s, l, T_0, T_final, 
-                                   MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                                   q, chord, J['x'], True)), rtol = 1e-6)
-                except:
-                    #In case the sings are not contrary, try using the secant method
-                    eps_s = bisect(equilibrium, 0, eps_0, args=((s, l, T_0, T_final, 
-                                   MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                                   q, chord, J['x'], True)), rtol = 1e-6)
-
-#        eps_s = newton(equilibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
-#                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#                       q, chord, J['x'], True)), maxiter = 500, 
-#                       tol = 1.0e-6)
-
-        s.eps = eps_s
-        s.calculate_theta()
-        s.update()
         
-        f = open('data', 'a')
-        f.write('Outer loop \t'+ str(i)  + '\t'+ str(eps_s) + '\t'+ str(s.theta)+ '\n')
-        f.close()
-        if s.theta <= max_theta:
-            break
-        else:
-            n_real +=1
+    #    print 'stiffness: ', l.k
+    
+    
+        s.theta = l.calculate_theta()
         l.theta = s.theta
         l.update()
-        eps_s_list.append(eps_s)
-        eps_l_list.append(l.eps)
-        theta_list.append(math.degrees(s.theta))
-#        print i, eps_s, eps_0, s.theta
+        s.update()
+       
+        #Calculate initial torques
+        s.calculate_torque()   
+        
+        tau_w = - r_w*W 
+        #aerodynamic (Panel method: coupling via theta)
+        if aero_loads:
+            # The deflection considered for the flap is positivite in
+            # the clockwise, contrary to the dynamic system. Hence we need
+            # to multiply it by -1.
+            
+    #        Cm = calculate_flap_moment(x, y, alpha, J['x'], - l.theta,
+    #                                   unit_deflection = 'rad')
+            Cm = Cm_function(l.theta)
+            tau_a = Cm*q*chord**2
+        else:
+            tau_a = 0.
+            
+        l.k = - (s.torque + tau_w + tau_a)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
+        
+        l.calculate_force(source = 'strain')
+        l.calculate_torque()
     
-    #Extra run with prescribed deformation (which has already been calculated)
-    # to get all the properties
-    for i in range(1, n_real):
-        data = constitutive_model(T_0, T_final, MVF_init, i, n, 
-                                  eps_s_list[i], eps_t_0, sigma_0 = sigma_o,
-                                  eps_0 = eps_0, plot = 'False')
-    delta_xi = 1. - data[1][-1][0]
+    #    s.plot_actuator()
+    #    l.plot_actuator()
+        t = 0.12
+        
+        y_J = af.Naca00XX(chord, t, [J['x']], return_dict = 'y')
+        
+        s.find_limits(y_J, theta_0 = 0)
+        l.find_limits(y_J, theta_0 = 0)
     
-    if all_outputs:
-        sigma_list = []
-        for i in range(len(data[0])):
-            sigma_list.append(data[0][i][0])
-        MVF_list = []
-        for i in range(len(data[1])):
-            MVF_list.append(data[1][i][0])    
-        T_list = []
-        for i in range(len(data[2])):
-            T_list.append(data[2][i][0])    
-        eps_t_list = []
-        for i in range(len(data[3])):
-            eps_t_list.append(data[3][i][0])
-        return eps_s_list, theta_list, sigma_list, MVF_list, T_list, eps_t_list
-    else:
-        T = data[2][n_real-1][0]
-        return delta_xi, s.theta, l.k, T
+        print 's: limits', s.max_theta, s.min_theta
+        print s.max_theta_A, s.max_theta_B
+        print 'l: limits', l.max_theta, l.min_theta
+        print l.max_theta_A, l.max_theta_B
+        
+        max_theta = max(s.max_theta, l.max_theta)
+        
+#        #The following code is good for plotting the airfoil and etc
+#        s.theta = s.max_theta_B
+#        s.update()
+#        l.theta = s.max_theta_B
+#        l.update()
+#    #    
+##        deformation_theta(theta = -math.pi/2., plot = True)
+        plot_flap(x, y, J['x'], -s.theta)
+#    #    import matplotlib.pyplot as plt
+#        import matplotlib.pyplot as plt
+#        plt.scatter(J['x'] , y_J['l'])
+#        plt.scatter(J['x'] , y_J['u'])
+    ##==============================================================================
+    # Matlab simulation
+    ##==============================================================================         
+        eps_s = eps_0
+        eps_s_list = [eps_s]
+        eps_l_list = [l.eps]
+        theta_list = [s.theta]
+    
+        #Because of the constraint of the maximum deflection, it is possible that
+        #the number of steps is smaller than n
+        n_real = 1
+        
+        #Create new data file and erase everything inside
+        f = open('data', 'w')
+        f.close()
+        
+        for i in range(1, n):
+            equilibrium_0 = equilibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_o,
+                       i, n, r_w, W, x, y, alpha, q, chord, J['x'], True)
+            f = open('data', 'a')
+            f.write(str(equilibrium_0) + '\t' + str(eps_0) + '\n')
+            f.close()
+            if not abs(equilibrium_0) < 1e-4:
+                if 1.1*eps_s> eps_0:
+                    try:
+                        eps_s = brentq(equilibrium, eps_s*0.9, eps_0, args=((s, l, T_0, T_final, 
+                                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                       q, chord, J['x'], True)), rtol = 1e-6)
+                    except:
+                        try:
+                            eps_s = brentq(equilibrium, 0., eps_0, args=((s, l, T_0, T_final, 
+                                           MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                           q, chord, J['x'], True)), rtol = 1e-6)
+                        except:
+                            try:
+                                OptimizeResult = minimize_scalar(equilibrium, (0., eps_0), (0., eps_0), args=((s, l, T_0, T_final, 
+                                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                               q, chord, J['x'], True)), method = 'bounded')
+                                eps_s = OptimizeResult.x
+                            except:
+                                minimize_scalar(equilibrium,  (0., eps_0), (0., eps_0), args=((s, l, T_0, T_final, 
+                                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                               q, chord, J['x'], True)), method='golden')
+                else:
+                    try:
+                        eps_s = brentq(equilibrium, eps_s*0.9, 1.1*eps_s, args=((s, l, T_0, T_final, 
+                                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                       q, chord, J['x'], True)), rtol = 1e-6)
+                    except:
+                        try:
+                            #In case the sings are not contrary, try using the secant method
+                            eps_s = brentq(equilibrium, 0, eps_0, args=((s, l, T_0, T_final, 
+                                           MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                           q, chord, J['x'], True)), rtol = 1e-6)
+                        except:
+                            OptimizeResult = minimize_scalar(equilibrium, (0., eps_0), (0., eps_0), args=((s, l, T_0, T_final, 
+                                           MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                           q, chord, J['x'], True)), method = 'bounded')
+                            eps_s = OptimizeResult.x
+    #                        eps_s = newton(equilibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
+    #                                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+    #                                       q, chord, J['x'], True)), maxiter = 500, 
+    #                                       tol = 1.0e-6)
+            s.eps = eps_s
+            s.calculate_theta(theta_0 = s.theta)
+            s.update()
+            
+            f = open('data', 'a')
+            f.write('Outer loop \t'+ str(i)  + '\t'+ str(eps_s) + '\t'+ str(s.theta)+ '\n')
+            f.close()
+
+            if s.theta <= max_theta:
+                break
+            else:
+                n_real +=1
+            l.theta = s.theta
+            l.update()
+            eps_s_list.append(eps_s)
+            eps_l_list.append(l.eps)
+            theta_list.append(math.degrees(s.theta))
+    #        print i, eps_s, eps_0, s.theta
+        
+        #Extra run with prescribed deformation (which has already been calculated)
+        # to get all the properties
+        for i in range(1, n_real):
+            data = constitutive_model(T_0, T_final, MVF_init, i, n, 
+                                      eps_s_list[i], eps_t_0, sigma_0 = sigma_o,
+                                      eps_0 = eps_0, plot = 'False')
+        delta_xi = 1. - data[1][-1][0]
+        
+        if all_outputs:
+            sigma_list = []
+            for i in range(len(data[0])):
+                sigma_list.append(data[0][i][0])
+            MVF_list = []
+            for i in range(len(data[1])):
+                MVF_list.append(data[1][i][0])    
+            T_list = []
+            for i in range(len(data[2])):
+                T_list.append(data[2][i][0])    
+            eps_t_list = []
+            for i in range(len(data[3])):
+                eps_t_list.append(data[3][i][0])
+            return eps_s_list, theta_list, sigma_list, MVF_list, T_list, eps_t_list
+        else:
+            T = data[2][n_real-1][0]
+            return delta_xi, s.theta, l.k, T
 
 def run(inputs, parameters = None):
     """Function to be callled by DOE and optimization. Design Variables are 
@@ -756,10 +806,20 @@ def run(inputs, parameters = None):
 if __name__ == '__main__':
     J = {'x':0.25, 'y':0.}
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
-    sma = {'x-': J['x'], 'y-': -0.02*2/0.0441137488474, 'x+': 0.1225 + J['x'],
-           'y+': 0.0135*2/0.0345972364185}
-    linear = {'x-': J['x'], 'y-': 0.032*2/0.0441137488474, 'x+': 0.146 + J['x'], 
-              'y+': -0.0135*2/0.0321083851839}
+#    sma = {'x-': J['x'], 'y-': -0.02*2/0.0441137488474, 'x+': 0.1225 + J['x'],
+#           'y+': 0.0135*2/0.0345972364185}
+#    linear = {'x-': J['x'], 'y-': 0.032*2/0.0441137488474, 'x+': 0.146 + J['x'], 
+#              'y+': -0.0135*2/0.0321083851839}
+
+#    sma = {'x-': 0.125, 'y-': 0., 'x+': 0.586625,
+#           'y+': 0.8}
+#    linear = {'x-': 0.125, 'y-': 0., 'x+': .280875, 
+#              'y+': -0.}
+    sma = {'x-': 0.0755349198441, 'y-': -0.683217938433, 'x+': 0.468927662681,
+           'y+': 0.79959454484}
+    linear = {'x-': 0.137940873304, 'y-': -0.660579929064, 'x+': 0.453353413238, 
+              'y+': 0.20369104683}
+								
 
     #SMA Pre-stress
     sigma_o = 400e6
