@@ -384,17 +384,20 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         
         #weight (Geometric equation: coupling via theta)
         tau_w = - r_w*W*math.cos(l.theta)
-        print eps_s, s.theta
+
         #aerodynamic (Panel method: coupling via theta)
         if aero_loads:
             # The deflection considered for the flap is positivite in
             # the clockwise, contrary to the dynamic system. Hence we need
             # to multiply it by -1.
 #            print alpha, x_hinge, l.theta
-            Cm = Cm_function(l.theta)
+            if abs(l.theta) > math.pi/2.:
+                tau_a = - np.sign(l.theta)*4
+            else:
+                Cm = Cm_function(l.theta)
+                tau_a = Cm*q*chord**2
 #            Cm = calculate_flap_moment(x, y, alpha, x_hinge, - l.theta,
 #                                       unit_deflection = 'rad')
-            tau_a = Cm*q*chord**2
         else:
             tau_a = 0.
             
@@ -515,7 +518,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             Cm_list = pickle.load( f )
             theta_list = pickle.load( f )
     else:
-        theta_list = np.linspace(-3.*math.pi/4., 3*math.pi/4., 100)
+        theta_list = np.linspace(-math.pi/2., math.pi/2., 100)
         Cm_list = []
         for theta in theta_list:
             Cm = calculate_flap_moment(x, y, alpha, J['x'], - theta,
@@ -539,7 +542,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     s = actuator(sma, J, eps_0 = eps_0, material = 'SMA')
 
     #Check if crossing joint. If True do nothing
-    if s.check_crossing_joint(tol = 0.01) or l.check_crossing_joint(tol = 0.01):
+    if s.check_crossing_joint(tol = 0.005) or l.check_crossing_joint(tol = 0.005):
         return 0., s.theta, 0., 200.
     else:
         
@@ -589,6 +592,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             
     #        Cm = calculate_flap_moment(x, y, alpha, J['x'], - l.theta,
     #                                   unit_deflection = 'rad')
+
             Cm = Cm_function(l.theta)
             tau_a = Cm*q*chord**2
         else:
@@ -622,7 +626,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
 #        l.update()
 #    #    
 ##        deformation_theta(theta = -math.pi/2., plot = True)
-        plot_flap(x, y, J['x'], -s.theta)
+#        'plot_flap(x, y, J['x'], -s.theta)
 #    #    import matplotlib.pyplot as plt
 #        import matplotlib.pyplot as plt
 #        plt.scatter(J['x'] , y_J['l'])
@@ -757,10 +761,10 @@ def run(inputs, parameters = None):
     sigma_o = 400e6
            
     airfoil = "naca0012"
-    chord = 0.6175
+    chord = 1.#0.6175
     t = 0.12*chord
 
-    J = {'x':0.25, 'y':0.}
+    J = {'x':0.75, 'y':0.}
     
     # need to transform normalized coordiantes in to global coordinates
     sma['y+'] = sma['y+']*thickness(sma['x+'], t, chord)/2.
@@ -775,13 +779,13 @@ def run(inputs, parameters = None):
     
     # Design constants
     #original bias spring length
-    length_l = 0.06 #
+    length_l = 0.1 #
     
     #arm length to center of gravity
     r_w = 0.15
     
     #Aicraft weight (mass times gravity)
-    W = 0.06*9.8
+    W = 0.2*9.8 #0.06*9.8
     alpha = 0.
     V = 10 #m/s
     altitude = 10000. #feet
@@ -804,7 +808,7 @@ def run(inputs, parameters = None):
     return {'delta_xi': delta_xi, 'theta': theta, 'k': k, 'T':T}
     
 if __name__ == '__main__':
-    J = {'x':0.25, 'y':0.}
+    J = {'x':0.75, 'y':0.}
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
 #    sma = {'x-': J['x'], 'y-': -0.02*2/0.0441137488474, 'x+': 0.1225 + J['x'],
 #           'y+': 0.0135*2/0.0345972364185}
@@ -815,12 +819,11 @@ if __name__ == '__main__':
 #           'y+': 0.8}
 #    linear = {'x-': 0.125, 'y-': 0., 'x+': .280875, 
 #              'y+': -0.}
-    sma = {'x-': 0.0755349198441, 'y-': -0.683217938433, 'x+': 0.468927662681,
-           'y+': 0.79959454484}
-    linear = {'x-': 0.137940873304, 'y-': -0.660579929064, 'x+': 0.453353413238, 
-              'y+': 0.20369104683}
+    sma = {'x-': 0.299995775649, 'y-': -0.489271403902, 'x+': 0.933305551204,
+           'y+': 0.129628381654}
+    linear = {'x-': 0.17621128807, 'y-': 0.518957036421, 'x+': 0.826482293305, 
+              'y+': 0.77827287458}
 								
-
     #SMA Pre-stress
     sigma_o = 400e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})

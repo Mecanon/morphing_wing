@@ -67,13 +67,13 @@ eng.cd('SMA_temperature_strain_driven')
 # =============================================================================
 # 
 # =============================================================================
-chord = 0.6175
-x_hinge = 0.25
+chord = 1.
+x_hinge = 0.75
 safety = 0.05*chord
 
 opt_prob = Optimization('Static model optimization',objfunc)
 #xs_n
-opt_prob.addVar('x1', 'c', lower = safety , upper = x_hinge - safety, value = x_hinge/2. )
+opt_prob.addVar('x1', 'c', lower = x_hinge/2. , upper = x_hinge - safety, value = x_hinge/2. )
 #ys_n
 opt_prob.addVar('x2', 'c', lower = -.9, upper = -0., value = -.9)
 #xs_p
@@ -81,7 +81,7 @@ opt_prob.addVar('x3', 'c', lower = x_hinge + safety, upper = chord - safety, val
 #ys_p
 opt_prob.addVar('x4', 'c', lower = 0., upper = .9, value = .0)
 #xl_n
-opt_prob.addVar('x5', 'c',  lower = safety, upper = x_hinge - safety, value = x_hinge/2.)
+opt_prob.addVar('x5', 'c',  lower = x_hinge/2., upper = x_hinge - safety, value = x_hinge/2.)
 #yl_n
 opt_prob.addVar('x6', 'c', lower = -.9, upper = 0.9, value = 0.9)
 #xl_p
