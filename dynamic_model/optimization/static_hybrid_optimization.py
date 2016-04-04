@@ -103,6 +103,8 @@ DataFile.close()
 
 # Global Optimization
 nsga2 = NSGA2()
+nsga2.setOption('PopSize', 40)
+nsga2.setOption('maxGen', 50)
 nsga2(opt_prob)
 print opt_prob.solution(0)
 

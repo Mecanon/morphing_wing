@@ -50,7 +50,7 @@ class actuator():
         - k: linear spring elastic coefficient
         """
         #Storing inputs in local coordinate system
-        self.x_n= geo_props['x-'] - J['x']  #Local Coordinates
+        self.x_n = geo_props['x-'] - J['x']  #Local Coordinates
         self.y_n = geo_props['y-'] - J['y'] #Local Coordinates
         self.x_p = geo_props['x+'] - J['x'] #Local Coordinates
         self.y_p = geo_props['y+'] - J['y'] #Local Coordinates
@@ -214,9 +214,9 @@ class actuator():
         # Constraint B
         if self.r_n > self.r_p:
             self.max_theta_B = math.atan2(self.y_n*self.x_p - self.x_n*self.y_p,
-                                          self.x_n*self.x_p - self.y_n*self.y_p)
-            self.max_theta_B = np.sign(self.max_theta_B) * (self.max_theta_B % (2*math.pi))
-            print 'max_theta_B', self.max_theta_B
+                                          self.x_n*self.x_p + self.y_n*self.y_p)
+            self.max_theta_B = np.sign(self.max_theta_B) * (abs(self.max_theta_B) % (2*math.pi))
+
             if self.max_theta_B > 0.:
                 self.min_theta_B = self.max_theta_B
                 self.max_theta_B = self.max_theta_B - 2*math.pi
@@ -233,12 +233,12 @@ class actuator():
 #            print 'comparison', self.r_p, abs(y['l'])
             if self.r_p >= abs(y['l']):
                 a = (y['l'] - self.y_n)/(0. - self.x_n)
-                self.max_theta_A = newton(eq_theta_A, theta_0,  maxiter = 1000)
+                self.max_theta_A = newton(eq_theta_A, theta_0, diff_eq, maxiter = 1000)
             else:
                 self.max_theta_A = -math.pi/2.
             if self.r_p >= abs(y['u']):
                 a = (y['u'] - self.y_n)/(0. - self.x_n)
-                self.min_theta_A = newton(eq_theta_A, theta_0,  maxiter = 1000)
+                self.min_theta_A = newton(eq_theta_A, theta_0, diff_eq, maxiter = 1000)
             else:
                 self.min_theta_A = math.pi/2.
 
@@ -246,9 +246,8 @@ class actuator():
             self.max_theta_A = -math.pi/2.
             self.min_theta_A = math.pi/2.
 
-    
-        self.max_theta_A = np.sign(self.max_theta_A) * (self.max_theta_A % (2*math.pi))
-        self.min_theta_A = np.sign(self.min_theta_A) * (self.min_theta_A % (2*math.pi))
+        self.max_theta_A = np.sign(self.max_theta_A) * (abs(self.max_theta_A) % (2*math.pi))
+        self.min_theta_A = np.sign(self.min_theta_A) * (abs(self.min_theta_A) % (2*math.pi))
 
         self.max_theta = max(self.max_theta_A, self.max_theta_B)
         self.min_theta = min(self.min_theta_A, self.min_theta_B)         
@@ -350,7 +349,6 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         """Calculates the moment equilibrium. Function used for the 
         secant method.
         """
-        
         #calculate new theta for eps_s and update all the parameter
         #of the actuator class
         s.eps = eps_s
@@ -434,7 +432,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     
         return eps_s_list, theta_list
 
-    def plot_flap(x, y, x_J, theta):
+    def plot_flap(x, y, x_J, y_J = None, theta = 0):
         """
         Plot flap with actuators. theta is clockwise positive.
         @Author: Endryws (modified by Pedro Leal)
@@ -483,6 +481,12 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         
         s.plot_actuator()
         l.plot_actuator()
+        
+        if y_J != None:
+            for i in range(y_J):
+                plt.scatter(x_J , y_J[i])
+        plt.savefig( str(np.floor(100*abs(theta))) + "_configuration.png")
+        plt.close()
 #==============================================================================
 # Material and flow properties
 #==============================================================================
@@ -542,7 +546,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     s = actuator(sma, J, eps_0 = eps_0, material = 'SMA')
 
     #Check if crossing joint. If True do nothing
-    if s.check_crossing_joint(tol = 0.005) or l.check_crossing_joint(tol = 0.005):
+    if s.check_crossing_joint(tol = 0.001) or l.check_crossing_joint(tol = 0.001):
         return 0., s.theta, 0., 200.
     else:
         
@@ -611,7 +615,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         
         s.find_limits(y_J, theta_0 = 0)
         l.find_limits(y_J, theta_0 = 0)
-    
+
         print 's: limits', s.max_theta, s.min_theta
         print s.max_theta_A, s.max_theta_B
         print 'l: limits', l.max_theta, l.min_theta
@@ -626,9 +630,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
 #        l.update()
 #    #    
 ##        deformation_theta(theta = -math.pi/2., plot = True)
-#        'plot_flap(x, y, J['x'], -s.theta)
-#    #    import matplotlib.pyplot as plt
-#        import matplotlib.pyplot as plt
+#        plot_flap(x, y, J['x'], -s.theta)
 #        plt.scatter(J['x'] , y_J['l'])
 #        plt.scatter(J['x'] , y_J['u'])
     ##==============================================================================
@@ -712,7 +714,9 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             eps_l_list.append(l.eps)
             theta_list.append(math.degrees(s.theta))
     #        print i, eps_s, eps_0, s.theta
-        
+
+#        plot_flap(x, y, J['x'],[y_J['l'],y_J['u']], -s.theta)
+
         #Extra run with prescribed deformation (which has already been calculated)
         # to get all the properties
         for i in range(1, n_real):
@@ -819,11 +823,11 @@ if __name__ == '__main__':
 #           'y+': 0.8}
 #    linear = {'x-': 0.125, 'y-': 0., 'x+': .280875, 
 #              'y+': -0.}
-    sma = {'x-': 0.299995775649, 'y-': -0.489271403902, 'x+': 0.933305551204,
-           'y+': 0.129628381654}
-    linear = {'x-': 0.17621128807, 'y-': 0.518957036421, 'x+': 0.826482293305, 
-              'y+': 0.77827287458}
-								
+    sma = {'x+': 0.8470282457622402, 'y+': 0.3285094482343373, 
+           'y-': -0.8761071893285969, 'x-': 0.39555494486866644}
+    linear =  {'x+': 0.8245532223401671, 'y+': 0.17833420990262494, 
+               'y-': 0.8593955187045358, 'x-': 0.6004982481804977}
+							
     #SMA Pre-stress
     sigma_o = 400e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
