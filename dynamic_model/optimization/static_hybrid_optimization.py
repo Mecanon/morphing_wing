@@ -47,7 +47,7 @@ def objfunc(x):
     f = outputs['theta']
     
     DataFile = open('opt_data.txt','a')
-    DataFile.write( '\t' + str(f))    
+    DataFile.write( '\t %.5f' % (f) )    
     DataFile.write('\n')
     DataFile.close()
     
@@ -96,7 +96,7 @@ print opt_prob
 DataFile = open('opt_data.txt','w')
 key_list = ['xs-', 'ys-', 'xs+', 'ys+', 'xl-', 'yl-', 'xl+', 'yl+']
 output_list = ['theta']
-for key in ['i'] + key_list + output_list:
+for key in key_list + output_list:
     DataFile.write(key + '\t')
 DataFile.write('\n')
 DataFile.close()

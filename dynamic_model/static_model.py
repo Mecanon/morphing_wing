@@ -270,7 +270,14 @@ class actuator():
     
     def check_crossing_joint(self, tol = 1e-3):
         """Does the actuator cross the joint? Should not happen"""
-        B = (self.y_p - self.y_n)/(self.x_p - self.x_n)
+        
+        #rotationed 
+        x_p = self.x_p*math.cos(self.theta) - \
+                   self.y_p*math.sin(self.theta)
+        y_p = self.y_p*math.cos(self.theta) + \
+                   self.x_p*math.sin(self.theta)
+                   
+        B = (y_p - self.y_n)/(x_p - self.x_n)
         y_at_J = self.y_n - B* self.x_n
         
         if abs(y_at_J) < tol:
@@ -345,7 +352,8 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
 
     def equilibrium(eps_s, s, l, T_0, T_final, MVF_init, sigma_0,
                    i, n, r_w, W, x = None, y = None, alpha = 0.,
-                   q = 1., chord = 1., x_hinge = 0.25, aero_loads = aero_loads):
+                   q = 1., chord = 1., x_hinge = 0.25, aero_loads = aero_loads,
+                   return_abs = False):
         """Calculates the moment equilibrium. Function used for the 
         secant method.
         """
@@ -403,7 +411,10 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         f = open('data', 'a')
         f.write('\t Inner loop \t'+ str( eps_s) + '\t' + str( tau_s + tau_l + tau_w + tau_a)+ '\t' + str(l.theta)  + '\n')
         f.close()
-        return tau_s + tau_l + tau_w + tau_a
+        if return_abs:
+            return abs(tau_s + tau_l + tau_w + tau_a)
+        else:
+            return tau_s + tau_l + tau_w + tau_a
         
     def deformation_theta(theta = -math.pi/2., plot = False):
         """Return lists of deformation os SMA actuator per theta"""
@@ -425,7 +436,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             eps_l_list.append(l.eps)
         if plot:
             import matplotlib.pyplot as plt
-            plt.figure()    
+            plt.figure()
             plt.plot(np.degrees(theta_list), eps_s_list, 'r', np.degrees(theta_list), eps_l_list, 'b')  
             plt.xlabel('$\\theta (degrees)$')
             plt.ylabel('$\epsilon$')
@@ -485,6 +496,12 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         if y_J != None:
             for i in range(y_J):
                 plt.scatter(x_J , y_J[i])
+        plt.grid()
+        plt.locator_params(axis = 'y', nbins=6)
+        plt.xlabel('${}_{I}x$')
+        plt.ylabel('${}_{I}x$')
+        border = 0.05
+        plt.xlim(-border, 1+border)
         plt.savefig( str(np.floor(100*abs(theta))) + "_configuration.png")
         plt.close()
 #==============================================================================
@@ -546,8 +563,11 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
     s = actuator(sma, J, eps_0 = eps_0, material = 'SMA')
 
     #Check if crossing joint. If True do nothing
-    if s.check_crossing_joint(tol = 0.001) or l.check_crossing_joint(tol = 0.001):
-        return 0., s.theta, 0., 200.
+    if s.check_crossing_joint(tol = 0.01) or l.check_crossing_joint(tol = 0.01):
+        if all_outputs:
+            return 0., s.theta, 0., 200.
+        else:
+            return s.theta
     else:
         
     #===========================================================================
@@ -630,7 +650,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
 #        l.update()
 #    #    
 ##        deformation_theta(theta = -math.pi/2., plot = True)
-#        plot_flap(x, y, J['x'], -s.theta)
+        plot_flap(x, y, J['x'], theta = -s.theta)
 #        plt.scatter(J['x'] , y_J['l'])
 #        plt.scatter(J['x'] , y_J['u'])
     ##==============================================================================
@@ -655,43 +675,59 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             f = open('data', 'a')
             f.write(str(equilibrium_0) + '\t' + str(eps_0) + '\n')
             f.close()
-            if not abs(equilibrium_0) < 1e-4:
+            if not abs(equilibrium_0) < 1e-8:
                 if 1.1*eps_s> eps_0:
                     try:
-                        eps_s = brentq(equilibrium, eps_s*0.9, eps_0, args=((s, l, T_0, T_final, 
+                        eps_s = brentq(equilibrium, eps_s*0.95, eps_0, args=((s, l, T_0, T_final, 
                                        MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
                                        q, chord, J['x'], True)), rtol = 1e-6)
+
                     except:
-                        try:
-                            eps_s = brentq(equilibrium, 0., eps_0, args=((s, l, T_0, T_final, 
-                                           MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                                           q, chord, J['x'], True)), rtol = 1e-6)
-                        except:
+                        eps_before = (0.999)*eps_s
+                        for j in range(10):
                             try:
-                                OptimizeResult = minimize_scalar(equilibrium, (0., eps_0), (0., eps_0), args=((s, l, T_0, T_final, 
+                                eps_s = brentq(equilibrium, eps_before, eps_0, args=((s, l, T_0, T_final, 
                                                MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                                               q, chord, J['x'], True)), method = 'bounded')
-                                eps_s = OptimizeResult.x
+                                               q, chord, J['x'], True)), rtol = 1e-6)
+                                break
                             except:
-                                minimize_scalar(equilibrium,  (0., eps_0), (0., eps_0), args=((s, l, T_0, T_final, 
-                                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                                               q, chord, J['x'], True)), method='golden')
+                                eps_before = eps_before - 0.001*eps_s
+
+                        if j==9:
+                            f = open('data', 'a')
+                            f.write('bounded1')
+                            f.close()
+                            OptimizeResult = minimize_scalar(equilibrium, (0.8*eps_s, eps_s), bounds = (0.8*eps_s, eps_s), args=((s, l, T_0, T_final, 
+                                           MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                           q, chord, J['x'], True, True)), method = 'bounded', options = {'xatol' : 1e-07})
+                            eps_s = OptimizeResult.x
+#                            print OptimizeResult.fun
+
                 else:
                     try:
                         eps_s = brentq(equilibrium, eps_s*0.9, 1.1*eps_s, args=((s, l, T_0, T_final, 
                                        MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
                                        q, chord, J['x'], True)), rtol = 1e-6)
                     except:
-                        try:
-                            #In case the sings are not contrary, try using the secant method
-                            eps_s = brentq(equilibrium, 0, eps_0, args=((s, l, T_0, T_final, 
+                        eps_before = (0.999)*eps_s
+                        for j in range(10):
+                            try:
+                                eps_s = brentq(equilibrium, eps_before, eps_s, args=((s, l, T_0, T_final, 
+                                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                               q, chord, J['x'], True)), rtol = 1e-6)
+                                break
+                            except:
+                                eps_before = eps_before - 0.002*eps_s
+ 
+                        if j==9:
+                            f = open('data', 'a')
+                            f.write('bounded2')
+                            f.close()
+                            OptimizeResult = minimize_scalar(equilibrium, (0.5*eps_s, 1.1*eps_s), bounds = (0.5*eps_s, 1.1*eps_s), args=((s, l, T_0, T_final, 
                                            MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                                           q, chord, J['x'], True)), rtol = 1e-6)
-                        except:
-                            OptimizeResult = minimize_scalar(equilibrium, (0., eps_0), (0., eps_0), args=((s, l, T_0, T_final, 
-                                           MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                                           q, chord, J['x'], True)), method = 'bounded')
+                                           q, chord, J['x'], True, True)), method = 'bounded', options = {'xatol' : 1e-07})
                             eps_s = OptimizeResult.x
+                            
     #                        eps_s = newton(equilibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
     #                                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
     #                                       q, chord, J['x'], True)), maxiter = 500, 
@@ -703,8 +739,9 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             f = open('data', 'a')
             f.write('Outer loop \t'+ str(i)  + '\t'+ str(eps_s) + '\t'+ str(s.theta)+ '\n')
             f.close()
-
-            if s.theta <= max_theta:
+            
+            #stop if actuator crosses joints, exceds maximum theta and theta is positively increasing
+            if s.theta <= max_theta or s.check_crossing_joint(tol = 0.001) or l.check_crossing_joint(tol = 0.001) or s.theta > 0.01:
                 break
             else:
                 n_real +=1
@@ -715,33 +752,36 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             theta_list.append(math.degrees(s.theta))
     #        print i, eps_s, eps_0, s.theta
 
-#        plot_flap(x, y, J['x'],[y_J['l'],y_J['u']], -s.theta)
-
-        #Extra run with prescribed deformation (which has already been calculated)
-        # to get all the properties
-        for i in range(1, n_real):
-            data = constitutive_model(T_0, T_final, MVF_init, i, n, 
-                                      eps_s_list[i], eps_t_0, sigma_0 = sigma_o,
-                                      eps_0 = eps_0, plot = 'False')
-        delta_xi = 1. - data[1][-1][0]
+        plot_flap(x, y, J['x'], theta= -s.theta)
         
         if all_outputs:
-            sigma_list = []
-            for i in range(len(data[0])):
-                sigma_list.append(data[0][i][0])
-            MVF_list = []
-            for i in range(len(data[1])):
-                MVF_list.append(data[1][i][0])    
-            T_list = []
-            for i in range(len(data[2])):
-                T_list.append(data[2][i][0])    
-            eps_t_list = []
-            for i in range(len(data[3])):
-                eps_t_list.append(data[3][i][0])
-            return eps_s_list, theta_list, sigma_list, MVF_list, T_list, eps_t_list
+            if n_real == 1:
+                return 0., s.theta, 0., 200.
+            else:
+                #Extra run with prescribed deformation (which has already been calculated)
+                # to get all the properties
+                for i in range(1, n_real):
+                    data = constitutive_model(T_0, T_final, MVF_init, i, n, 
+                                              eps_s_list[i], eps_t_0, sigma_0 = sigma_o,
+                                              eps_0 = eps_0, plot = 'False')
+                delta_xi = 1. - data[1][-1][0]
+                
+                sigma_list = []
+                for i in range(len(data[0])):
+                    sigma_list.append(data[0][i][0])
+                MVF_list = []
+                for i in range(len(data[1])):
+                    MVF_list.append(data[1][i][0])    
+                T_list = []
+                for i in range(len(data[2])):
+                    T_list.append(data[2][i][0])    
+                eps_t_list = []
+                for i in range(len(data[3])):
+                    eps_t_list.append(data[3][i][0])
+                return eps_s_list, theta_list, sigma_list, MVF_list, T_list, eps_t_list
         else:
-            T = data[2][n_real-1][0]
-            return delta_xi, s.theta, l.k, T
+            print "k", l.k
+            return s.theta
 
 def run(inputs, parameters = None):
     """Function to be callled by DOE and optimization. Design Variables are 
@@ -804,12 +844,12 @@ def run(inputs, parameters = None):
     # Number of steps
     n = 200
     
-    delta_xi, theta, k, T = flap(airfoil, chord, J, sma, linear, sigma_o, 
+    theta= flap(airfoil, chord, J, sma, linear, sigma_o, 
                            length_l, W, r_w, V, altitude, alpha, T_0, 
                            T_final, MVF_init, n, all_outputs = False,
                            import_matlab = import_matlab, eng=eng)
     
-    return {'delta_xi': delta_xi, 'theta': theta, 'k': k, 'T':T}
+    return {'theta': theta}
     
 if __name__ == '__main__':
     J = {'x':0.75, 'y':0.}
@@ -823,15 +863,20 @@ if __name__ == '__main__':
 #           'y+': 0.8}
 #    linear = {'x-': 0.125, 'y-': 0., 'x+': .280875, 
 #              'y+': -0.}
-    sma = {'x+': 0.8470282457622402, 'y+': 0.3285094482343373, 
-           'y-': -0.8761071893285969, 'x-': 0.39555494486866644}
-    linear =  {'x+': 0.8245532223401671, 'y+': 0.17833420990262494, 
-               'y-': 0.8593955187045358, 'x-': 0.6004982481804977}
-							
+#    sma = {'x-': 0.395554944869, 'y-': -0.876107189329, 
+#           'x+': 0.847028245762, 'y+': 0.328509448234}
+#    linear =  {'x-': 0.60049824818, 'y-': 0.859395518705, 
+#               'x+': 0.82455322234, 'y+': 0.17833420990}
+    sma = {'x-': 6.817445e-001, 'y-': -5.216475e-001, 
+           'x+': 9.029895e-001, 'y+': 8.726738e-001}
+    linear =  {'x-': 6.958111e-001, 'y-': -4.593744e-001, 
+               'x+': 8.187166e-001, 'y+': -5.719241e-001}
     #SMA Pre-stress
     sigma_o = 400e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
-    print 'delta_xi', data['delta_xi'], 'theta: ', data['theta']
+    print  'theta: ', data['theta']
+    DataFile = open('data.txt','a')
+							
 ##==============================================================================
 ## Run withou run function
 ##==============================================================================
