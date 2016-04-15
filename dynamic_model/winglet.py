@@ -8,6 +8,8 @@ Created on Wed Mar 16 11:45:31 2016
 import pylab as plt
 import math
 
+from actuator import actuator
+
 class Winglet(object):
     def __init__(self, posicoes, R, k, area=None, epss_0=None,
                  tamanho_sem_deformacao_s=None):
