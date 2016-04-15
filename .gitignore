@@ -60,3 +60,15 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+
+#Mr Developer
+.mr.developer.cfg
+Cp_*
+Polar_*
+Coordinates*
+naca*
+flapped
+*.mat
+*.asv
+dynamic_model/optimization/data
