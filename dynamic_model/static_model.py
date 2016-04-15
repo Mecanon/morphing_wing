@@ -148,7 +148,7 @@ class actuator():
         #Calculate force from stress and cross section
         elif source == 'sigma':
             self.F = self.area * self.sigma
-                
+        return self.F                
     def calculate_torque(self):
         """Calculate torque given the actuator force: r \times F (where a is 
         global coordinates)"""
@@ -498,8 +498,8 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
                 plt.scatter(x_J , y_J[i])
         plt.grid()
         plt.locator_params(axis = 'y', nbins=6)
-        plt.xlabel('${}_{I}x$')
-        plt.ylabel('${}_{I}x$')
+        plt.xlabel('${}_{I}x + x_J$')
+        plt.ylabel('${}_{I}y$')
         border = 0.05
         plt.xlim(-border, 1+border)
         plt.savefig( str(np.floor(100*abs(theta))) + "_configuration.png")
@@ -621,7 +621,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             tau_a = Cm*q*chord**2
         else:
             tau_a = 0.
-            
+        
         l.k = - (s.torque + tau_w + tau_a)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
         
         l.calculate_force(source = 'strain')
@@ -650,7 +650,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
 #        l.update()
 #    #    
 ##        deformation_theta(theta = -math.pi/2., plot = True)
-        plot_flap(x, y, J['x'], theta = -s.theta)
+#        plot_flap(x, y, J['x'], theta = -s.theta)
 #        plt.scatter(J['x'] , y_J['l'])
 #        plt.scatter(J['x'] , y_J['u'])
     ##==============================================================================
@@ -660,7 +660,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
         eps_s_list = [eps_s]
         eps_l_list = [l.eps]
         theta_list = [s.theta]
-    
+        F_l_list =[l.calculate_force()]
         #Because of the constraint of the maximum deflection, it is possible that
         #the number of steps is smaller than n
         n_real = 1
@@ -723,7 +723,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
                             f = open('data', 'a')
                             f.write('bounded2')
                             f.close()
-                            OptimizeResult = minimize_scalar(equilibrium, (0.5*eps_s, 1.1*eps_s), bounds = (0.5*eps_s, 1.1*eps_s), args=((s, l, T_0, T_final, 
+                            OptimizeResult = minimize_scalar(equilibrium, (0.5*eps_s, 1.1*eps_s), bounds = (0.*eps_s, 1.1*eps_s), args=((s, l, T_0, T_final, 
                                            MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
                                            q, chord, J['x'], True, True)), method = 'bounded', options = {'xatol' : 1e-07})
                             eps_s = OptimizeResult.x
@@ -750,9 +750,10 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
             eps_s_list.append(eps_s)
             eps_l_list.append(l.eps)
             theta_list.append(math.degrees(s.theta))
+            F_l_list.append(l.calculate_force())
     #        print i, eps_s, eps_0, s.theta
 
-        plot_flap(x, y, J['x'], theta= -s.theta)
+#        plot_flap(x, y, J['x'], theta= -s.theta)
         
         if all_outputs:
             if n_real == 1:
@@ -778,10 +779,10 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, length_l, W, r_w, V,
                 eps_t_list = []
                 for i in range(len(data[3])):
                     eps_t_list.append(data[3][i][0])
-                return eps_s_list, theta_list, sigma_list, MVF_list, T_list, eps_t_list
+                return eps_s_list, eps_l_list, theta_list, sigma_list[:n_real], MVF_list, T_list[:n_real], eps_t_list, theta_list, F_l_list, l.k
         else:
             print "k", l.k
-            return s.theta
+            return s.theta, l.k
 
 def run(inputs, parameters = None):
     """Function to be callled by DOE and optimization. Design Variables are 
@@ -844,33 +845,72 @@ def run(inputs, parameters = None):
     # Number of steps
     n = 200
     
-    theta= flap(airfoil, chord, J, sma, linear, sigma_o, 
-                           length_l, W, r_w, V, altitude, alpha, T_0, 
-                           T_final, MVF_init, n, all_outputs = False,
-                           import_matlab = import_matlab, eng=eng)
+    all_outputs = True
     
-    return {'theta': theta}
+    if all_outputs:
+        eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k= flap(airfoil, chord, J, sma, linear, sigma_o, 
+                               length_l, W, r_w, V, altitude, alpha, T_0, 
+                               T_final, MVF_init, n, all_outputs = True,
+                               import_matlab = import_matlab, eng=eng)
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.plot(theta, eps_s, lw=2., label = "$\epsilon_s$")
+        plt.plot(theta, eps_l, 'b--',lw=2, label = "$\epsilon_l$")
+        plt.ylabel('$\epsilon$', fontsize=24)
+        plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
+        plt.legend(loc = 'best', fontsize = 'x-large')
+        plt.grid()
+        
+        plt.figure()
+        plt.plot(T, eps_s, 'b', lw=2., label = "$\epsilon_s$")
+        plt.plot(T, eps_l, 'b--',lw=2, label = "$\epsilon_l$")
+        plt.xlabel('$T (K)$', fontsize=20)
+        plt.ylabel('$\epsilon$', fontsize=24)
+        plt.legend(loc = 'best', fontsize = 'x-large')
+        plt.grid()
+        
+        plt.figure()
+        plt.plot(T, theta, lw=2.)
+        plt.xlabel('$T (K)$', fontsize=20)
+        plt.ylabel(r'$\theta ({}^{\circ})$', fontsize=20)
+        plt.grid()
+        
+        F_s = []
+        for i in range(len(sigma)):
+            F_s.append(sigma[i]*sma['area'])
+#        sigma_MPa = []
+#        for sigma_i in sigma:
+#            sigma_MPa.append(sigma_i/1e6)
+        plt.figure()
+        plt.plot(theta, F_s, 'b', lw=2., label = "$F_s$")
+        plt.plot(theta, F_l, 'b--', lw=2., label = "$F_l$")
+        plt.ylabel('$F (N)$', fontsize=20)
+        plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
+        plt.legend(loc = 'best', fontsize = 'x-large')
+        plt.grid()        
+    else:
+        theta, k= flap(airfoil, chord, J, sma, linear, sigma_o, 
+                               length_l, W, r_w, V, altitude, alpha, T_0, 
+                               T_final, MVF_init, n, all_outputs = False,
+                               import_matlab = import_matlab, eng=eng)
+        
+    return {'theta': theta, 'k': k}
     
 if __name__ == '__main__':
     J = {'x':0.75, 'y':0.}
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
-#    sma = {'x-': J['x'], 'y-': -0.02*2/0.0441137488474, 'x+': 0.1225 + J['x'],
-#           'y+': 0.0135*2/0.0345972364185}
-#    linear = {'x-': J['x'], 'y-': 0.032*2/0.0441137488474, 'x+': 0.146 + J['x'], 
-#              'y+': -0.0135*2/0.0321083851839}
 
-#    sma = {'x-': 0.125, 'y-': 0., 'x+': 0.586625,
-#           'y+': 0.8}
-#    linear = {'x-': 0.125, 'y-': 0., 'x+': .280875, 
-#              'y+': -0.}
-#    sma = {'x-': 0.395554944869, 'y-': -0.876107189329, 
-#           'x+': 0.847028245762, 'y+': 0.328509448234}
-#    linear =  {'x-': 0.60049824818, 'y-': 0.859395518705, 
-#               'x+': 0.82455322234, 'y+': 0.17833420990}
+    #Optimal for max deflection
     sma = {'x-': 6.817445e-001, 'y-': -5.216475e-001, 
            'x+': 9.029895e-001, 'y+': 8.726738e-001}
     linear =  {'x-': 6.958111e-001, 'y-': -4.593744e-001, 
                'x+': 8.187166e-001, 'y+': -5.719241e-001}
+
+    #Optimal multiobjective               
+    sma = {'x-': 6.161543e-001, 'y-': -6.631015e-001, 
+           'x+': 8.697452e-001, 'y+': 3.962915e-001}
+    linear =  {'x-': 4.593649e-001, 'y-': -7.127816e-001, 
+               'x+': 8.269874e-001, 'y+': -1.587640e-001}
     #SMA Pre-stress
     sigma_o = 400e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
