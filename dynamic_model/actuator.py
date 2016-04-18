@@ -23,7 +23,7 @@ class actuator():
     - material: linear or SMA
     """
     #
-    def __init__(self, geo_props, J, area = None, zero_stress_length = None,
+    def __init__(self, geo_props, J, R = None, area = None, zero_stress_length = None,
                  eps_0 = None, k = None, material = 'linear', design = 'A'):
         """
         Initiate class and it's basic atributes:
@@ -74,6 +74,10 @@ class actuator():
             self.area = geo_props['area']
         except:
             self.area = area
+        try:
+            self.R = geo_props['R']
+        except:
+            self.R = R
         self.sigma = None
         # type of actuator
         try:
@@ -190,7 +194,51 @@ class actuator():
             plt.plot([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
                      [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2],
                      colour)
-        #TODO: include spring plot
+        #TODO: include spring plot ( Included )
+        # To this type of actuator, the points will be diferent than the type 
+        # above.
+        elif self.actuator_type == "spring":
+            sup = self.R + self.R / 4
+            inf = self.R - self.R / 4
+            tamanho_l = self.rl
+            tamanho_s = self.rs
+            anel_l = tamanho_l / 10
+            anel_s = tamanho_s / 10
+            
+            cir1 = plt.Circle((0,0), radius= self.R, alpha =.7, fc='k')
+            cir2 = plt.Circle((0,0), radius=(self.R/2), alpha =.5, fc='w')
+                                                            
+            ax = plt.axes(aspect=1) # Create empty axes (aspect=1 it has to do 
+                                    # with the scale
+    
+            ax.add_patch(cir1)                    
+            ax.add_patch(cir2) 
+    
+            plt.plot([self.xl_n,self.xl_n + anel_l,self.xl_n + 2*anel_l,
+                      self.xl_n + 3*anel_l, self.xl_n + 4*anel_l, 
+                      self.xl_n + 5*anel_l, self.xl_n + 6*anel_l,
+                      self.xl_n + 7*anel_l, self.xl_n + 8*anel_l, 
+                      self.xl_n + 9*anel_l, self.xl_n + 10*anel_l,0], 
+                      [-self.R, -sup, -inf, -sup, -inf, -sup, -inf, -sup,
+                       -inf, -sup, -self.R, -self.R], 'r' )
+    
+            plt.plot([self.xs_n, self.xs_n + anel_s, self.xs_n + 2*anel_s,
+                      self.xs_n + 3*anel_s, self.xs_n + 4*anel_s, 
+                      self.xs_n + 5*anel_s, self.xs_n + 6*anel_s,
+                      self.xs_n + 7*anel_s, self.xs_n + 8*anel_s, 
+                      self.xs_n + 9*anel_s, self.xs_n + 10*anel_s,0], 
+                      [self.R,sup,inf,sup,inf,sup,inf,sup,
+                       inf,sup,self.R,self.R], 'r' )
+              
+            plt.plot([0, self.R + 0.1],[0,0],'b')
+            
+            if self.theta == 0:
+                pass
+            else:
+                plt.plot([0, self.R*math.cos(math.radians(self.theta))],
+                          [0, self.R*math.sin(math.radians(self.theta))],
+                'r')
+        
 
     def find_limits(self, y, theta_0 = 0):
         """The actuator has two major constraints:
