@@ -139,7 +139,7 @@ class actuator():
         if theta != None:
             self.theta = theta
         else:
-            #TODO: Add option for B
+            #TODO: Add option for B (Included)
             if self.design == 'A':
                 self.r_1 = self.x_p*math.cos(self.theta) - \
                         self.y_p*math.sin(self.theta) - self.x_n
@@ -147,19 +147,41 @@ class actuator():
                         self.x_p*math.sin(self.theta) - self.y_n
             
             self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
-            self.eps = self.length_r/self.zero_stress_length - 1. 
+            self.eps = self.length_r/self.zero_stress_length - 1.
+            
+          # I can´t use elif in this point, because the spyder says we have a invalid syntax.
+            
+            if self.design == 'B':
+                self.theta = theta
+                delta_r = math.radians(self.theta)*self.R
+                self.rl = self.xs_p - self.xs_n + delta_r
+                self.rl = self.xs_p - self.xs_n + delta_r
+                self.epss = (self.rs / self.tamanho_sem_deformacao_s) - 1
+                self.epsl = (self.rl / self.tamanho_sem_deformacao_l) - 1
          
     def calculate_force(self, source = 'strain'):
-        
-        if source == 'strain':
-            if self.material == 'linear':
-                self.F = self.k*self.eps*self.length_r
+        if self.design == 'A':
+            if source == 'strain':
+                if self.material == 'linear':
+                    self.F = self.k*self.eps*self.length_r
+                elif self.material == 'SMA':
+                    print "Put Edwin code here"
+            #Calculate force from stress and cross section
+            elif source == 'sigma':
+                self.F = self.area * self.sigma
+            return self.F  
+        elif self.design == 'B':
+            if source == 'tensao':
+                if self.material == 'linear':
+                    self.F = self.k*(self.epsl*self.rl)
             elif self.material == 'SMA':
-                print "Put Edwin code here"
-        #Calculate force from stress and cross section
+                print "Colocar o modelo constitutivo para o SMA"         
+                
+    # Calculate strain through the cross section
+                
         elif source == 'sigma':
-            self.F = self.area * self.sigma
-        return self.F      
+            self.F = self.area * self.sigma 
+        
           
     def calculate_torque(self):
         """Calculate torque given the actuator force: r \times F (where a is 
@@ -200,10 +222,10 @@ class actuator():
         elif self.actuator_type == "spring":
             sup = self.R + self.R / 4
             inf = self.R - self.R / 4
-            tamanho_l = self.rl
-            tamanho_s = self.rs
-            anel_l = tamanho_l / 10
-            anel_s = tamanho_s / 10
+            length_l = self.rl
+            length_s = self.rs
+            ring_l = length_l / 10
+            ring_s = length_s / 10
             
             cir1 = plt.Circle((0,0), radius= self.R, alpha =.7, fc='k')
             cir2 = plt.Circle((0,0), radius=(self.R/2), alpha =.5, fc='w')
@@ -214,19 +236,19 @@ class actuator():
             ax.add_patch(cir1)                    
             ax.add_patch(cir2) 
     
-            plt.plot([self.xl_n,self.xl_n + anel_l,self.xl_n + 2*anel_l,
-                      self.xl_n + 3*anel_l, self.xl_n + 4*anel_l, 
-                      self.xl_n + 5*anel_l, self.xl_n + 6*anel_l,
-                      self.xl_n + 7*anel_l, self.xl_n + 8*anel_l, 
-                      self.xl_n + 9*anel_l, self.xl_n + 10*anel_l,0], 
+            plt.plot([self.xl_n,self.xl_n + ring_l,self.xl_n + 2*ring_l,
+                      self.xl_n + 3*ring_l, self.xl_n + 4*ring_l, 
+                      self.xl_n + 5*ring_l, self.xl_n + 6*ring_l,
+                      self.xl_n + 7*ring_l, self.xl_n + 8*ring_l, 
+                      self.xl_n + 9*ring_l, self.xl_n + 10*ring_l,0], 
                       [-self.R, -sup, -inf, -sup, -inf, -sup, -inf, -sup,
                        -inf, -sup, -self.R, -self.R], 'r' )
     
-            plt.plot([self.xs_n, self.xs_n + anel_s, self.xs_n + 2*anel_s,
-                      self.xs_n + 3*anel_s, self.xs_n + 4*anel_s, 
-                      self.xs_n + 5*anel_s, self.xs_n + 6*anel_s,
-                      self.xs_n + 7*anel_s, self.xs_n + 8*anel_s, 
-                      self.xs_n + 9*anel_s, self.xs_n + 10*anel_s,0], 
+            plt.plot([self.xs_n, self.xs_n + ring_s, self.xs_n + 2*ring_s,
+                      self.xs_n + 3*ring_s, self.xs_n + 4*ring_s, 
+                      self.xs_n + 5*ring_s, self.xs_n + 6*ring_s,
+                      self.xs_n + 7*ring_s, self.xs_n + 8*ring_s, 
+                      self.xs_n + 9*ring_s, self.xs_n + 10*ring_s,0], 
                       [self.R,sup,inf,sup,inf,sup,inf,sup,
                        inf,sup,self.R,self.R], 'r' )
               
