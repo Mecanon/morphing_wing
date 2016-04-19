@@ -55,32 +55,41 @@ R = 0.1
 max_contractionFM = 0.01*c
 max_contractionMT = 0.02*c
 
-list_contractionsFM = np.linspace(0, max_contractionFM, 10)
-list_contractionsMT = np.linspace(0, max_contractionMT, 10)
+list_contractionsFM = np.linspace(0, max_contractionFM, 2)
+list_contractionsMT = np.linspace(0, max_contractionMT, 2)
 for contractionFM in list_contractionsFM:
     for contractionMT in list_contractionsMT:
         #in all interations the contration of the spring is the same
-        #calculating alfa, beta and gama based on SMA spring contraction
-#        contractionFM = 0.01 * c
-#        contractionMT = 0.02 * c
-        alfa = (contractionFM)/R
+        #calculating alpha, beta and gama based on SMA spring contraction
+        alpha = (contractionFM)/R
         gamma = (contractionMT)/R
      
-        alfa = alfa
-        M_alpha = {'x':M['x']*np.cos(alfa) - M['y']*np.sin(alfa),
-           'y':M['x']*np.sin(alfa) + M['y']*np.cos(alfa)}
+        M_alpha = {'x':M['x']*np.cos(alpha) - M['y']*np.sin(alpha),
+           'y':M['x']*np.sin(alpha) + M['y']*np.cos(alpha)}
     
-        beta = alfa + gamma
-        T_beta = {'x':T['x']*np.cos(beta) - T['y']*np.sin(beta),
-           'y':T['x']*np.sin(beta) + T['y']*np.cos(beta)}
-    
+        beta = alpha + gamma
+        T_alpha = {'x':T['x']*np.cos(alpha) - T['y']*np.sin(alpha),
+           'y':T['x']*np.sin(alpha) + T['y']*np.cos(alpha)}
+        
+        T_beta = {'x':M_alpha['x'] + 
+                      (T_alpha['x']-M_alpha['x'])*np.cos(beta) - 
+                      (T_alpha['y']-M_alpha['y'])*np.sin(beta),
+                  'y':M_alpha['y'] + 
+                      (T_alpha['x']-M_alpha['x'])*np.sin(beta) + 
+                      (T_alpha['y']-M_alpha['y'])*np.cos(beta)}
+           
         plotter(M_alpha, T_beta, fraction_M = contractionFM/max_contractionFM,
                 fraction_T = contractionMT/max_contractionMT)
+        print distance(F,M_alpha), distance(T_beta,M_alpha)
+plt.grid()
+plt.axes().set_aspect('equal')
+
 #TODO: change contraction to strain. Strain is negative when contracting and
 # positive when expanding. Usually strain = - contraction/length_o
 #TODO: plots of wingtip displacement versus deflection (alpha,gamma)
 #TODO: plots of wingtip displacement versus strain (contractionFM, contractionMT)
 #TODO: plots of deflections (relative, alpha, gamma) versus strains
+    
 '''   
     # Calculating the lengths
     l_FT=distance(F,T)
