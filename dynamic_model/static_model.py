@@ -56,10 +56,7 @@ def run(inputs, parameters = None):
     sma['area'] = math.pi*0.00025**2
     linear['area'] = 0.001
     
-    # Design constants
-    #original bias spring length
-    length_l = 0.1 #
-    
+    # Design constants   
     #arm length to center of gravity
     r_w = 0.15
     
@@ -83,7 +80,7 @@ def run(inputs, parameters = None):
     
     if all_outputs:
         eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k= flap(airfoil, chord, J, sma, linear, sigma_o, 
-                               length_l, W, r_w, V, altitude, alpha, T_0, 
+                               W, r_w, V, altitude, alpha, T_0, 
                                T_final, MVF_init, n, all_outputs = True,
                                import_matlab = import_matlab, eng=eng)
         import matplotlib.pyplot as plt
@@ -124,9 +121,9 @@ def run(inputs, parameters = None):
         plt.grid()        
     else:
         theta, k= flap(airfoil, chord, J, sma, linear, sigma_o, 
-                               length_l, W, r_w, V, altitude, alpha, T_0, 
-                               T_final, MVF_init, n, all_outputs = False,
-                               import_matlab = import_matlab, eng=eng)
+                       W, r_w, V, altitude, alpha, T_0, 
+                       T_final, MVF_init, n, all_outputs = False,
+                       import_matlab = import_matlab, eng=eng)
         
     return {'theta': theta, 'k': k}
     
