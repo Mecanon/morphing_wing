@@ -24,7 +24,8 @@ class actuator():
     """
     #
     def __init__(self, geo_props, J, R = None, area = None, zero_stress_length = None,
-                 eps_0 = None, k = None, material = 'linear', design = 'A'):
+                 eps_0 = None, k = None, material = 'linear', design = 'A',
+                 actuator_type = 'wire'):
         """
         Initiate class and it's basic atributes:
         - geoprops: dictionary with the following keys:
@@ -163,7 +164,7 @@ class actuator():
         if self.design == 'A':
             if source == 'strain':
                 if self.material == 'linear':
-                    self.F = self.k*self.eps*self.length_r
+                    self.F = self.k*self.eps*self.zero_stress_length
                 elif self.material == 'SMA':
                     print "Put Edwin code here"
             #Calculate force from stress and cross section

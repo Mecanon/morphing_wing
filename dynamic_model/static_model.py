@@ -13,9 +13,10 @@ Created on Wed Feb 17 13:10:30 2016
 @author: Pedro Leal
 """
 import math
-    
-import airfoil_module as af
+import numpy as np
+import pickle
 
+import airfoil_module as af
 from flap import flap
 
 def run(inputs, parameters = None):
@@ -76,10 +77,13 @@ def run(inputs, parameters = None):
     # Number of steps
     n = 200
     
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #Parameters to select how to output stuff
     all_outputs = True
-    
+    save_data = True
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
-        eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k= flap(airfoil, chord, J, sma, linear, sigma_o, 
+        eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s= flap(airfoil, chord, J, sma, linear, sigma_o, 
                                W, r_w, V, altitude, alpha, T_0, 
                                T_final, MVF_init, n, all_outputs = True,
                                import_matlab = import_matlab, eng=eng)
@@ -124,7 +128,13 @@ def run(inputs, parameters = None):
                        W, r_w, V, altitude, alpha, T_0, 
                        T_final, MVF_init, n, all_outputs = False,
                        import_matlab = import_matlab, eng=eng)
-        
+    
+    if save_data == True:
+        Data = {'theta': theta, 'eps_s': eps_s, 'eps_l': eps_l, 
+                'sigma': sigma, 'xi': MVF, 'T': T, 'eps_t': eps_t,
+                'F_l': F_l, 'k': k, 'L_s':L_s}
+        pickle.dump(Data, open( "data.p", "wb" ) )
+    
     return {'theta': theta, 'k': k}
     
 if __name__ == '__main__':
@@ -142,6 +152,12 @@ if __name__ == '__main__':
            'x+': 8.697452e-001, 'y+': 3.962915e-001}
     linear =  {'x-': 4.593649e-001, 'y-': -7.127816e-001, 
                'x+': 8.269874e-001, 'y+': -1.587640e-001}
+
+#    #Extension test           
+#    sma = {'x-': 0.6, 'y-': -0.6, 
+#           'x+': 0.8, 'y+': -0.6}
+#    linear =  {'x-': 0.6, 'y-': 0.6, 
+#               'x+': 0.8, 'y+': 0.6}
     #SMA Pre-stress
     sigma_o = 400e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
