@@ -23,7 +23,7 @@ class actuator():
     - material: linear or SMA
     """
     #
-    def __init__(self, geo_props, J, R = None, area = None, zero_stress_length = None,
+    def __init__(self, geo_props, J, area = None, zero_stress_length = None,
                  eps_0 = None, k = None, material = 'linear', design = 'A'):
         """
         Initiate class and it's basic atributes:
@@ -74,10 +74,7 @@ class actuator():
             self.area = geo_props['area']
         except:
             self.area = area
-        try:
-            self.R = geo_props['R']
-        except:
-            self.R = R
+
         self.sigma = None
         # type of actuator
         try:
@@ -133,7 +130,7 @@ class actuator():
                 self.theta = self.theta % (2.*math.pi)
         return self.theta
         
-    def update(self, theta = None):
+    def update(self, theta = None, R = None):
         """If vector length r or theta is changed, new coordinates are 
         calculated"""
         if theta != None:
@@ -146,18 +143,14 @@ class actuator():
                 self.r_2 = self.y_p*math.cos(self.theta) + \
                         self.x_p*math.sin(self.theta) - self.y_n
             
-            self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
-            self.eps = self.length_r/self.zero_stress_length - 1.
-            
-          # I can´t use elif in this point, because the spyder says we have a invalid syntax.
-            
-            if self.design == 'B':
+                self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
+                self.eps = self.length_r/self.zero_stress_length - 1.
+            elif self.design == 'B':
                 self.theta = theta
-                delta_r = math.radians(self.theta)*self.R
-                self.rl = self.xs_p - self.xs_n + delta_r
-                self.rl = self.xs_p - self.xs_n + delta_r
-                self.epss = (self.rs / self.tamanho_sem_deformacao_s) - 1
-                self.epsl = (self.rl / self.tamanho_sem_deformacao_l) - 1
+                delta_r = math.radians(self.theta)*R
+                self.r_1 = self.x_p - self.x_n + delta_r
+                self.r_2 = 0.
+                self.eps = self.length_r/self.zero_stress_length - 1.
          
     def calculate_force(self, source = 'strain'):
         if self.design == 'A':
