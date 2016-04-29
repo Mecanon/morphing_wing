@@ -97,12 +97,11 @@ for strainFM in list_strainsFM:
         
         plotter(M_gamma, T_beta, fraction_M = strainFM/max_strainFM,
                 fraction_T = strainMT/max_strainMT)
-       # print distance(F,M_gamma), distance(T_beta,M_gamma)
+
 plt.grid()
 
 
-#DONE?#TODO: change strain to strain. Strain is negative when contracting and
-# positive when expanding. Usually strain = - strain/length_o
+
 #TODO: plots of wingtip displacement versus deflection (gamma,beta)
 #TODO: plots of wingtip displacement versus strain (strainFM, strainMT)
 #TODO: plots of deflections (relative, gamma, beta) versus strains
@@ -111,15 +110,5 @@ plt.grid()
 print  'gamma: ', list_gamma
 print  'beta: ', list_beta
 print 'delta: ' , list_delta
-'''   
-    # Calculating the lengths
-    l_FT=distance(F,T)
-    l_FM=distance(F,M)
-    l_MT=distance(T,M)
-    print 'l_FM:', l_FM
-    print "  "
 
-print 'l_FM:', l_FM
-
-'''
 
