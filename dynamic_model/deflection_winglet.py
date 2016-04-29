@@ -46,13 +46,11 @@ l_FT = distance(F,T)
 l_FM = distance(F,M)
 l_MT = distance(T,M)
 
-plotter(M, T)
-
 #angular variables lists
 
-list_alpha=[]
-list_gamma = []
+list_gamma=[]
 list_beta = []
+
 
 #bearing radius
 R = 1.8
@@ -63,50 +61,48 @@ max_strainMT = -(0.02*c)/l_MT
 
 list_strainsFM = np.linspace(0, max_strainFM, 2)
 list_strainsMT = np.linspace(0, max_strainMT, 2)
+plt.figure()
 for strainFM in list_strainsFM:
-    alpha = -(strainFM)*l_FM/R
-    list_alpha.append(np.degrees(alpha))
+    gamma = -(strainFM)*l_FM/R
+    list_gamma.append(np.degrees(gamma))
     
     for strainMT in list_strainsMT:
         #in all interations the contration of the spring is the same
-        #calculating alpha, beta and gama based on SMA spring strain
+        #calculating gamma, beta and gama based on SMA spring strain
         
-        gamma = -(strainMT)*l_MT/R
-        list_gamma.append(np.degrees(gamma))
-        
-        M_alpha = {'x':M['x']*np.cos(alpha) - M['y']*np.sin(alpha),
-           'y':M['x']*np.sin(alpha) + M['y']*np.cos(alpha)}
-    
-        beta = alpha + gamma
+        beta = -(strainMT)*l_MT/R
         list_beta.append(np.degrees(beta))
         
-        T_alpha = {'x':T['x']*np.cos(alpha) - T['y']*np.sin(alpha),
-           'y':T['x']*np.sin(alpha) + T['y']*np.cos(alpha)}
+        M_gamma = {'x':M['x']*np.cos(gamma) - M['y']*np.sin(gamma),
+           'y':M['x']*np.sin(gamma) + M['y']*np.cos(gamma)}
+    
         
-        T_beta = {'x':M_alpha['x'] + 
-                      (T_alpha['x']-M_alpha['x'])*np.cos(beta) - 
-                      (T_alpha['y']-M_alpha['y'])*np.sin(beta),
-                  'y':M_alpha['y'] + 
-                      (T_alpha['x']-M_alpha['x'])*np.sin(beta) + 
-                      (T_alpha['y']-M_alpha['y'])*np.cos(beta)}
+        T_gamma = {'x':T['x']*np.cos(gamma) - T['y']*np.sin(gamma),
+           'y':T['x']*np.sin(gamma) + T['y']*np.cos(gamma)}
+        
+        T_beta = {'x':M_gamma['x'] + 
+                      (T_gamma['x']-M_gamma['x'])*np.cos(beta) - 
+                      (T_gamma['y']-M_gamma['y'])*np.sin(beta),
+                  'y':M_gamma['y'] + 
+                      (T_gamma['x']-M_gamma['x'])*np.sin(beta) + 
+                      (T_gamma['y']-M_gamma['y'])*np.cos(beta)}
            
-        plotter(M_alpha, T_beta, fraction_M = strainFM/max_strainFM,
+        plotter(M_gamma, T_beta, fraction_M = strainFM/max_strainFM,
                 fraction_T = strainMT/max_strainMT)
-        print distance(F,M_alpha), distance(T_beta,M_alpha)
+        print distance(F,M_gamma), distance(T_beta,M_gamma)
 plt.grid()
 
 
 #DONE?#TODO: change strain to strain. Strain is negative when contracting and
 # positive when expanding. Usually strain = - strain/length_o
-#TODO: plots of wingtip displacement versus deflection (alpha,gamma)
+#TODO: plots of wingtip displacement versus deflection (gamma,beta)
 #TODO: plots of wingtip displacement versus strain (strainFM, strainMT)
-#TODO: plots of deflections (relative, alpha, gamma) versus strains
+#TODO: plots of deflections (relative, gamma, beta) versus strains
 
 
+print  'gamma: ', list_gamma
+print  'beta: ', list_beta
 
-print  list_alpha
-print  list_beta
-print  list_gamma    
 '''   
     # Calculating the lengths
     l_FT=distance(F,T)
