@@ -23,7 +23,7 @@ class actuator():
     - material: linear or SMA
     """
     #
-    def __init__(self, positions, J, area = None, zero_stress_length = None,
+    def __init__(self, geo_props, J, area = None, zero_stress_length = None,
                  eps_0 = None, k = None, material = 'linear', design = 'C'):
         """
         Initiate class and it's basic atributes:
@@ -120,7 +120,7 @@ class actuator():
         """If vector length r or theta is changed, new coordinates are 
         calculated"""
         if theta != None:
-            s.theta = theta
+            self.theta = theta
         else:
             if self.design == 'C':
                 self.r_1 = self.x_p*math.cos(self.theta) - \

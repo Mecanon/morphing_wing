@@ -12,56 +12,29 @@ from actuator import actuator
 if __name__ == '__main__':
     
 #=======================================================================
-# Variaveis do projeto    
+# Design Variables
 #=======================================================================
-    
-    posicoes = {'xl_n': -1, 'xl_p': -0.5, 'xs_n': -1, 'xs_p': -0.5}
-    
     radius = 0.2
+    
+    sma_geo_props = {'x-': -1, 'x+': -0.5, 'y-': 0, 'y+': radius}
+    
+    linear_geo_props = {'x-' : -1, 'x+': -0.5, 'y+': 0, 'y-': - radius}
+    
+    J = {'x': 0, 'y': 0}
     
     k = 0.5
     
     deformacao_inicial = 0.2
     
-#=======================================================================
-# Criando uma instância de actuator
-#=======================================================================
-
-    wing = actuator(posicoes,radius,k,epss_0 = deformacao_inicial)
-
-#=======================================================================
-# Criando um desenho inicial do modelo
-#=======================================================================
-
-    wing.imprime_modelo('r')
+    design = "B"
     
 #=======================================================================
-# tendo em mãos um ângulo, calculo a deformacao que foi gerada.
-# calculo a força gerada e o torque gerados a partir deste angulo que 
-# foi girado.
+# Creating instances of actuator
 #=======================================================================
-    angulo_de_rotacao = 90 
     
-    material_l = 'linear'
+    # for the very first time the sma is modeled like a linear spring
+    SMA = 'linear'
+    sma = actuator(sma_geo_props, J, radius,k, SMA, design)
     
-    material_SMA= 'SMA'
-    
-    wing.update(angulo_de_rotacao)
-    
-    wing.calcula_forca(material_l)
-    
-    wing.calcula_forca(material_SMA)
-    
-    wing.calcula_torque()
-
-    
-
-#=======================================================================
-# Redesenha o modelo
-#=======================================================================
-
-    wing.imprime_modelo('b')
-    
-#=======================================================================
-# 
-#=======================================================================
+    linear = 'linear'
+    linear = actuator(sma_geo_props, J, radius, k, linear, design)
