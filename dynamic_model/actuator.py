@@ -102,7 +102,6 @@ class actuator():
         """
         Calculate angle for given deformation epsilon via the newton method.
         """
-        #TODO: include option for design B
         if self.design == "A":
             def diff_eq(theta):
                 sin = math.sin(theta)
@@ -130,13 +129,18 @@ class actuator():
                 self.theta = self.theta % (2.*math.pi)
         return self.theta
         
+        # TODO: Create this function, because i havent maked in winglet code
+        # See why the elif don´t work, but if works.
+        
+        if self.design == "B":
+            pass
+        
     def update(self, theta = None, R = None):
         """If vector length r or theta is changed, new coordinates are 
         calculated"""
         if theta != None:
             self.theta = theta
         else:
-            #TODO: Add option for B (Included)
             if self.design == 'A':
                 self.r_1 = self.x_p*math.cos(self.theta) - \
                         self.y_p*math.sin(self.theta) - self.x_n
@@ -209,7 +213,7 @@ class actuator():
             plt.plot([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
                      [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2],
                      colour)
-        #TODO: include spring plot ( Included )
+            
         # To this type of actuator, the points will be diferent than the type 
         # above.
         elif self.actuator_type == "spring":
