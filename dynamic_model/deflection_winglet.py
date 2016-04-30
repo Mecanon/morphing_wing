@@ -51,7 +51,13 @@ l_MT = distance(T,M)
 list_gamma=[]
 list_beta = []
 list_delta = []
-list_wingtipheigh = []
+aux_gamma = []
+aux_beta = []
+
+#wingtip heigh list
+
+list_wingtipheighgamma = []
+list_wingtipheighbeta = []
 
 #bearing radius
 R = 1.8
@@ -61,11 +67,12 @@ max_strainFM = -(0.01*c)/l_FM
 max_strainMT = -(0.02*c)/l_MT
 
 list_strainsFM = np.linspace(0, max_strainFM, 10)
-list_strainsMT = np.linspace(0, max_strainMT, 1)
+list_strainsMT = np.linspace(0, max_strainMT, 10)
 plt.figure()
+
 for strainFM in list_strainsFM:
-   
-    
+    gamma = -(strainFM)*l_FM/R
+    aux_gamma.append(np.degrees(gamma))      
     for strainMT in list_strainsMT:
         #in all interations the contration of the spring is the same
         #calculating gamma, beta and delta based on SMA spring strain
@@ -90,7 +97,8 @@ for strainFM in list_strainsFM:
                       (T_gamma['x']-M_gamma['x'])*np.sin(beta) + 
                       (T_gamma['y']-M_gamma['y'])*np.cos(beta)}
         
-        list_wingtipheigh.append(T_beta['y'])
+        if strainMT == 0: 
+            list_wingtipheighgamma.append(T_beta['y'])
         
         delta = np.arctan((T_beta['y']/T_beta['x']))
         list_delta.append(np.degrees(delta))
@@ -105,17 +113,26 @@ plt.grid()
 
 
 #TODO: plots of wingtip displacement versus deflection (gamma,beta)
-plt.figure()
-plt.grid()
-plt.scatter(list_gamma,list_wingtipheigh,color = 'g')
-plt.plot(list_gamma, list_wingtipheigh,color = 'g' )
+def deflectionbygamma():
+    plt.figure()
+    plt.grid()
+    plt.scatter(aux_gamma,list_wingtipheighgamma,color = 'g')
+    plt.plot(aux_gamma, list_wingtipheighgamma,color = 'g' )
+
+def deflectionbybeta():
+    plt.figure()
+    plt.grid()
+    plt.scatter(list_beta,list_wingtipheighbeta,color = 'g')
+    plt.plot(list_gamma, list_wingtipheighbeta,color = 'g' )
 
 #TODO: plots of wingtip displacement versus strain (strainFM, strainMT)
 #TODO: plots of deflections (relative, gamma, beta) versus strains
 
+deflectionbygamma()
 
+'''
 print  'gamma: ', list_gamma
 print  'beta: ', list_beta
 print 'delta: ' , list_delta
-
+'''
 
