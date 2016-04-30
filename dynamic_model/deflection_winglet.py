@@ -51,6 +51,7 @@ l_MT = distance(T,M)
 list_gamma=[]
 list_beta = []
 list_delta = []
+list_wingtipheigh = []
 
 #bearing radius
 R = 1.8
@@ -59,8 +60,8 @@ R = 1.8
 max_strainFM = -(0.01*c)/l_FM
 max_strainMT = -(0.02*c)/l_MT
 
-list_strainsFM = np.linspace(0, max_strainFM, 2)
-list_strainsMT = np.linspace(0, max_strainMT, 2)
+list_strainsFM = np.linspace(0, max_strainFM, 10)
+list_strainsMT = np.linspace(0, max_strainMT, 1)
 plt.figure()
 for strainFM in list_strainsFM:
    
@@ -89,6 +90,7 @@ for strainFM in list_strainsFM:
                       (T_gamma['x']-M_gamma['x'])*np.sin(beta) + 
                       (T_gamma['y']-M_gamma['y'])*np.cos(beta)}
         
+        list_wingtipheigh.append(T_beta['y'])
         
         delta = np.arctan((T_beta['y']/T_beta['x']))
         list_delta.append(np.degrees(delta))
@@ -103,6 +105,11 @@ plt.grid()
 
 
 #TODO: plots of wingtip displacement versus deflection (gamma,beta)
+plt.figure()
+plt.grid()
+plt.scatter(list_gamma,list_wingtipheigh,color = 'g')
+plt.plot(list_gamma, list_wingtipheigh,color = 'g' )
+
 #TODO: plots of wingtip displacement versus strain (strainFM, strainMT)
 #TODO: plots of deflections (relative, gamma, beta) versus strains
 
