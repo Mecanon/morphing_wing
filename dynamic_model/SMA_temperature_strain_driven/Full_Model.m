@@ -1,4 +1,4 @@
-function [ sigma, MVF, eps_t, E, MVF_r, eps_t_r ] = Full_Model(k, T, eps, P, elastic_check, integration_scheme, MVF_init, eps_t_0, sigma_0 )
+function [ sigma, MVF, eps_t, E, MVF_r, eps_t_r ] = Full_Model(k, T, eps, P, elastic_check, integration_scheme, MVF_init, eps_t_0, sigma_0, n )
 % Function to run the One Dimensional, strain-driven, implicit integration
 % scheme
 
@@ -25,23 +25,23 @@ TP.Y_0_t = TP.rho_delta_s0/2*(P.M_s-P.A_f)-TP.a3;
 % Arrays of output variables
 if k == 2
     % H_cur: Current maximum transformational strain
-    H_cur = zeros((size(T,1)),1);
+    H_cur = zeros(n,1);
     % eps_t: Transformational Strain
-    eps_t = zeros((size(T,1)),1);
+    eps_t = zeros(n,1);
     % sig: Stress
-    sigma = zeros((size(T,1)),1);
+    sigma = zeros(n,1);
     % MVF: Martensitic Volume Fraction
-    MVF = zeros((size(T,1)),1);
+    MVF = zeros(n,1);
     % E: Youngs Modulus
-    E = zeros((size(T,1)),1);
+    E = zeros(n,1);
     % eps_t_r: transformational strain at transformation reversal
-    eps_t_r = zeros((size(T,1)),1);
+    eps_t_r = zeros(n,1);
     % MVF_r: Martensic Strain at transformation reversal
-    MVF_r = zeros((size(T,1)),1);
+    MVF_r = zeros(n,1);
     %Phi_fwd: Forward transformation surface
-    Phi_fwd = zeros((size(T,1)),1);
+    Phi_fwd = zeros(n,1);
     %Phi_rev: Reverse transformation surface
-    Phi_rev = zeros((size(T,1)),1);
+    Phi_rev = zeros(n,1);
 
     % Initialize outputs
     H_cur(1,1) = P.H_min;
@@ -51,12 +51,68 @@ if k == 2
     E(1,1)=P.E_A;
 else
     load('data.mat',  'sigma','MVF', 'eps_t', 'E', 'MVF_r', 'eps_t_r', 'H_cur', 'Phi_fwd', 'Phi_rev')
-end    
+    if rem(k,n) == 2
+        old_n = size(T,1) - n;
+        disp('old_n')
+        disp(size(old_n))
+        H_cur = [H_cur(1:old_n,1); zeros(n,1)];
+        eps_t = [eps_t(1:old_n,1); zeros(n,1)];
+        sigma = [sigma(1:old_n,1); zeros(n,1)];
+        MVF = [MVF(1:old_n,1); zeros(n,1)];
+        E = [E(1:old_n,1); zeros(n,1)];
+        eps_t_r = [eps_t_r(1:old_n,1); zeros(n,1)];
+        MVF_r = [MVF_r(1:old_n,1); zeros(n,1)];
+        Phi_fwd = [Phi_fwd(1:old_n,1); zeros(n,1)];
+        Phi_rev = [Phi_rev(1:old_n,1); zeros(n,1)];
+    end
+end
+disp('rem')
+disp(rem(k,n))
+disp('k')
+disp(k)
+disp('n')
+disp(n)
+disp('T')
+disp(size(T))
+disp('eps')
+disp(size(eps))
+disp('H_cur')
+disp(size(H_cur))
+disp('eps_t')
+disp(size(eps_t))
+disp('sigma')
+disp(size(sigma))
+disp('MVF')
+disp(size(MVF))
+disp('E')
+disp(size(E))
+disp('eps_t_r')
+disp(size(eps_t_r))
+disp('MVF_r')
+disp(size(MVF_r))
+disp('Phi_fwd')
+disp(size(Phi_fwd))
+disp('Phi_rev')
+disp(size(Phi_rev))
+
 % Array for number of iterations required for each load step
 % increments = zeros((size(T,1)),1);
 
 %calculate everything for new strain
 i = k;
+
+% sigma(i,1)
+% eps_t(i,1)
+% MVF(i,1)
+% H_cur(i,1)
+% Phi_fwd(i,1)
+% Phi_rev(i,1)
+% eps(i,1)
+% size(T)
+% T(i,1)
+% E(i,1)
+% eps_t_r(i,1)
+% MVF_r(i,1)
 
 % increments(i,1)=0;
 % Initialize Output Variables

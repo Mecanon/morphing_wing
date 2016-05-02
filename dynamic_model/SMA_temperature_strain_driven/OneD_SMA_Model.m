@@ -1,4 +1,4 @@
-function [sigma, MVF, T, eps_t, eps]=OneD_SMA_Model(k, eps_current, T_0, T_final, MVF_init, eps_t_0, sigma_0, eps_0,n, to_plot) %k, T_inp, eps_i,
+function [sigma, MVF, T, eps_t, eps]=OneD_SMA_Model(k, eps_current, T, MVF_init, eps_t_0, sigma_0, eps_0,n, to_plot) %k, T_inp, eps_i,
 % Modified Edwins original code to calculate just for a given T and eps
 % Ideal: [sigma, MVF]=OneD_SMA_Model(T_inp, esp_inp)
 %Inputs:
@@ -70,14 +70,22 @@ P.MVF_tolerance=1e-8;
 % Generate strain and temperature states at each increment
 %T: Temperature
 if k == 2
-  T_inp = [T_0; T_final];
-    for i = 1:(size(T_inp,1)-1)
-        if i == 1
-            T = linspace(T_inp(i), T_inp(i+1), n)';
-        else     
-            T = [T; linspace(T_inp(i), T_inp(i+1),n)'];
-        end
-    end
+  T = cell2mat(T);
+  T = T(1:n);
+  T = T.';
+  % T_inp = [T_0; T_final];
+    % for i = 1:(size(T_inp,1)-1)
+        % if i == 1
+            % T = linspace(T_inp(i), T_inp(i+1), n)';
+        % else     
+            % T = [T; linspace(T_inp(i), T_inp(i+1),n)'];
+        % end
+    % end
+elseif rem(k,n) == 2 %If remainder equal to 1, just started a new cycle
+  new_n = (floor(k/n)+1)*n;
+  T = cell2mat(T);
+  T = T(1:new_n);
+  T = T.';
 else
     load('data.mat', 'T')
 end
@@ -88,6 +96,12 @@ if k == 2
     eps(1) = eps_0;
 else
     load('data.mat', 'eps')
+    if rem(k,n) == 2
+        old_n = size(T,1) - n;
+        disp('old_n')
+        disp(size(old_n))
+        eps = [eps(1:old_n,1); zeros(n,1)];
+    end
 end
 eps(k) = eps_current;
 
@@ -98,7 +112,7 @@ elastic_check = 'N';
 % Integration Scheme
 integration_scheme = 'I';
 
-[sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( k, T, eps, P, elastic_check, integration_scheme, MVF_init, eps_t_0, sigma_0 );
+[sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( k, T, eps, P, elastic_check, integration_scheme, MVF_init, eps_t_0, sigma_0, n );
 
 if strcmp(to_plot,'True')
     figure()

@@ -74,25 +74,57 @@ def run(inputs, parameters = None):
     #Initial martensitic volume fraction
     MVF_init = 1.
     
-    # Number of steps
+    # Number of steps and cycles
     n = 200
-    
+    n_cycles = 0
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
     all_outputs = True
-    save_data = True
+    save_data = False
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
-        eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s= flap(airfoil, chord, J, sma, linear, sigma_o, 
+        eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s = flap(airfoil, 
+                               chord, J, sma, linear, sigma_o, 
                                W, r_w, V, altitude, alpha, T_0, 
                                T_final, MVF_init, n, all_outputs = True,
-                               import_matlab = import_matlab, eng=eng)
+                               import_matlab = import_matlab, eng=eng,
+                               n_cycles = n_cycles)
+
         import matplotlib.pyplot as plt
         plt.figure()
         plt.plot(theta, eps_s, lw=2., label = "$\epsilon_s$")
         plt.plot(theta, eps_l, 'b--',lw=2, label = "$\epsilon_l$")
         plt.ylabel('$\epsilon$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
+        plt.legend(loc = 'best', fontsize = 'x-large')
+        plt.grid()
+        
+        print len(T), len(eps_s), len(eps_l), len(theta), len(eps_t)
+        plt.figure()
+        plt.plot(theta, eps_t, lw=2.)
+        plt.ylabel('$\epsilon_t$', fontsize=24)
+        plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
+        plt.legend(loc = 'best', fontsize = 'x-large')
+        plt.grid()
+        
+        plt.figure()
+        plt.plot(theta, MVF, lw=2.)
+        plt.ylabel('$MVF$', fontsize=24)
+        plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
+        plt.legend(loc = 'best', fontsize = 'x-large')
+        plt.grid()
+
+        plt.figure()
+        plt.plot(T, MVF, lw=2.)
+        plt.ylabel('$MVF$', fontsize=24)
+        plt.xlabel('$T (K)$', fontsize=20)
+        plt.legend(loc = 'best', fontsize = 'x-large')
+        plt.grid()
+
+        plt.figure()
+        plt.plot(T, sigma, lw=2.)
+        plt.ylabel('$\sigma$', fontsize=24)
+        plt.xlabel('$T (K)$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
         plt.grid()
         
@@ -127,7 +159,8 @@ def run(inputs, parameters = None):
         theta, k= flap(airfoil, chord, J, sma, linear, sigma_o, 
                        W, r_w, V, altitude, alpha, T_0, 
                        T_final, MVF_init, n, all_outputs = False,
-                       import_matlab = import_matlab, eng=eng)
+                       import_matlab = import_matlab, eng=eng,
+                       n_cycles = n_cycles)
     
     if save_data == True:
         Data = {'theta': theta, 'eps_s': eps_s, 'eps_l': eps_l, 
@@ -147,11 +180,11 @@ if __name__ == '__main__':
     linear =  {'x-': 6.958111e-001, 'y-': -4.593744e-001, 
                'x+': 8.187166e-001, 'y+': -5.719241e-001}
 
-    #Optimal multiobjective               
-    sma = {'x-': 6.161543e-001, 'y-': -6.631015e-001, 
-           'x+': 8.697452e-001, 'y+': 3.962915e-001}
-    linear =  {'x-': 4.593649e-001, 'y-': -7.127816e-001, 
-               'x+': 8.269874e-001, 'y+': -1.587640e-001}
+#    #Optimal multiobjective               
+#    sma = {'x-': 6.161543e-001, 'y-': -6.631015e-001, 
+#           'x+': 8.697452e-001, 'y+': 3.962915e-001}
+#    linear =  {'x-': 4.593649e-001, 'y-': -7.127816e-001, 
+#               'x+': 8.269874e-001, 'y+': -1.587640e-001}
 
 #    #Extension test           
 #    sma = {'x-': 0.6, 'y-': -0.6, 
