@@ -51,7 +51,7 @@ if k == 2
     E(1,1)=P.E_A;
 else
     load('data.mat',  'sigma','MVF', 'eps_t', 'E', 'MVF_r', 'eps_t_r', 'H_cur', 'Phi_fwd', 'Phi_rev')
-    if rem(k,n) == 2
+    if rem(k,n) == 1
         old_n = size(T,1) - n;
         disp('old_n')
         disp(size(old_n))

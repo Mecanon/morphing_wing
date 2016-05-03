@@ -69,7 +69,7 @@ def run(inputs, parameters = None):
     
     # Temperature
     T_0 = 220.
-    T_final = 400.
+    T_final = 420.
      
     #Initial martensitic volume fraction
     MVF_init = 1.
@@ -94,6 +94,8 @@ def run(inputs, parameters = None):
         plt.figure()
         plt.plot(theta, eps_s, lw=2., label = "$\epsilon_s$")
         plt.plot(theta, eps_l, 'b--',lw=2, label = "$\epsilon_l$")
+        plt.scatter(theta, eps_s, c = 'b')
+        plt.scatter(theta, eps_l, c = 'b')
         plt.ylabel('$\epsilon$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -102,6 +104,7 @@ def run(inputs, parameters = None):
         print len(T), len(eps_s), len(eps_l), len(theta), len(eps_t)
         plt.figure()
         plt.plot(theta, eps_t, lw=2.)
+        plt.scatter(theta, eps_t, c = 'b')
         plt.ylabel('$\epsilon_t$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -109,6 +112,7 @@ def run(inputs, parameters = None):
         
         plt.figure()
         plt.plot(theta, MVF, lw=2.)
+        plt.scatter(theta, MVF, c = 'b')
         plt.ylabel('$MVF$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -116,6 +120,7 @@ def run(inputs, parameters = None):
 
         plt.figure()
         plt.plot(T, MVF, lw=2.)
+        plt.scatter(T, MVF, c = 'b')
         plt.ylabel('$MVF$', fontsize=24)
         plt.xlabel('$T (K)$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -123,6 +128,7 @@ def run(inputs, parameters = None):
 
         plt.figure()
         plt.plot(T, sigma, lw=2.)
+        plt.scatter(T, sigma, c = 'b')
         plt.ylabel('$\sigma$', fontsize=24)
         plt.xlabel('$T (K)$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -131,6 +137,8 @@ def run(inputs, parameters = None):
         plt.figure()
         plt.plot(T, eps_s, 'b', lw=2., label = "$\epsilon_s$")
         plt.plot(T, eps_l, 'b--',lw=2, label = "$\epsilon_l$")
+        plt.scatter(T, eps_s, c = 'b')
+        plt.scatter(T, eps_l, c = 'b')
         plt.xlabel('$T (K)$', fontsize=20)
         plt.ylabel('$\epsilon$', fontsize=24)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -138,6 +146,7 @@ def run(inputs, parameters = None):
         
         plt.figure()
         plt.plot(T, theta, lw=2.)
+        plt.scatter(T, theta, c = 'b')
         plt.xlabel('$T (K)$', fontsize=20)
         plt.ylabel(r'$\theta ({}^{\circ})$', fontsize=20)
         plt.grid()
@@ -191,6 +200,12 @@ if __name__ == '__main__':
 #           'x+': 0.8, 'y+': -0.6}
 #    linear =  {'x-': 0.6, 'y-': 0.6, 
 #               'x+': 0.8, 'y+': 0.6}
+
+#    #Compression test with n_real = n              
+#    sma = {'x-': 0.6, 'y-': -0.6, 
+#           'x+': 0.8, 'y+': -0.6}
+#    linear = {'x-': 0.6, 'y-': -0.6, 
+#           'x+': 0.8, 'y+': -0.6}
     #SMA Pre-stress
     sigma_o = 400e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
