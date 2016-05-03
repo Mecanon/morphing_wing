@@ -92,27 +92,27 @@ for i in range(1, n):
     P_list.append(P)
 t = np.linspace(0,(n-2)*delta_t, n-1)
 
-#plt.figure()
-#plt.plot(t, I_list, 'b')
-#plt.scatter(t, I_list, c = 'b')
-#plt.xlabel('Time (s)')
-#plt.ylabel('Current (A)')
-#plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
-#          min(I_list) - 0.02*(max(I_list)-min(I_list)),
-#          max(I_list) + 0.02*(max(I_list)-min(I_list))])
-#plt.grid()
-#
-#plt.figure()
-#plt.plot(t, P_list, 'b')
-#plt.scatter(t, P_list, c = 'b')
-#plt.xlabel('Time (s)')
-#plt.ylabel('Power (W)')
-#plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
-#          min(P_list) - 0.02*(max(P_list)-min(P_list)),
-#          max(P_list) + 0.02*(max(P_list)-min(P_list))])
-#plt.grid()
-#
-#Total_power = 0
-#for i in range(len(P_list)-1):
-#    Total_power += delta_t*(P_list[i] + P_list[i+1])/2.
-#print 'Total power is %f Joules' % Total_power
+plt.figure()
+plt.plot(t, I_list, 'b')
+plt.scatter(t, I_list, c = 'b')
+plt.xlabel('Time (s)')
+plt.ylabel('Current (A)')
+plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
+          min(I_list) - 0.02*(max(I_list)-min(I_list)),
+          max(I_list) + 0.02*(max(I_list)-min(I_list))])
+plt.grid()
+
+plt.figure()
+plt.plot(t, P_list, 'b')
+plt.scatter(t, P_list, c = 'b')
+plt.xlabel('Time (s)')
+plt.ylabel('Power (W)')
+plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
+          min(P_list) - 0.02*(max(P_list)-min(P_list)),
+          max(P_list) + 0.02*(max(P_list)-min(P_list))])
+plt.grid()
+
+Total_power = 0
+for i in range(len(P_list)-1):
+    Total_power += delta_t*(P_list[i] + P_list[i+1])/2.
+print 'Total power is %f Joules' % Total_power

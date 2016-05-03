@@ -53,8 +53,6 @@ else
     load('data.mat',  'sigma','MVF', 'eps_t', 'E', 'MVF_r', 'eps_t_r', 'H_cur', 'Phi_fwd', 'Phi_rev')
     if rem(k,n) == 1
         old_n = size(T,1) - n;
-        disp('old_n')
-        disp(size(old_n))
         H_cur = [H_cur(1:old_n,1); zeros(n,1)];
         eps_t = [eps_t(1:old_n,1); zeros(n,1)];
         sigma = [sigma(1:old_n,1); zeros(n,1)];
@@ -66,53 +64,12 @@ else
         Phi_rev = [Phi_rev(1:old_n,1); zeros(n,1)];
     end
 end
-disp('rem')
-disp(rem(k,n))
-disp('k')
-disp(k)
-disp('n')
-disp(n)
-disp('T')
-disp(size(T))
-disp('eps')
-disp(size(eps))
-disp('H_cur')
-disp(size(H_cur))
-disp('eps_t')
-disp(size(eps_t))
-disp('sigma')
-disp(size(sigma))
-disp('MVF')
-disp(size(MVF))
-disp('E')
-disp(size(E))
-disp('eps_t_r')
-disp(size(eps_t_r))
-disp('MVF_r')
-disp(size(MVF_r))
-disp('Phi_fwd')
-disp(size(Phi_fwd))
-disp('Phi_rev')
-disp(size(Phi_rev))
 
 % Array for number of iterations required for each load step
 % increments = zeros((size(T,1)),1);
 
 %calculate everything for new strain
 i = k;
-
-% sigma(i,1)
-% eps_t(i,1)
-% MVF(i,1)
-% H_cur(i,1)
-% Phi_fwd(i,1)
-% Phi_rev(i,1)
-% eps(i,1)
-% size(T)
-% T(i,1)
-% E(i,1)
-% eps_t_r(i,1)
-% MVF_r(i,1)
 
 % increments(i,1)=0;
 % Initialize Output Variables

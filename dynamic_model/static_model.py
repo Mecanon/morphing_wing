@@ -80,7 +80,7 @@ def run(inputs, parameters = None):
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
     all_outputs = True
-    save_data = False
+    save_data = True
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
         eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s = flap(airfoil, 
@@ -209,7 +209,7 @@ if __name__ == '__main__':
     #SMA Pre-stress
     sigma_o = 400e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
-    print  'theta: ', data['theta']
+#    print  'theta: ', data['theta']
     DataFile = open('data.txt','a')
 							
 ##==============================================================================

@@ -98,8 +98,6 @@ else
     load('data.mat', 'eps')
     if rem(k,n) == 1
         old_n = size(T,1) - n;
-        disp('old_n')
-        disp(size(old_n))
         eps = [eps(1:old_n,1); zeros(n,1)];
     end
 end

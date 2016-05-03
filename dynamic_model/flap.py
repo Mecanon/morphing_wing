@@ -61,76 +61,6 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                                       nargout=6)
         return data
 
-    def equilibrium(eps_s, s, l, T, MVF_init, sigma_0,
-                   i, n, r_w, W, x = None, y = None, alpha = 0.,
-                   q = 1., chord = 1., x_hinge = 0.25, aero_loads = aero_loads,
-                   return_abs = False):
-        """Calculates the moment equilibrium. Function used for the 
-        secant method.
-        """
-        #calculate new theta for eps_s and update all the parameter
-        #of the actuator class
-        s.eps = eps_s
-#        print s.eps, s.eps_0, s.r_1, s.r_2, s.r_1_0, s.r_2_0, s.max_eps, s.min_eps
-#        print s.min_theta, s.max_theta
-#        try:
-#        print eps_s
-        s.calculate_theta(theta_0 = s.theta)
-#        except:
-#            s.theta = max(s.max_theta, l.max_theta)
-#            s.update()
-#            l.theta = max_theta
-#            l.update()
-#            plot_flap(x, y, J['x'], -s.theta)
-#            raise Exception("Inverse solution for theta did not converge")
-        s.update()
-        
-        l.theta = s.theta
-        l.update()
-        #SMA (Constitutive equation: coupling via sigma)
-        data = constitutive_model(T, MVF_init, i, n, eps_s,
-                                  eps_t_0, sigma_0, s.eps_0, plot = 'False')
-        
-        s.sigma = data[0][i][0]
-        s.calculate_force(source = 'sigma')
-        tau_s = s.calculate_torque()
-        
-        #Linear (Geometric equation: coupling via theta)
-        l.calculate_force()
-        tau_l = l.calculate_torque()
-        
-        #weight (Geometric equation: coupling via theta)
-        tau_w = - r_w*W*math.cos(l.theta)
-
-        #aerodynamic (Panel method: coupling via theta)
-        if aero_loads:
-            # The deflection considered for the flap is positivite in
-            # the clockwise, contrary to the dynamic system. Hence we need
-            # to multiply it by -1.
-#            print alpha, x_hinge, l.theta
-            if abs(l.theta) > math.pi/2.:
-                tau_a = - np.sign(l.theta)*4
-            else:
-                Cm = Cm_function(l.theta)
-                tau_a = Cm*q*chord**2
-#            Cm = calculate_flap_moment(x, y, alpha, x_hinge, - l.theta,
-#                                       unit_deflection = 'rad')
-        else:
-            tau_a = 0.
-            
-#        print 'tau', tau_s, tau_l, tau_w, tau_a, tau_s + tau_l + tau_w + tau_a
-        f = open('data', 'a')
-        f.write('\t Inner loop \t'+ str(T[i]) + '\t' + str( eps_s) + '\t' + \
-                str( tau_s + tau_l + tau_w + tau_a) + '\t' + str( tau_s) + '\t' + str(tau_l) + '\t' + str(tau_w) + '\t' + str(tau_a) + '\t' + \
-                str(l.theta)  + '\n')
-        f.write('\t ' + str(i) + '\t' + str(n) +'\n')
-        f.write('\t ' + str(l.F) + '\t' + str(s.F) + '\n')
-        f.close()
-        if return_abs:
-            return abs(tau_s + tau_l + tau_w + tau_a)
-        else:
-            return tau_s + tau_l + tau_w + tau_a
-
     def eps_s_fixed_point(eps_s, s, l, T, MVF_init, sigma_0,
                    i, n, r_w, W, x = None, y = None, alpha = 0.,
                    q = 1., chord = 1., x_hinge = 0.25, aero_loads = aero_loads,
@@ -141,18 +71,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         #calculate new theta for eps_s and update all the parameter
         #of the actuator class
         s.eps = eps_s
-#        print s.eps, s.eps_0, s.r_1, s.r_2, s.r_1_0, s.r_2_0, s.max_eps, s.min_eps
-#        print s.min_theta, s.max_theta
-#        try:
-#        print eps_s
         s.calculate_theta(theta_0 = s.theta)
-#        except:
-#            s.theta = max(s.max_theta, l.max_theta)
-#            s.update()
-#            l.theta = max_theta
-#            l.update()
-#            plot_flap(x, y, J['x'], -s.theta)
-#            raise Exception("Inverse solution for theta did not converge")
         s.update()
         
         l.theta = s.theta
@@ -177,14 +96,11 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
             # The deflection considered for the flap is positivite in
             # the clockwise, contrary to the dynamic system. Hence we need
             # to multiply it by -1.
-#            print alpha, x_hinge, l.theta
             if abs(l.theta) > math.pi/2.:
                 tau_a = - np.sign(l.theta)*4
             else:
                 Cm = Cm_function(l.theta)
                 tau_a = Cm*q*chord**2
-#            Cm = calculate_flap_moment(x, y, alpha, x_hinge, - l.theta,
-#                                       unit_deflection = 'rad')
         else:
             tau_a = 0.
         
@@ -198,8 +114,6 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         f.write('\t Inner loop \t'+ str(T[i]) + '\t' + str( eps_s) + '\t' + \
                 str( tau_s + tau_l + tau_w + tau_a) + '\t' + str( tau_s) + '\t' + str(tau_l) + '\t' + str(tau_w) + '\t' + str(tau_a) + '\t' + \
                 str(l.theta)  + '\n')
-        f.write('\t ' + str(i) + '\t' + str(n) +'\n')
-        f.write('\t ' + str(l.F) + '\t' + str(s.F) + '\n')
         f.close()        
         return eps_s
             
@@ -381,7 +295,6 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         s.sigma = sigma_o
         s.calculate_force(source = 'sigma')
         s.eps_t_0 = eps_t_0
-    #    print s.eps_0, s.eps_t_0, s.sigma, s.max_theta,
     
         if alpha != 0.:
             raise Exception('The initial equilibirum equation only ' + \
@@ -446,7 +359,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                 Nt = (E*G*l.d*l.length_r_0 + (1.-2.*C)*E*G*l.d**2 - \
                      8.*l.F*G*C**3)/(E*G*l.d**2 + 8.*E*l.F*C**3)
                 Na = Nt + G/E #Equivalent active number of springs
-                print "Ns", Nt, Na
+#                print "Ns", Nt, Na
                 
             l.k = l.d**4*G/(8*l.D**3*Na)
             if l.F < 0.:
@@ -454,21 +367,14 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                 l.solid = (Nt + 1)*l.d
             else:
                 l.zero_stress_length = (2*C - 1 + Nt)*l.d
-                print "different zero lengths", (2*C - 1 + Nt)*l.d, -l.F/l.k + l.length_r_0
                 l.solid = l.zero_stress_length
-            print 'before'    
-            print l.F,  l.k, l.d, G, l.D, Na, Nt, l.zero_stress_length, safety_factor, l.length_r_0, l.length_r_0/l.zero_stress_length
-            print 'strain', l.length_r_0/l.zero_stress_length -1.         
+      
             l.update()
             l.eps_0 = l.eps
             l.calculate_force(source = 'strain')
             l.calculate_torque()
             l.calculate_theta()
-            print "after"
-            print l.F,  l.k, l.d, G, l.D, Na, Nt, l.zero_stress_length, safety_factor, l.length_r_0
-            print 'strain', l.eps          
-            print "torques"            
-            print l.torque, l.theta,  s.torque + tau_w + tau_a, s.torque, tau_w, tau_a, l.torque
+
             t = 0.12
             
             y_J = af.Naca00XX(chord, t, [J['x']], return_dict = 'y')
@@ -476,23 +382,13 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
             s.find_limits(y_J, theta_0 = 0)
             l.find_limits(y_J, theta_0 = 0)
     
-            print 's: limits', s.max_theta, s.min_theta
-            print s.max_theta_A, s.max_theta_B
-            print 'l: limits', l.max_theta, l.min_theta
-            print l.max_theta_A, l.max_theta_B
+#            print 's: limits', s.max_theta, s.min_theta
+#            print s.max_theta_A, s.max_theta_B
+#            print 'l: limits', l.max_theta, l.min_theta
+#            print l.max_theta_A, l.max_theta_B
             
             max_theta = max(s.max_theta, l.max_theta)
             
-    #        #The following code is good for plotting the airfoil and etc
-    #        s.theta = s.max_theta_B
-    #        s.update()
-    #        l.theta = s.max_theta_B
-    #        l.update()
-    #    #    
-    ##        deformation_theta(theta = -math.pi/2., plot = True)
-    #        plot_flap(x, y, J['x'], theta = -s.theta)
-    #        plt.scatter(J['x'] , y_J['l'])
-    #        plt.scatter(J['x'] , y_J['u'])
         ##==============================================================================
         # Matlab simulation
         ##==============================================================================         
@@ -514,7 +410,6 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                 iterations = n
             else:
                 iterations = 2*n*n_cycles
-            a_counter = 0
             #original number of steps without any restrictions
             n_o = n
 
@@ -525,98 +420,16 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                 #to break
                 if i == iterations:
                     break
-#                equilibrium_0 = equilibrium(eps_s, s, l, T, MVF_init, sigma_o,
-#                           i, n, r_w, W, x, y, alpha, q, chord, J['x'], True)
-#                f = open('data', 'a')
-#                f.write(str(equilibrium_0) + '\t' + str(eps_0) + '\n')
-#                f.close()
-                print "T length: ", len(T)
-#                if not abs(equilibrium_0) < 1e-8:
+
+                #Linear prediction 
                 delta_eps = eps_s_prev[1] - eps_s_prev[0]
+                #Correction with fixed point iteration
                 eps_s = fixed_point(eps_s_fixed_point, eps_s + delta_eps, args=((s, l, T, 
                                        MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
                                        q, chord, J['x'], True)), xtol = 1e-8)
                 eps_s_prev[0] = eps_s_prev[1]
                 eps_s_prev[1] = eps_s
-#                    if 1.1*eps_s> eps_0:
-#                        try:
-#                            eps_s = brentq(equilibrium, eps_s*0.9, eps_0, args=((s, l, T, 
-#                                           MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#                                           q, chord, J['x'], True)), rtol = 1e-8)
-#                        except:
-#                            eps_before = (0.999)*eps_s
-#                            for j in range(10):
-#                                try:
-#                                    eps_s = brentq(equilibrium, eps_before, eps_0, args=((s, l, T, 
-#                                                   MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#                                                   q, chord, J['x'], True)), rtol = 1e-8)
-#                                    break
-#                                except:
-#                                    eps_before = eps_before - 0.001*eps_s
-#    
-#                            if j == 9:
-#                                f = open('data', 'a')
-#                                f.write('bounded1')
-#                                f.close()
-#                                OptimizeResult = minimize_scalar(equilibrium, (0.9*eps_0, eps_0), bounds = (0.9*eps_0, eps_0), args=((s, l, T, 
-#                                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#                                               q, chord, J['x'], True, True)), method = 'bounded', options = {'xatol' : 1e-08})
-#                                eps_s = OptimizeResult.x
-#    #                            print OptimizeResult.fun
-#    
-#                    else:
-#                        if n != n_real:
-#                            try:
-#                                eps_s = brentq(equilibrium, eps_s*0.9, 1.1*eps_s, args=((s, l, T, 
-#                                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#                                               q, chord, J['x'], True)), rtol = 1e-8)
-#                            except:
-#                                eps_before = (0.999)*eps_s
-#                                for j in range(10):
-#                                    try:
-#                                        eps_s = brentq(equilibrium, eps_before, eps_s, args=((s, l, T, 
-#                                                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#                                                       q, chord, J['x'], True)), rtol = 1e-8)
-#                                        break
-#                                    except:
-#                                        eps_before = eps_before - 0.002*eps_s
-#         
-#                                if j==9:
-#                                    f = open('data', 'a')
-#                                    f.write('bounded2')
-#                                    f.close()
-#                                    OptimizeResult = minimize_scalar(equilibrium, (0.5*eps_s, 1.1*eps_s), bounds = (0.*eps_s, 1.1*eps_s), args=((s, l, T, 
-#                                                   MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#                                                   q, chord, J['x'], True, True)), method = 'bounded', options = {'xatol' : 1e-08})
-#                                    eps_s = OptimizeResult.x
-#                        else:
-#                            try:
-#                                eps_s = brentq(equilibrium, eps_s*0.9, 1.2*eps_s, args=((s, l, T, 
-#                                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#                                               q, chord, J['x'], True)), rtol = 1e-8)
-#                            except:
-#                                eps_after = (1.001)*eps_s
-#                                for j in range(10):
-#                                    try:
-#                                        eps_s = brentq(equilibrium, eps_s, eps_after, args=((s, l, T, 
-#                                                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#                                                       q, chord, J['x'], True)), rtol = 1e-8)
-#                                        break
-#                                    except:
-#                                        eps_before = eps_before + 0.002*eps_s
-#         
-#                                if j==9:
-#                                    f = open('data', 'a')
-#                                    f.write('bounded2')
-#                                    f.close()
-#                                    OptimizeResult = minimize_scalar(equilibrium, (0.9*eps_s, eps_0), bounds = (0.*eps_s, eps_0), args=((s, l, T, 
-#                                                   MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#                                                   q, chord, J['x'], True, True)), method = 'bounded', options = {'xatol' : 1e-08})
-#                                    eps_s = OptimizeResult.x                                
-#        #                        eps_s = newton(equilibrium, x0 = eps_s, args = ((s, l, T_0, T_final, 
-#        #                                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-#        #                                       q, chord, J['x'], True)), maxiter = 500, 
-#        #                                       tol = 1.0e-6)
+
                 s.eps = eps_s
                 s.calculate_theta(theta_0 = s.theta)
                 s.update()
@@ -632,16 +445,22 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                         T = T[:n_real]
                         break
                     else:
-                        a_counter += 1
                         n = n_real #+ 10
                         iterations = 2*n_real*n_cycles
                         T_cycle = T[:n_real]  + T[:n_real][::-1] #+ 10*[T[n_real-1]]
                         T = T_cycle
                         for k in range(n_cycles-1):
                             T += T_cycle
-                        print 'iterations: ', iterations, n_real, n_cycles, a_counter, len(T)
+                        #Rerun ith iteration
+                        #Linear prediction 
+                        delta_eps = eps_s_prev[1] - eps_s_prev[0]
+                        #Correction with fixed point iteration
+                        eps_s = fixed_point(eps_s_fixed_point, eps_s + delta_eps, args=((s, l, T, 
+                                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                               q, chord, J['x'], True)), xtol = 1e-8)
+                        eps_s_prev[0] = eps_s_prev[1]
+                        eps_s_prev[1] = eps_s
                 else:
-                    print 'n_o: ', n_o, ', n: ', n, 'n_real', n_real
                     if n != n_real:
                         n_real +=1
                     if n_o == n_real:
@@ -655,16 +474,14 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                             T = T_cycle
                             for k in range(n_cycles-1):
                                 T += T_cycle
-                        print 'length of T: ', len(T)
-                    l.theta = s.theta
-                    l.update()
-                    
-                    eps_s_list.append(eps_s)
-                    eps_l_list.append(l.eps)
-                    theta_list.append(math.degrees(s.theta))
-                    F_l_list.append(l.calculate_force())
-                    L_s_list.append(s.length_r)
-        #        print i, eps_s, eps_0, s.theta
+                l.theta = s.theta
+                l.update()
+                
+                eps_s_list.append(eps_s)
+                eps_l_list.append(l.eps)
+                theta_list.append(math.degrees(s.theta))
+                F_l_list.append(l.calculate_force())
+                L_s_list.append(s.length_r)
     
             plot_flap(x, y, J['x'], theta= -s.theta)
             
@@ -693,6 +510,5 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                     for i in range(len(data[3])):
                         eps_t_list.append(data[3][i][0])
                     return eps_s_list, eps_l_list, theta_list, sigma_list, MVF_list, T, eps_t_list, theta_list, F_l_list, l.k, L_s_list
-            else:
-                print "k", l.k
-                return s.theta, l.k
+#            else:
+#                print "k", l.k
