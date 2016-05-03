@@ -70,6 +70,7 @@ max_strainMT = -(0.02*c)/l_MT
 list_strainsFM = np.linspace(0, max_strainFM, 10)
 list_strainsMT = np.linspace(0, max_strainMT, 10)
 plt.figure()
+plt.grid()
 
 for strainFM in list_strainsFM:
     
@@ -120,10 +121,10 @@ for strainFM in list_strainsFM:
         plotter(M_gamma, T_beta, fraction_M = strainFM/max_strainFM,
                 fraction_T = strainMT/max_strainMT)
 
-plt.grid()
 
 
 #DONE: plots of wingtip displacement versus deflection (gamma,beta)
+
 def deflectionbygamma():
     #calculates for beta = 0
     plt.figure()
