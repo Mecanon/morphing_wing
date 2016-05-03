@@ -59,6 +59,7 @@ aux_beta = []
 list_wingtipheightgamma = []
 list_wingtipheightbeta = []
 
+
 #bearing radius
 R = 1.8
 #-----------------------------------------------------------------------------#
@@ -71,8 +72,11 @@ list_strainsMT = np.linspace(0, max_strainMT, 10)
 plt.figure()
 
 for strainFM in list_strainsFM:
+    
     gamma = -(strainFM)*l_FM/R
-    aux_gamma.append(np.degrees(gamma))      
+    aux_gamma.append(np.degrees(gamma))
+
+    
     for strainMT in list_strainsMT:
         #in all interations the contration of the spring is the same
         #calculating gamma, beta and delta based on SMA spring strain
@@ -80,13 +84,13 @@ for strainFM in list_strainsFM:
         gamma = -(strainFM)*l_FM/R
         list_gamma.append(np.degrees(gamma))        
         
-        
-            
+                  
         beta = -(strainMT)*l_MT/R                
         list_beta.append(np.degrees(beta))
         
         if strainFM == 0 :
             aux_beta.append(np.degrees(beta))
+         
         
         M_gamma = {'x':M['x']*np.cos(gamma) - M['y']*np.sin(gamma),
            'y':M['x']*np.sin(gamma) + M['y']*np.cos(gamma)}
@@ -121,30 +125,57 @@ plt.grid()
 
 #DONE: plots of wingtip displacement versus deflection (gamma,beta)
 def deflectionbygamma():
+    #calculates for beta = 0
     plt.figure()
     plt.grid()
     plt.scatter(aux_gamma,list_wingtipheightgamma,color = 'c')
     plt.plot(aux_gamma, list_wingtipheightgamma,color = 'c' )
-    plt.xlabel('gamma')
+    plt.xlabel('gamma (considering beta = 0) ')
     plt.ylabel('tip height')
     
 def deflectionbybeta():
-    #currently calculates for gamma = 0
+    #calculates for gamma = 0
     plt.figure()
     plt.grid()
     plt.scatter(aux_beta,list_wingtipheightbeta ,color = 'g')
     plt.plot(aux_beta, list_wingtipheightbeta ,color = 'g' )
-    plt.xlabel('beta (considering gamma = o)')
+    plt.xlabel('beta (considering gamma = 0)')
     plt.ylabel('tip height')
 
-#TODO: plots of wingtip displacement versus strain (strainFM, strainMT)
+
+#DONE: plots of wingtip displacement versus strain (strainFM, strainMT)
+
+
+def deflectionbystrainFM():
+    #calculates for beta = 0
+    plt.figure()
+    plt.grid()
+    plt.scatter(list_strainsFM,list_wingtipheightgamma)
+    plt.plot(list_strainsFM,list_wingtipheightgamma)
+    plt.xlabel('FM strains')
+    plt.ylabel('wingtipheight (for beta = 0)')
+    
+def deflectionbystrainMT():
+    #calculates for gamma = 0
+    plt.figure()
+    plt.grid()
+    plt.scatter(list_strainsMT,list_wingtipheightbeta, color = [0.8,0.2,0.7])
+    plt.plot(list_strainsMT,list_wingtipheightbeta, color = [0.8,0.2,0.7])
+    plt.xlabel('MT strains')
+    plt.ylabel('wingtipheight (for gamma = 0)')    
+
+
+
 #TODO: plots of deflections (relative, gamma, beta) versus strains
 
 
 
+#plotting functions
+
 deflectionbygamma()
 deflectionbybeta()
-
+deflectionbystrainFM()
+deflectionbystrainMT()
 
 '''
 print  'gamma: ', list_gamma
