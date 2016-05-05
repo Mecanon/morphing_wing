@@ -70,6 +70,11 @@ class actuator():
         #define initial values for r, theta and force
         self.theta = 0
         self.F = 0.
+        
+        # Initializing the variables of the spring.
+        self.D = geo_props['D']
+        self.N = geo_props['N']
+        
         #Cross section area
         try:
             self.area = geo_props['area']
@@ -217,6 +222,13 @@ class actuator():
             
         # To this type of actuator, the points will be diferent than the type 
         # above.
+        
+        #TODO: alterar sup por self.D
+        #TODO: trocar 10 por self.N
+        #TODO: Alterar xl e s n e p por x- e x+
+        #TODO: Passar circ1 e circ2 para o código do winglet
+        
+        
         elif self.actuator_type == "spring":
             sup = self.R + self.R / 4
             inf = self.R - self.R / 4
