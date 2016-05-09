@@ -223,19 +223,14 @@ class actuator():
         # To this type of actuator, the points will be diferent than the type 
         # above.
         
-        #TODO: alterar sup por self.D
-        #TODO: trocar 10 por self.N
-        #TODO: Alterar xl e s n e p por x- e x+
-        #TODO: Passar circ1 e circ2 para o código do winglet
+        
+        #TODO: Passar circ1 e circ2 para o código do winglet (melhor passar quando
+        # o código do winglet estiver sendo construido com base neste)
         
         
         elif self.actuator_type == "spring":
-            sup = self.R + self.R / 4
-            inf = self.R - self.R / 4
-            length_l = self.rl
-            length_s = self.rs
-            ring_l = length_l / 10
-            ring_s = length_s / 10
+            ring = (self.x_p - self.x_n) / self.N  # In this actual geometry, returns 
+                                                   # a positive value.
             
             cir1 = plt.Circle((0,0), radius= self.R, alpha =.7, fc='k')
             cir2 = plt.Circle((0,0), radius=(self.R/2), alpha =.5, fc='w')
@@ -246,21 +241,21 @@ class actuator():
             ax.add_patch(cir1)                    
             ax.add_patch(cir2) 
     
-            plt.plot([self.xl_n,self.xl_n + ring_l,self.xl_n + 2*ring_l,
-                      self.xl_n + 3*ring_l, self.xl_n + 4*ring_l, 
-                      self.xl_n + 5*ring_l, self.xl_n + 6*ring_l,
-                      self.xl_n + 7*ring_l, self.xl_n + 8*ring_l, 
-                      self.xl_n + 9*ring_l, self.xl_n + 10*ring_l,0], 
-                      [-self.R, -sup, -inf, -sup, -inf, -sup, -inf, -sup,
-                       -inf, -sup, -self.R, -self.R], 'r' )
+            plt.plot([self.x_n,self.x_n + ring,self.x_n + 2*ring,
+                      self.x_n + 3*ring, self.x_n + 4*ring, 
+                      self.x_n + 5*ring, self.x_n + 6*ring,
+                      self.x_n + 7*ring, self.x_n + 8*ring, 
+                      self.x_n + 9*ring, self.x_n + 10*ring,0], 
+                      [-self.R, -self.D, -self.D, -self.D, -self.D, -self.D,
+                       -self.D, -self.D,-self.D, -self.D, -self.R, -self.R], 'r' )
     
-            plt.plot([self.xs_n, self.xs_n + ring_s, self.xs_n + 2*ring_s,
-                      self.xs_n + 3*ring_s, self.xs_n + 4*ring_s, 
-                      self.xs_n + 5*ring_s, self.xs_n + 6*ring_s,
-                      self.xs_n + 7*ring_s, self.xs_n + 8*ring_s, 
-                      self.xs_n + 9*ring_s, self.xs_n + 10*ring_s,0], 
-                      [self.R,sup,inf,sup,inf,sup,inf,sup,
-                       inf,sup,self.R,self.R], 'r' )
+            plt.plot([self.x_n, self.x_n + ring, self.x_n + 2*ring,
+                      self.x_n + 3*ring, self.x_n + 4*ring, 
+                      self.x_n + 5*ring, self.x_n + 6*ring,
+                      self.x_n + 7*ring, self.x_n + 8*ring, 
+                      self.x_n + 9*ring, self.x_n + 10*ring,0], 
+                      [self.R,self.D, self.D ,self.D, self.D, self.D, self.D,
+                       self.D, self.D, self.D, self.R,self.R], 'r' )
               
             plt.plot([0, self.R + 0.1],[0,0],'b')
             
