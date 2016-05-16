@@ -7,6 +7,7 @@ Created on Fri Apr 15 17:27:40 2016
 import math
 from scipy.optimize import newton
 import numpy as np
+import matplotlib.pyplot as plt
 
 class actuator():
     """
@@ -24,8 +25,8 @@ class actuator():
     """
     #
     def __init__(self, geo_props, J, R = None, area = None, zero_stress_length = None,
-                 eps_0 = None, k = None, material = 'linear', design = 'A',
-                 actuator_type = 'wire'):
+                 eps_0 = None, k = None, material = 'linear', design = 'B',
+                 actuator_type = 'spring'):
         """
         Initiate class and it's basic atributes:
         - geoprops: dictionary with the following keys:
@@ -103,6 +104,11 @@ class actuator():
         
         if material == 'linear':
             self.k = k
+        
+#TODO: Adicionei esta linha, pois acredito que é a melhor maneira de não invalidar os modelos que não
+     # tem raio no modelo.
+        if R!= None:
+            self.R = R
             
     def calculate_theta(self, theta_0 = 0.):
         """
@@ -203,22 +209,23 @@ class actuator():
         return self.torque
         
     def plot_actuator(self):
-        import matplotlib.pyplot as plt
+        
         if self.material == 'linear':
             colour = 'b'
         elif self.material == 'SMA':
             colour = 'r'
+            
         plt.figure(1)
         plt.axes().set_aspect('equal')
         
         if self.actuator_type == "wire":
-            plt.scatter([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
-                        [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2], 
-                        c=colour)
-            plt.scatter([self.x_J],[self.y_J], c = 'g')
-            plt.plot([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
-                     [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2],
-                     colour)
+           plt.scatter([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
+                       [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2], 
+                       c=colour)
+           plt.scatter([self.x_J],[self.y_J], c = 'g')
+           plt.plot([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
+                    [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2],
+                    colour)
             
         # To this type of actuator, the points will be diferent than the type 
         # above.
@@ -228,9 +235,12 @@ class actuator():
         # o código do winglet estiver sendo construido com base neste)
         
         
-        elif self.actuator_type == "spring":
-            ring = (self.x_p - self.x_n) / self.N  # In this actual geometry, returns 
-                                                   # a positive value.
+        if self.actuator_type == "spring":
+            
+            sup = self.y_n + self.D/2
+            inf = self.y_n - (self.D/2)
+            length = self.r_1_0
+            ring = length / self.N
             
             cir1 = plt.Circle((0,0), radius= self.R, alpha =.7, fc='k')
             cir2 = plt.Circle((0,0), radius=(self.R/2), alpha =.5, fc='w')
@@ -243,19 +253,19 @@ class actuator():
     
             plt.plot([self.x_n,self.x_n + ring,self.x_n + 2*ring,
                       self.x_n + 3*ring, self.x_n + 4*ring, 
-                      self.x_n + 5*ring, self.x_n + 6*ring,
+                      self.x_n + 5*ring, self.x_n+ 6*ring,
                       self.x_n + 7*ring, self.x_n + 8*ring, 
                       self.x_n + 9*ring, self.x_n + 10*ring,0], 
-                      [-self.R, -self.D, -self.D, -self.D, -self.D, -self.D,
-                       -self.D, -self.D,-self.D, -self.D, -self.R, -self.R], 'r' )
+                      [self.y_n, sup, inf, sup, inf, sup, inf, sup,
+                       inf, sup, self.y_p, self.y_p], 'r' )
     
-            plt.plot([self.x_n, self.x_n + ring, self.x_n + 2*ring,
-                      self.x_n + 3*ring, self.x_n + 4*ring, 
-                      self.x_n + 5*ring, self.x_n + 6*ring,
-                      self.x_n + 7*ring, self.x_n + 8*ring, 
-                      self.x_n + 9*ring, self.x_n + 10*ring,0], 
-                      [self.R,self.D, self.D ,self.D, self.D, self.D, self.D,
-                       self.D, self.D, self.D, self.R,self.R], 'r' )
+            #plt.plot([self.xs_n, self.xs_n + ring_s, self.xs_n + 2*ring_s,
+            #         self.xs_n + 3*ring_s, self.xs_n + 4*ring_s, 
+            #         self.xs_n + 5*ring_s, self.xs_n + 6*ring_s,
+            #         self.xs_n + 7*ring_s, self.xs_n + 8*ring_s, 
+            #         self.xs_n + 9*ring_s, self.xs_n + 10*ring_s,0], 
+            #         [self.R,sup,inf,sup,inf,sup,inf,sup,
+            #           inf,sup,self.R,self.R], 'r' )
               
             plt.plot([0, self.R + 0.1],[0,0],'b')
             
@@ -265,6 +275,7 @@ class actuator():
                 plt.plot([0, self.R*math.cos(math.radians(self.theta))],
                           [0, self.R*math.sin(math.radians(self.theta))],
                 'r')
+        
         
 
     def find_limits(self, y, theta_0 = 0):
