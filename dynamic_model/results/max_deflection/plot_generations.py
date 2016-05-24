@@ -8,7 +8,7 @@ import math
 
 from optimization_tools import plot_generations
 
-filename = "opt_data.txt"
+filename = "opt_data_20160513.txt"
 n_generation = 50
 
 outputs_plotted = ['theta'] 

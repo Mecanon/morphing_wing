@@ -61,6 +61,76 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                                       nargout=6)
         return data
 
+    def equilibrium(eps_s, s, l, T, MVF_init, sigma_0,
+                   i, n, r_w, W, x = None, y = None, alpha = 0.,
+                   q = 1., chord = 1., x_hinge = 0.25, aero_loads = aero_loads,
+                   return_abs = False):
+        """Calculates the moment equilibrium. Function used for the 
+        secant method.
+        """
+        #calculate new theta for eps_s and update all the parameter
+        #of the actuator class
+        s.eps = eps_s
+#        print s.eps, s.eps_0, s.r_1, s.r_2, s.r_1_0, s.r_2_0, s.max_eps, s.min_eps
+#        print s.min_theta, s.max_theta
+#        try:
+#        print eps_s
+        s.calculate_theta(theta_0 = s.theta)
+#        except:
+#            s.theta = max(s.max_theta, l.max_theta)
+#            s.update()
+#            l.theta = max_theta
+#            l.update()
+#            plot_flap(x, y, J['x'], -s.theta)
+#            raise Exception("Inverse solution for theta did not converge")
+        s.update()
+        
+        l.theta = s.theta
+        l.update()
+        #SMA (Constitutive equation: coupling via sigma)
+        data = constitutive_model(T, MVF_init, i, n, eps_s,
+                                  eps_t_0, sigma_0, s.eps_0, plot = 'False')
+        
+        s.sigma = data[0][i][0]
+        s.calculate_force(source = 'sigma')
+        tau_s = s.calculate_torque()
+        
+        #Linear (Geometric equation: coupling via theta)
+        l.calculate_force()
+        tau_l = l.calculate_torque()
+        
+        #weight (Geometric equation: coupling via theta)
+        tau_w = - r_w*W*math.cos(l.theta)
+
+        #aerodynamic (Panel method: coupling via theta)
+        if aero_loads:
+            # The deflection considered for the flap is positivite in
+            # the clockwise, contrary to the dynamic system. Hence we need
+            # to multiply it by -1.
+#            print alpha, x_hinge, l.theta
+            if abs(l.theta) > math.pi/2.:
+                tau_a = - np.sign(l.theta)*4
+            else:
+                Cm = Cm_function(l.theta)
+                tau_a = Cm*q*chord**2
+#            Cm = calculate_flap_moment(x, y, alpha, x_hinge, - l.theta,
+#                                       unit_deflection = 'rad')
+        else:
+            tau_a = 0.
+            
+#        print 'tau', tau_s, tau_l, tau_w, tau_a, tau_s + tau_l + tau_w + tau_a
+        f = open('data', 'a')
+        f.write('\t Inner loop \t'+ str(T[i]) + '\t' + str( eps_s) + '\t' + \
+                str( tau_s + tau_l + tau_w + tau_a) + '\t' + str( tau_s) + '\t' + str(tau_l) + '\t' + str(tau_w) + '\t' + str(tau_a) + '\t' + \
+                str(l.theta)  + '\n')
+        f.write('\t ' + str(i) + '\t' + str(n) +'\n')
+        f.write('\t ' + str(l.F) + '\t' + str(s.F) + '\n')
+        f.close()
+        if return_abs:
+            return abs(tau_s + tau_l + tau_w + tau_a)
+        else:
+            return tau_s + tau_l + tau_w + tau_a
+
     def eps_s_fixed_point(eps_s, s, l, T, MVF_init, sigma_0,
                    i, n, r_w, W, x = None, y = None, alpha = 0.,
                    q = 1., chord = 1., x_hinge = 0.25, aero_loads = aero_loads,
@@ -71,6 +141,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         #calculate new theta for eps_s and update all the parameter
         #of the actuator class
         s.eps = eps_s
+#        print 'eps_s: ', eps_s
         s.calculate_theta(theta_0 = s.theta)
         s.update()
         
@@ -289,7 +360,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         if all_outputs:
             return 0., s.theta, 0., 200.
         else:
-            return s.theta
+            return s.theta, 9999.
     else:
         #Input initial stress   
         s.sigma = sigma_o
@@ -299,7 +370,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         if alpha != 0.:
             raise Exception('The initial equilibirum equation only ' + \
                             'makes sense for alpha equal to zero!!')
-    
+
         s.update()     
         #Calculate initial torques
         s.calculate_torque()   
@@ -321,13 +392,13 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         #Linear actuator (l)
         l = actuator(linear, J, material = 'linear')
         l.theta = s.theta
-        
+
         #Check if crossing joint. If True do nothing
-        if l.check_crossing_joint(tol = 0.01):
+        if l.check_crossing_joint(tol = 0.001):
             if all_outputs:
                 return 0., s.theta, 0., 200.
             else:
-                return s.theta
+                return s.theta, 9999.
         else:        
             #l.k = - (s.torque + tau_w + tau_a)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
             l.F = - l.length_r_0*(s.torque + tau_w + \
@@ -386,9 +457,8 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
 #            print s.max_theta_A, s.max_theta_B
 #            print 'l: limits', l.max_theta, l.min_theta
 #            print l.max_theta_A, l.max_theta_B
-            
+#            plot_flap(x, y, J['x'], theta= 0.)            
             max_theta = max(s.max_theta, l.max_theta)
-            
         ##==============================================================================
         # Matlab simulation
         ##==============================================================================         
@@ -401,6 +471,8 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
             #Because of the constraint of the maximum deflection, it is possible that
             #the number of steps is smaller than n
             n_real = 1
+            
+#            plot_flap(x, y, J['x'], theta= -s.theta)
             
             #Create new data file and erase everything inside
             f = open('data', 'w')
@@ -420,13 +492,27 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                 #to break
                 if i == iterations:
                     break
-
+                
                 #Linear prediction 
                 delta_eps = eps_s_prev[1] - eps_s_prev[0]
                 #Correction with fixed point iteration
-                eps_s = fixed_point(eps_s_fixed_point, eps_s + delta_eps, args=((s, l, T, 
-                                       MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                                       q, chord, J['x'], True)), xtol = 1e-8)
+                try:
+                    eps_s = fixed_point(eps_s_fixed_point, eps_s + delta_eps, args=((s, l, T, 
+                                           MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                           q, chord, J['x'], True)), xtol = 1e-8)
+                except:
+#                    eps_s = fixed_point(eps_s_fixed_point, eps_s, args=((s, l, T, 
+#                           MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+#                           q, chord, J['x'], True)), xtol = 1e-8)
+                    eps_s_start = eps_s + delta_eps
+                    for j in range(10):
+                        try:
+                            eps_s = fixed_point(eps_s_fixed_point, eps_s_start, args=((s, l, T, 
+                                                   MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                                   q, chord, J['x'], True)), xtol = 1e-8)
+                            break
+                        except:
+                            eps_s_start  = eps_s_start*float(j)/10.
                 eps_s_prev[0] = eps_s_prev[1]
                 eps_s_prev[1] = eps_s
 
@@ -437,7 +523,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                 f = open('data', 'a')
                 f.write('Outer loop \t'+ str(i)  + '\t'+ str(eps_s) + '\t'+ str(s.theta)+ '\n')
                 f.close()
-                
+#                print 'new theta: ', s.theta
                 #stop if actuator crosses joints, exceds maximum theta and theta is positively increasing
                 if s.theta <= max_theta or s.check_crossing_joint(tol = 0.001) or l.check_crossing_joint(tol = 0.001) or s.theta > 0.01 or l.length_r <= l.solid:
                     if n_cycles == 0:
@@ -451,20 +537,21 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                         T = T_cycle
                         for k in range(n_cycles-1):
                             T += T_cycle
-                        #Rerun ith iteration
-                        #Linear prediction 
-                        delta_eps = eps_s_prev[1] - eps_s_prev[0]
                         #Correction with fixed point iteration
-                        eps_s = fixed_point(eps_s_fixed_point, eps_s + delta_eps, args=((s, l, T, 
-                                               MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
-                                               q, chord, J['x'], True)), xtol = 1e-8)
+                            eps_s = fixed_point(eps_s_fixed_point, eps_s_prev[1], args=((s, l, T, 
+                                                   MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
+                                                   q, chord, J['x'], True)), xtol = 1e-8)
                         eps_s_prev[0] = eps_s_prev[1]
                         eps_s_prev[1] = eps_s
+                        
+                        s.eps = eps_s
+                        s.calculate_theta(theta_0 = s.theta)
+                        s.update()
+                        
                 else:
                     if n != n_real:
                         n_real +=1
                     if n_o == n_real:
-                        #WRITE APPEND T HERE
                         n = n_real #+ 10
                         if n_cycles == 0:
                             iterations = n_real
@@ -479,13 +566,25 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                 
                 eps_s_list.append(eps_s)
                 eps_l_list.append(l.eps)
-                theta_list.append(math.degrees(s.theta))
+                theta_list.append(s.theta)
                 F_l_list.append(l.calculate_force())
                 L_s_list.append(s.length_r)
     
-            plot_flap(x, y, J['x'], theta= -s.theta)
-            
+#            print 'final theta: ', s.theta
             if all_outputs:
+                print "Nt: %.4f , Na: %.4f, d: %.5f, D: %.4f, L: %.4f, solid length: %.4f, final_L: %.4f" % (Nt, Na, l.d , l.D, l.zero_stress_length, l.solid, l.length_r)
+                s.theta = theta_list[-1]
+                l.theta = s.theta
+                s.update()
+                l.update()
+                plot_flap(x, y, J['x'], theta= -s.theta)
+                
+                s.theta = 0.
+                l.theta = s.theta
+                s.update()
+                l.update()
+                plot_flap(x, y, J['x'], theta= -s.theta)
+                
                 if n_real == 1:
                     return 0., s.theta, 0., 200.
                 else:
@@ -510,5 +609,6 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                     for i in range(len(data[3])):
                         eps_t_list.append(data[3][i][0])
                     return eps_s_list, eps_l_list, theta_list, sigma_list, MVF_list, T, eps_t_list, theta_list, F_l_list, l.k, L_s_list
-#            else:
-#                print "k", l.k
+            else:
+#                print theta_list
+                return theta_list[-1], l.k

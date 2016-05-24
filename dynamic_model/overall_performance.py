@@ -19,11 +19,15 @@ import pickle
 import airfoil_module as af
 from flap import flap
 
-def run(inputs, parameters = None):
+def run(inputs, parameters = None, W = 0.2*9.8, alpha = 0., V = 10):
     """Function to be callled by DOE and optimization. Design Variables are 
         the only inputs.
         
-        :param inputs: {'sma', 'linear', 'sigma_o'}"""
+        :param inputs: {'sma', 'linear', 'sigma_o'}
+        :param W: weight (N)
+        :param alpha: angle of attack(radians)
+        :param V: velocity (m/s)
+        """
     def thickness(x, t, chord):
         y = af.Naca00XX(chord, t, [x], return_dict = 'y')
         thickness_at_x = y['u'] - y['l']
@@ -62,9 +66,6 @@ def run(inputs, parameters = None):
     r_w = 0.15
     
     #Aicraft weight (mass times gravity)
-    W = 0.2*9.8 #0.06*9.8
-    alpha = 0.
-    V = 10 #m/s
     altitude = 10000. #feet
     
     # Temperature
@@ -79,8 +80,8 @@ def run(inputs, parameters = None):
     n_cycles = 0
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
-    all_outputs = True
-    save_data = True
+    all_outputs = False
+    save_data = False
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
         eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s = flap(airfoil, 
@@ -185,23 +186,61 @@ if __name__ == '__main__':
     J = {'x':0.75, 'y':0.}
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
 
-    #Optimal from max deflection             
-#    sma = {'x-': 7.407724e-001, 'y-': -3.680615e-001, 
-#           'x+': 9.933211e-001, 'y+': 6.004423e-001}
-#    linear = {'x-': 7.290939e-001, 'y-': -7.584186e-001, 
-#           'x+': 7.550874e-001, 'y+': -4.011175e-001}
+    #Optimal for max deflection
+#    sma = {'x-': 6.817445e-001, 'y-': -5.216475e-001, 
+#           'x+': 9.029895e-001, 'y+': 8.726738e-001}
+#    linear =  {'x-': 6.958111e-001, 'y-': -4.593744e-001, 
+#               'x+': 8.187166e-001, 'y+': -5.719241e-001}
+               
+#    linear = {'x+': 0.8746717751201235, 'y+': -0.37669650699461776, 'y-': 0.7445609404288144, 'x-': 0.7394757699162359}
+#    sma = {'x+': 0.8793685619240611, 'y+': 0.713701519873574, 'y-': -0.7509778773146336, 'x-': 0.6785498036887645}
+#    #Optimal multiobjective               
+#    sma = {'x-': 6.161543e-001, 'y-': -6.631015e-001, 
+#           'x+': 8.697452e-001, 'y+': 3.962915e-001}
+#    linear =  {'x-': 4.593649e-001, 'y-': -7.127816e-001, 
+#               'x+': 8.269874e-001, 'y+': -1.587640e-001}
 
-    #Optimal from multiobjective
-    sma = {'x-': 6.983658e-001, 'y-': -5.518018e-001, 
-           'x+': 8.145638e-001, 'y+': 8.309352e-002}
-    linear = {'x-': 6.978678e-001, 'y-': -5.474895e-001, 
-           'x+': 8.147300e-001, 'y+': -8.607796e-001}
+#    #Extension test           
+#    sma = {'x-': 0.6, 'y-': -0.6, 
+#           'x+': 0.8, 'y+': -0.6}
+#    linear =  {'x-': 0.6, 'y-': 0.6, 
+#               'x+': 0.8, 'y+': 0.6}
+
+    #Compression test with n_real = n              
+    sma = {'x-': 7.407724e-001, 'y-': -3.680615e-001, 
+           'x+': 9.933211e-001, 'y+': 6.004423e-001}
+    linear = {'x-': 7.290939e-001, 'y-': -7.584186e-001, 
+           'x+': 7.550874e-001, 'y+': -4.011175e-001}
+
     #SMA Pre-stress
     sigma_o = 400e6
-    data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
-    print  'k: ', data['k']
-    DataFile = open('data.txt','a')
-							
+
+    V_list = np.linspace(0,35,10)
+    alpha_list = np.linspace(0,math.radians(10.),10)
+    W_list = np.linspace(0,5,10)
+    
+    data_V = {'theta':[],'k':[]}
+    for V_i in V_list:
+        data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o},
+                   V = V_i)
+        data_V['theta'].append(data['theta'])
+        data_V['k'].append(data['k'])  
+    
+    data_alpha = {'theta':[],'k':[]}
+    for alpha_i in alpha_list:
+        data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o},
+                   alpha = alpha_i)
+        data_alpha['theta'].append(data['theta'])
+        data_alpha['k'].append(data['k'])   
+    
+    data_W = {'theta':[],'k':[]}
+    for W_i in W_list:
+        data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o},
+                   W = W_i)
+        data_W['theta'].append(data['theta'])
+        data_W['k'].append(data['k'])
+        
+    pickle.dump([data_V, data_alpha, data_W], open( "data_overall.p", "wb" ) )    
 ##==============================================================================
 ## Run withou run function
 ##==============================================================================

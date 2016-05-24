@@ -13,7 +13,7 @@ n_generation = 50
 
 outputs_plotted = ['f'] 
 output_constrained = ['f']
-g1 = lambda x: True if x != 0.5 else False
+g1 = lambda x: True if x < 1.4 else False
 g = [g1]
 
 p1 = lambda x: math.degrees(x)

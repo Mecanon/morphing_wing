@@ -146,7 +146,7 @@ class actuator():
                         self.y_p*math.sin(self.theta) - self.x_n
                 self.r_2 = self.y_p*math.cos(self.theta) + \
                         self.x_p*math.sin(self.theta) - self.y_n
-            
+
             self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
             self.eps = self.length_r/self.zero_stress_length - 1.
             
@@ -294,20 +294,24 @@ class actuator():
             return math.atan2(sin, cos)
 
         # Constraint B
-        if self.r_n > self.r_p:
-            self.max_theta_B = math.atan2(self.y_n*self.x_p - self.x_n*self.y_p,
-                                          self.x_n*self.x_p + self.y_n*self.y_p)
-            self.max_theta_B = np.sign(self.max_theta_B) * (abs(self.max_theta_B) % (2*math.pi))
-
-            if self.max_theta_B > 0.:
-                self.min_theta_B = self.max_theta_B
-                self.max_theta_B = self.max_theta_B - 2*math.pi
-            else:
-                self.min_theta_B = self.max_theta_B + 2*math.pi
-
+#        if self.r_n > self.r_p:
+        self.max_theta_B = math.atan2(self.y_n*self.x_p - self.x_n*self.y_p,
+                                      self.x_n*self.x_p + self.y_n*self.y_p)
+        self.max_theta_B = np.sign(self.max_theta_B) * (abs(self.max_theta_B) % (2*math.pi))
+        
+        if self.max_theta_B > 0.:
+            self.min_theta_B = self.max_theta_B
+            self.max_theta_B = self.max_theta_B - math.pi
         else:
-            self.max_theta_B = -math.pi/2.
-            self.min_theta_B = math.pi/2.
+            self.min_theta_B = self.max_theta_B + math.pi
+        
+        # Correction for in case r- > r+ and the angle at which they are aligned
+        # and on top of each other is smaller than when they are aligned
+        # and not on top of each other
+        self.max_theta_B = max(self.max_theta_B, np.sign(self.max_theta_B) *((self.max_theta_B - math.pi) % (2*math.pi)))
+#        else:
+#            self.max_theta_B = -math.pi/2.
+#            self.min_theta_B = math.pi/2.
             
         # Constraint A
         #Avoid division by zero for when x_n is the origin
