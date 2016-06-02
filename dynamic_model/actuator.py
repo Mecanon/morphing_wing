@@ -139,7 +139,7 @@ class actuator():
             
             if abs(self.theta) > math.pi:
                 self.theta = self.theta % (2.*math.pi)
-        return self.theta
+                return self.theta
         
         # TODO: Create this function, because i havent maked in winglet code
         # See why the elif don´t work, but if works.
@@ -152,21 +152,21 @@ class actuator():
         calculated"""
         if theta != None:
             self.theta = theta
-        else:
-            if self.design == 'A':
-                self.r_1 = self.x_p*math.cos(self.theta) - \
-                        self.y_p*math.sin(self.theta) - self.x_n
-                self.r_2 = self.y_p*math.cos(self.theta) + \
-                        self.x_p*math.sin(self.theta) - self.y_n
             
-                self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
-                self.eps = self.length_r/self.zero_stress_length - 1.
-            elif self.design == 'B':
-                self.theta = theta
-                delta_r = math.radians(self.theta)*R
-                self.r_1 = self.x_p - self.x_n + delta_r
-                self.r_2 = 0.
-                self.eps = self.length_r/self.zero_stress_length - 1.
+        if self.design == 'A':
+            self.r_1 = self.x_p*math.cos(self.theta) - \
+                    self.y_p*math.sin(self.theta) - self.x_n
+            self.r_2 = self.y_p*math.cos(self.theta) + \
+                    self.x_p*math.sin(self.theta) - self.y_n
+        
+            self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
+            self.eps = self.length_r/self.zero_stress_length - 1.
+        elif self.design == 'B':
+            self.theta = theta
+            delta_r = math.radians(self.theta)*self.R
+            self.r_1 = self.r_1 - delta_r
+            self.r_2 = 0.
+            self.eps = self.r_1/self.r_1_0 - 1.
          
     def calculate_force(self, source = 'strain'):
         if self.design == 'A':
@@ -208,17 +208,15 @@ class actuator():
                        self.x_p*math.sin(self.theta))*F_1    
         return self.torque
         
-    def plot_actuator(self):
+    def plot_actuator(self,cor=None):
         
         if self.material == 'linear':
             colour = 'b'
         elif self.material == 'SMA':
             colour = 'r'
-            
-        plt.figure(1)
-        plt.axes().set_aspect('equal')
-        
+
         if self.actuator_type == "wire":
+           plt.axes().set_aspect('equal')
            plt.scatter([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
                        [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2], 
                        c=colour)
@@ -239,17 +237,8 @@ class actuator():
             
             sup = self.y_n + self.D/2
             inf = self.y_n - (self.D/2)
-            length = self.r_1_0
-            ring = length / self.N
-            
-            cir1 = plt.Circle((0,0), radius= self.R, alpha =.7, fc='k')
-            cir2 = plt.Circle((0,0), radius=(self.R/2), alpha =.5, fc='w')
-                                                            
-            ax = plt.axes(aspect=1) # Create empty axes (aspect=1 it has to do 
-                                    # with the scale
-    
-            ax.add_patch(cir1)                    
-            ax.add_patch(cir2) 
+            length = self.r_1#_0/(1 + self.eps)
+            ring = length /self.N
     
             plt.plot([self.x_n,self.x_n + ring,self.x_n + 2*ring,
                       self.x_n + 3*ring, self.x_n + 4*ring, 
@@ -257,16 +246,8 @@ class actuator():
                       self.x_n + 7*ring, self.x_n + 8*ring, 
                       self.x_n + 9*ring, self.x_n + 10*ring,0], 
                       [self.y_n, sup, inf, sup, inf, sup, inf, sup,
-                       inf, sup, self.y_p, self.y_p], 'r' )
+                       inf, sup, self.y_p, self.y_p], colour )
     
-            #plt.plot([self.xs_n, self.xs_n + ring_s, self.xs_n + 2*ring_s,
-            #         self.xs_n + 3*ring_s, self.xs_n + 4*ring_s, 
-            #         self.xs_n + 5*ring_s, self.xs_n + 6*ring_s,
-            #         self.xs_n + 7*ring_s, self.xs_n + 8*ring_s, 
-            #         self.xs_n + 9*ring_s, self.xs_n + 10*ring_s,0], 
-            #         [self.R,sup,inf,sup,inf,sup,inf,sup,
-            #           inf,sup,self.R,self.R], 'r' )
-              
             plt.plot([0, self.R + 0.1],[0,0],'b')
             
             if self.theta == 0:
