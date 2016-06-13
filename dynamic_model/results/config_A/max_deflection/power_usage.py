@@ -74,12 +74,12 @@ for i in range(1, n):
     total_work_list.append(Total_work)
 Total_work = sum(W_list)*delta_t
 Total_delta = sum(deltaW_list)*delta_t
-print Total_delta
+#print Total_delta
 
 #==============================================================================
 # Calculate input heat for different h
 #==============================================================================
-h_list = np.linspace(0,100., 11)
+h_list = np.linspace(0,100., 6)
 P_h_list = []
 total_power_list = []
 
@@ -123,7 +123,7 @@ for j in range(len(h_list)):
             2.*(h/r)*(T[i] - T_o))
         a += rho*c*delta_T
         b += delta_xi*(-pi_t + rho_delta_s0*T[i])
-        print a,b
+#        print a,b
         I_list.append(I)
         P_list.append(P)
         
@@ -179,7 +179,7 @@ print 'Adiabatic efficiency is %f ' % (Total_delta/total_power_list[0])
 #==============================================================================
 # Calculate input heat for different delta_t
 #==============================================================================
-delta_t_list = np.linspace(0.001,0.05, 30)
+delta_t_list = np.linspace(0.001,0.05, 50)
 #h = 10.
 h_dt_power_list = []
 
@@ -226,7 +226,7 @@ for i in range(len(h_list)):
                 2.*(h/r)*(T[i] - T_o))
             a += rho*c*delta_T
             b += delta_xi*(-pi_t + rho_delta_s0*T[i])
-            print a,b
+#            print a,b
             I_list.append(I)
             P_list.append(P)
             
@@ -239,14 +239,14 @@ t = np.linspace(0,(n-2)*delta_t, n-1)
 
 plt.figure()
 for i in range(len(h_list)):
-    print len(Total_delta), len(total_power_list)
+#    print len(h_dt_power_list)
     color=((1.-float(i)/(len(h_list)-1), float(i)/(len(h_list)-1),0, 1.))
-    plt.plot(delta_t_list, 100.*Total_delta/np.array(total_power_list[i]),
-             color = color)
+    plt.plot(delta_t_list, 100.*Total_delta/np.array(h_dt_power_list[i]),
+             color = color, label= 'h = %.f' % h_list[i])
 plt.xlabel('$\Delta t$ ')
 plt.ylabel('Efficiency (%)')
 plt.grid()
-
+plt.legend(loc='best')
 #==============================================================================
 # Calculate heat input for different T_o
 #==============================================================================

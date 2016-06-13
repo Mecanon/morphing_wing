@@ -77,10 +77,10 @@ def run(inputs, parameters = None):
     # Number of steps and cycles
     n = 200
     n_cycles = 0
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
-    all_outputs = True
-    save_data = True
+    all_outputs = False
+    save_data = False
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
         eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s = flap(airfoil, 
@@ -186,16 +186,23 @@ if __name__ == '__main__':
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
 
     #Optimal from max deflection             
-#    sma = {'x-': 7.407724e-001, 'y-': -3.680615e-001, 
-#           'x+': 9.933211e-001, 'y+': 6.004423e-001}
-#    linear = {'x-': 7.290939e-001, 'y-': -7.584186e-001, 
-#           'x+': 7.550874e-001, 'y+': -4.011175e-001}
-
+    sma = {'x-': 0.46278, 'y-': -0.68322, 
+           'x+': 0.90261, 'y+': 0.79959}
+    linear = {'x-': 0.46278, 'y-': -0.68322, 
+           'x+': 0.90261, 'y+': 0.79959}
+	 	 
     #Optimal from multiobjective
-    sma = {'x-': 6.983658e-001, 'y-': -5.518018e-001, 
-           'x+': 8.145638e-001, 'y+': 8.309352e-002}
-    linear = {'x-': 6.978678e-001, 'y-': -5.474895e-001, 
-           'x+': 8.147300e-001, 'y+': -8.607796e-001}
+#    sma = {'x-': 6.983658e-001, 'y-': -5.518018e-001, 
+#           'x+': 8.145638e-001, 'y+': 8.309352e-002}
+#    linear = {'x-': 6.978678e-001, 'y-': -5.474895e-001, 
+#           'x+': 8.147300e-001, 'y+': -8.607796e-001}
+
+    #Optimal for max deflection, colinear            
+    sma = {'x-': 7.318781e-001	, 'y-': -3.871608e-001, 
+           'x+': 9.949996e-001, 'y+': 8.349697e-001}
+    linear = {'x-': 7.318781e-001	, 'y-': -3.871608e-001, 
+           'x+': 9.949996e-001, 'y+': 8.349697e-001}   
+	
     #SMA Pre-stress
     sigma_o = 400e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})

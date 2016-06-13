@@ -226,19 +226,19 @@ if __name__ == '__main__':
         data_V['theta'].append(data['theta'])
         data_V['k'].append(data['k'])  
     
-    data_alpha = {'theta':[],'k':[]}
-    for alpha_i in alpha_list:
-        data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o},
-                   alpha = alpha_i)
-        data_alpha['theta'].append(data['theta'])
-        data_alpha['k'].append(data['k'])   
-    
-    data_W = {'theta':[],'k':[]}
-    for W_i in W_list:
-        data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o},
-                   W = W_i)
-        data_W['theta'].append(data['theta'])
-        data_W['k'].append(data['k'])
+#    data_alpha = {'theta':[],'k':[]}
+#    for alpha_i in alpha_list:
+#        data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o},
+#                   alpha = alpha_i)
+#        data_alpha['theta'].append(data['theta'])
+#        data_alpha['k'].append(data['k'])   
+#    
+#    data_W = {'theta':[],'k':[]}
+#    for W_i in W_list:
+#        data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o},
+#                   W = W_i)
+#        data_W['theta'].append(data['theta'])
+#        data_W['k'].append(data['k'])
         
     pickle.dump([data_V, data_alpha, data_W], open( "data_overall.p", "wb" ) )    
 ##==============================================================================
