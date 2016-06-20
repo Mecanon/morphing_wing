@@ -25,8 +25,8 @@ class actuator():
     """
     #
     def __init__(self, geo_props, J, R = None, area = None, zero_stress_length = None,
-                 eps_0 = None, k = None, material = 'linear', design = 'A',
-                 actuator_type = 'wire'):
+                 eps_0 = None, k = None, material = 'linear', design = 'B',
+                 actuator_type = 'spring'):
         """
         Initiate class and it's basic atributes:
         - geoprops: dictionary with the following keys:
@@ -115,6 +115,11 @@ class actuator():
         
         if material == 'linear':
             self.k = k
+        
+#TODO: Adicionei esta linha, pois acredito que é a melhor maneira de não invalidar os modelos que não
+     # tem raio no modelo.
+        if R!= None:
+            self.R = R
             
     def calculate_theta(self, theta_0 = 0.):
         """
@@ -146,6 +151,12 @@ class actuator():
             if abs(self.theta) > math.pi:
                 self.theta = self.theta % (2.*math.pi)
                 return self.theta
+<<<<<<< HEAD
+=======
+        
+        # TODO: Create this function, because i havent maked in winglet code
+        # See why the elif don´t work, but if works.
+>>>>>>> master
         
         if self.design == "B":
             self.r_1 = (self.eps + 1)*self.zero_stress_length
@@ -167,6 +178,7 @@ class actuator():
         
             self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
             self.eps = self.length_r/self.zero_stress_length - 1.
+<<<<<<< HEAD
         
         elif self.design == 'B':
             delta_r = self.theta*self.R
@@ -176,6 +188,14 @@ class actuator():
                 self.r_1 = self.r_1_0 - delta_r
             self.r_2 = 0.
             self.eps = self.r_1/self.zero_stress_length - 1.
+=======
+        elif self.design == 'B':
+            self.theta = theta
+            delta_r = math.radians(self.theta)*self.R
+            self.r_1 = self.r_1 - delta_r
+            self.r_2 = 0.
+            self.eps = self.r_1/self.r_1_0 - 1.
+>>>>>>> master
          
     def calculate_force(self, source = 'strain'):
         if self.design == 'A' or self.design == 'B':
@@ -208,7 +228,11 @@ class actuator():
             self.torque = - self.y_p*(-self.F)
         return self.torque
         
+<<<<<<< HEAD
     def plot_actuator(self):
+=======
+    def plot_actuator(self,cor=None):
+>>>>>>> master
         
         if self.material == 'linear':
             colour = 'b'
@@ -227,24 +251,6 @@ class actuator():
             
         # To this type of actuator, the points will be diferent than the type 
         # above.
-        
-        if self.actuator_type == "spring":
-            colour = colour
-            sup = self.y_n + self.D/2
-            inf = self.y_n - (self.D/2)
-            length = self.r_1#_0/(1 + self.eps)
-            ring = length /self.N
-    
-            global_x_n = self.x_n + self.x_J
-            plt.plot([global_x_n ,global_x_n + ring,global_x_n + 2*ring,
-                      global_x_n + 3*ring, global_x_n + 4*ring, 
-                      global_x_n + 5*ring, global_x_n+ 6*ring,
-                      global_x_n + 7*ring, global_x_n + 8*ring, 
-                      global_x_n + 9*ring, global_x_n + 10*ring,0], 
-                      [self.y_n, sup, inf, sup, inf, sup, inf, sup,
-                       inf, sup, self.y_p, self.y_p], colour)
-    
-            plt.plot([0, self.R + 0.1],[0,0],'w--')
             
             if self.theta == 0:
                 pass
@@ -252,6 +258,7 @@ class actuator():
                 plt.plot([0, abs(self.R*math.cos(self.theta))],
                           [0, abs(self.R*math.sin(self.theta))],
                 colour)
+        
         
         
 
