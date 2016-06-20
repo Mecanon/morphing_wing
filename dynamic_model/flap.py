@@ -7,13 +7,6 @@ Created on Fri Apr 15 17:27:40 2016
 import math
 from scipy.optimize import brentq, minimize_scalar, fixed_point
 import numpy as np
-    
-from AeroPy import calculate_flap_moment
-from aero_module import air_properties
-import airfoil_module as af
-import xfoil_module as xf
-
-from actuator import actuator
 
 def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
          altitude, alpha, T_0, T_final, MVF_init, n, all_outputs = False,
@@ -151,13 +144,14 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         data = constitutive_model(T, MVF_init, i, n, eps_s,
                                   eps_t_0, sigma_0, s.eps_0, plot = 'False')
         
-        s.sigma = data[0][i][0]
-        s.calculate_force(source = 'sigma')
-        tau_s = s.calculate_torque()
+        # Initializing current wire length r
+        self.r_1 = self.r_1_0
+        self.r_2 = self.r_2_0
+        self.length_r = self.length_r_0
         
-        #Linear (Geometric equation: coupling via theta)
-        l.calculate_force()
-        tau_l = l.calculate_torque()
+        #calculate rigid body distances
+        self.r_n = math.sqrt(self.x_n**2 + self.y_n**2)
+        self.r_p = math.sqrt(self.x_p**2 + self.y_p**2)
         
         #weight (Geometric equation: coupling via theta)
         tau_w = - r_w*W*math.cos(l.theta)
@@ -190,80 +184,129 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
             
     def deformation_theta(theta = -math.pi/2., plot = False):
         """Return lists of deformation os SMA actuator per theta"""
+        if zero_stress_length == None and eps_0 != None:
+            self.eps_0 = eps_0
+            self.eps = self.eps_0
+            self.zero_stress_length = self.length_r_0/(1 + self.eps)
+        elif zero_stress_length != None and eps_0 == None:
+            self.zero_stress_length = zero_stress_length
+            self.eps_0 = self.length_r/self.zero_stress_length - 1.
+            self.eps = self.eps_0            
         
-        theta_list = np.linspace(-theta, theta)
-        eps_s_list = []
-        eps_l_list = []
+        if material == 'linear':
+            self.k = k
+            
+    def calculate_theta(self, theta_0 = 0.):
+        """
+        Calculate angle for given deformation epsilon via the newton method.
+        """
+        def diff_eq(theta):
+            sin = math.sin(theta)
+            cos = math.cos(theta)
+            
+            diff = (2.*self.x_p*cos - 2.*self.y_p*sin)*(self.x_p*sin + \
+                    self.y_p*cos - self.y_n) - (2.*self.x_p*sin + \
+                    2.*self.y_p*cos)*(self.x_p*cos - self.x_n - self.y_p*sin) 
+            
+            return diff
         
-        for theta in theta_list:
-            s.theta = theta
-            l.theta = theta
+        def eq(theta):
+            eta = (self.eps - self.eps_0) + 1.
+            sin = math.sin(theta)
+            cos = math.cos(theta)
             
-            s.update()
-            l.update()
-            
-            l.calculate_force()
-            
-            eps_s_list.append(s.eps)
-            eps_l_list.append(l.eps)
-        if plot:
-            import matplotlib.pyplot as plt
-            plt.figure()
-            plt.plot(np.degrees(theta_list), eps_s_list, 'r', np.degrees(theta_list), eps_l_list, 'b')  
-            plt.xlabel('$\\theta (degrees)$')
-            plt.ylabel('$\epsilon$')
-    
-        return eps_s_list, theta_list
+            r_1 = self.x_p*cos - self.y_p*sin - self.x_n
+            r_2 = self.y_p*cos + self.x_p*sin - self.y_n
 
-    def plot_flap(x, y, x_J, y_J = None, theta = 0):
-        """
-        Plot flap with actuators. theta is clockwise positive.
-        @Author: Endryws (modified by Pedro Leal)
+            return r_1**2 + r_2**2 - (eta*self.length_r_0)**2
+#        print self.eps, self.eps_0
+        self.theta = newton(eq, theta_0, diff_eq, maxiter = 100)
         
-        Created on Fri Mar 18 14:26:54 2016
-        """
+        if abs(self.theta) > math.pi:
+            self.theta = self.theta % (2.*math.pi)
+        return self.theta
+        
+    def update(self, theta = None ):
+        """If vector length r or theta is changed, new coordinates are 
+        calculated"""
+        if theta != None:
+            self.theta = theta
+        else:
+            if self.design == 'C':
+                self.r_1 = self.x_p*math.cos(self.theta) - \
+                        self.y_p*math.sin(self.theta) - self.x_n
+                self.r_2 = self.y_p*math.cos(self.theta) + \
+                        self.x_p*math.sin(self.theta) - self.y_n
+            
+            self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
+            self.eps = self.length_r/self.zero_stress_length - 1. 
+         
+    def calculate_force(self, source = 'strain'):
+        
+        if source == 'strain':
+            if self.material == 'linear':
+                self.F = self.k*self.eps*self.length_r
+            elif self.material == 'SMA':
+                print "Put Edwin code here"
+        #Calculate force from stress and cross section
+        elif source == 'sigma':
+            self.F = self.area * self.sigma
+        return self.F                
+    def calculate_torque(self):
+        """Calculate torque given the actuator force: r \times F (where a is 
+        global coordinates)"""
+
+        #calculate components of force vector        
+        F_1 = - self.F*self.r_1/self.length_r
+        F_2 = - self.F*self.r_2/self.length_r
+#        print x_n, y_n
+        
+        #calculate torque
+        self.torque = (self.x_p*math.cos(self.theta) - \
+                       self.y_p*math.sin(self.theta))*F_2 - \
+                      (self.y_p*math.cos(self.theta) + \
+                       self.x_p*math.sin(self.theta))*F_1    
+        return self.torque
+        
+    def plot_actuator(self):
         import matplotlib.pyplot as plt
-        plt.figure()
-        x_dict, y_dict = af.separate_upper_lower(x, y)
-        
-        # Below I create the dictionarys used to pass to the function find_hinge
-        upper = {'x': x_dict['upper'], 'y': y_dict['upper']} # x and y upper points
-        lower = {'x': x_dict['lower'], 'y': y_dict['lower']} # x and y lower points
-        hinge = af.find_hinge(x_J, upper, lower) 
-        
-        #=======================================================================
-        # With the Joint (hinge) point, i can use the find flap function to
-        # found the points of the flap in the airfoil.
-        #=======================================================================
-        
-        data = {'x': x, 'y': y}
-        static_data, flap_data = af.find_flap(data, hinge)
-        R = hinge['y_upper']
-        theta_list = np.linspace(3*math.pi/2, math.pi/2, 50)
-        x_circle_list = hinge['x'] + R*np.cos(theta_list)
-        y_circle_list = hinge['y'] + R*np.sin(theta_list)
-
-        n_upper = len(flap_data['x'])/2
-        
-        # Ploting the flap in the original position
-        plt.plot(flap_data['x'][:n_upper],flap_data['y'][:n_upper],'k--')
-        plt.plot(flap_data['x'][n_upper:],flap_data['y'][n_upper:],'k--')         
-        # Rotate and plot
-        upper = {'x': np.concatenate((flap_data['x'][:n_upper], x_circle_list)),
-                 'y': np.concatenate((flap_data['y'][:n_upper], y_circle_list))}
-        lower = {'x':(flap_data['x'][n_upper:]),
-                 'y':(flap_data['y'][n_upper:])}
-                
-        rotated_upper, rotated_lower = af.rotate(upper, lower, hinge, theta, 
-                                                 unit_theta = 'rad')
-        plt.plot(static_data['x'], static_data['y'],'k')
-        
-        plt.plot(rotated_upper['x'], rotated_upper['y'],'k')
-        plt.plot(rotated_lower['x'], rotated_lower['y'],'k')
+        if self.material == 'linear':
+            colour = 'b'
+        elif self.material == 'SMA':
+            colour = 'r'
+        plt.figure(1)
         plt.axes().set_aspect('equal')
+        plt.scatter([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
+                    [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2], 
+                    c=colour)
+        plt.scatter([self.x_J],[self.y_J], c = 'g')
+        plt.plot([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
+                 [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2],
+                 colour)
+   
+    def find_limits(self, y, theta_0 = 0):
+        """The actuator has two major constraints:
+            A - Because there is no physical sense of an actuator that has any
+        part of it outside of the aircraft. We need to find the maximum
+        theta and eps the actuator can have without this taking place.
+            B - When r+ and r- are aligned, but + is between - and J, we 
+            have the minimum length possible for the actuator. Below this,
+            it is quite unrealistic
+            The maximum and minimum theta is defined by the smallest of
+            theta_A and theta_B
+        """
+ 
+        def diff_eq(theta):
+            sin = math.sin(theta)
+            cos = math.cos(theta)
+            diff = -a*(-self.x_p*sin - self.y_p*cos) + self.x_p*cos - self.y_p*sin
+            return diff
         
-        s.plot_actuator()
-        l.plot_actuator()
+        def eq_theta_A(theta):
+            sin = math.sin(theta)
+            cos = math.cos(theta)
+            return -a*(self.x_p*cos - self.y_p*sin - 0) + \
+                    self.x_p*sin + self.y_p*cos - y['l']
         
         if y_J != None:
             for i in range(y_J):

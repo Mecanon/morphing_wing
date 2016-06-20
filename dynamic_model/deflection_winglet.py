@@ -31,75 +31,156 @@ def distance(C1,C2):
     l = np.sqrt(dx**2 + dy**2)
 
     return l
-
-c = 1.0
+#dimensions obtained from the experimental model, in centimeters
+c = 51.5
 # Defining the positions
 # Front attachment point
 F = {'x':c*0, 'y':0.}
 # Midle attachment point
-M = {'x':c*0.3, 'y':0}
+M = {'x':c*0.214, 'y':0}
 # Tip point
 T = {'x':c*1, 'y':0}
 
 # Calculating the lengths
 l_FT = distance(F,T)
 l_FM = distance(F,M)
-l_TM = distance(T,M)
+l_MT = distance(T,M)
 
-plotter(M, T)
+#angular variables lists
+
+list_gamma=[]
+list_beta = []
+list_delta = []
+aux_gamma = []
+aux_beta = []
+
+#wingtip height list
+
+list_wingtipheightgamma = []
+list_wingtipheightbeta = []
+
 
 #bearing radius
-R = 0.1
+R = 1.8
+#-----------------------------------------------------------------------------#
+#Max strains
+max_strainFM = -(0.01*c)/l_FM
+max_strainMT = -(0.02*c)/l_MT
 
-#Max contractions
-max_contractionFM = 0.01*c
-max_contractionMT = 0.02*c
-
-list_contractionsFM = np.linspace(0, max_contractionFM, 2)
-list_contractionsMT = np.linspace(0, max_contractionMT, 2)
-for contractionFM in list_contractionsFM:
-    for contractionMT in list_contractionsMT:
-        #in all interations the contration of the spring is the same
-        #calculating alpha, beta and gama based on SMA spring contraction
-        alpha = (contractionFM)/R
-        gamma = (contractionMT)/R
-     
-        M_alpha = {'x':M['x']*np.cos(alpha) - M['y']*np.sin(alpha),
-           'y':M['x']*np.sin(alpha) + M['y']*np.cos(alpha)}
-    
-        beta = alpha + gamma
-        T_alpha = {'x':T['x']*np.cos(alpha) - T['y']*np.sin(alpha),
-           'y':T['x']*np.sin(alpha) + T['y']*np.cos(alpha)}
-        
-        T_beta = {'x':M_alpha['x'] + 
-                      (T_alpha['x']-M_alpha['x'])*np.cos(beta) - 
-                      (T_alpha['y']-M_alpha['y'])*np.sin(beta),
-                  'y':M_alpha['y'] + 
-                      (T_alpha['x']-M_alpha['x'])*np.sin(beta) + 
-                      (T_alpha['y']-M_alpha['y'])*np.cos(beta)}
-           
-        plotter(M_alpha, T_beta, fraction_M = contractionFM/max_contractionFM,
-                fraction_T = contractionMT/max_contractionMT)
-        print distance(F,M_alpha), distance(T_beta,M_alpha)
+list_strainsFM = np.linspace(0, max_strainFM, 10)
+list_strainsMT = np.linspace(0, max_strainMT, 10)
+plt.figure()
 plt.grid()
-plt.axes().set_aspect('equal')
 
-#TODO: change contraction to strain. Strain is negative when contracting and
-# positive when expanding. Usually strain = - contraction/length_o
-#TODO: plots of wingtip displacement versus deflection (alpha,gamma)
-#TODO: plots of wingtip displacement versus strain (contractionFM, contractionMT)
-#TODO: plots of deflections (relative, alpha, gamma) versus strains
+for strainFM in list_strainsFM:
     
-'''   
-    # Calculating the lengths
-    l_FT=distance(F,T)
-    l_FM=distance(F,M)
-    l_TM=distance(T,M)
-    print 'l_FM:', l_FM
-    print "  "
+    gamma = -(strainFM)*l_FM/R
+    aux_gamma.append(np.degrees(gamma))
 
-print 'l_FM:', l_FM
+    
+    for strainMT in list_strainsMT:
+        #in all interations the contration of the spring is the same
+        #calculating gamma, beta and delta based on SMA spring strain
+        
+        gamma = -(strainFM)*l_FM/R
+        list_gamma.append(np.degrees(gamma))        
+        
+                  
+        beta = -(strainMT)*l_MT/R                
+        list_beta.append(np.degrees(beta))
+        
+        if strainFM == 0 :
+            aux_beta.append(np.degrees(beta))
+         
+        
+        M_gamma = {'x':M['x']*np.cos(gamma) - M['y']*np.sin(gamma),
+           'y':M['x']*np.sin(gamma) + M['y']*np.cos(gamma)}
+    
+        
+        T_gamma = {'x':T['x']*np.cos(gamma) - T['y']*np.sin(gamma),
+           'y':T['x']*np.sin(gamma) + T['y']*np.cos(gamma)}
+        
+        T_beta = {'x':M_gamma['x'] + 
+                      (T_gamma['x']-M_gamma['x'])*np.cos(beta) - 
+                      (T_gamma['y']-M_gamma['y'])*np.sin(beta),
+                  'y':M_gamma['y'] + 
+                      (T_gamma['x']-M_gamma['x'])*np.sin(beta) + 
+                      (T_gamma['y']-M_gamma['y'])*np.cos(beta)}
+        
+        if strainMT == 0: 
+            list_wingtipheightgamma.append(T_beta['y'])
+            
+        if strainFM == 0:
+            list_wingtipheightbeta.append(T_beta['y'])
+        
+        delta = np.arctan((T_beta['y']/T_beta['x']))
+        list_delta.append(np.degrees(delta))
+        
+        
+        
+        plotter(M_gamma, T_beta, fraction_M = strainFM/max_strainFM,
+                fraction_T = strainMT/max_strainMT)
+
+
+
+#DONE: plots of wingtip displacement versus deflection (gamma,beta)
+
+def deflectionbygamma():
+    #calculates for beta = 0
+    plt.figure()
+    plt.grid()
+    plt.scatter(aux_gamma,list_wingtipheightgamma,color = 'c')
+    plt.plot(aux_gamma, list_wingtipheightgamma,color = 'c' )
+    plt.xlabel('gamma (considering beta = 0) ')
+    plt.ylabel('tip height')
+    
+def deflectionbybeta():
+    #calculates for gamma = 0
+    plt.figure()
+    plt.grid()
+    plt.scatter(aux_beta,list_wingtipheightbeta ,color = 'g')
+    plt.plot(aux_beta, list_wingtipheightbeta ,color = 'g' )
+    plt.xlabel('beta (considering gamma = 0)')
+    plt.ylabel('tip height')
+
+
+#DONE: plots of wingtip displacement versus strain (strainFM, strainMT)
+
+
+def deflectionbystrainFM():
+    #calculates for beta = 0
+    plt.figure()
+    plt.grid()
+    plt.scatter(list_strainsFM,list_wingtipheightgamma)
+    plt.plot(list_strainsFM,list_wingtipheightgamma)
+    plt.xlabel('FM strains')
+    plt.ylabel('wingtipheight (for beta = 0)')
+    
+def deflectionbystrainMT():
+    #calculates for gamma = 0
+    plt.figure()
+    plt.grid()
+    plt.scatter(list_strainsMT,list_wingtipheightbeta, color = [0.8,0.2,0.7])
+    plt.plot(list_strainsMT,list_wingtipheightbeta, color = [0.8,0.2,0.7])
+    plt.xlabel('MT strains')
+    plt.ylabel('wingtipheight (for gamma = 0)')    
+
+
+
+#TODO: plots of deflections (relative, gamma, beta) versus strains
+
+
+
+#plotting functions
+
+deflectionbygamma()
+deflectionbybeta()
+deflectionbystrainFM()
+deflectionbystrainMT()
 
 '''
-
+print  'gamma: ', list_gamma
+print  'beta: ', list_beta
+print 'delta: ' , list_delta
+'''
 
