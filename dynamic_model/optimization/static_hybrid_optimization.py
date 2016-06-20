@@ -43,10 +43,10 @@ def objfunc(x):
         DataFile.write( '\t %.5f' % (x_i) )
     DataFile.close()
             
-    print inputs
+#    print inputs
     outputs = run(inputs = inputs, parameters = [eng])
     f = outputs['theta']
-    
+#    print f
     DataFile = open('opt_data.txt','a')
     DataFile.write( '\t %.5f' % (f) )    
     DataFile.write('\n')
@@ -55,7 +55,7 @@ def objfunc(x):
 #    f = x[0] + x[1] + x[2] + x[3] + x[4] + x[5] + x[6] + x[7]
     fail = 0
     g = []
-    return f #,g,fail
+    return f,g,fail
     
 #==============================================================================
 # Start Matlab engine
@@ -103,18 +103,18 @@ DataFile.write('\n')
 DataFile.close()
 
 # Global Optimization
-#nsga2 = NSGA2()
-#nsga2.setOption('PopSize', 40)
-#nsga2.setOption('maxGen', 50)
-#nsga2(opt_prob)
-#print opt_prob.solution(0)
+nsga2 = NSGA2()
+nsga2.setOption('PopSize', 40)
+nsga2.setOption('maxGen', 50)
+nsga2(opt_prob)
+print opt_prob.solution(0)
 
 # Local Optimization Refinement
-result = minimize(objfunc, [6.817445e-001, -5.216475e-001, 9.029895e-001, 
-                            8.726738e-001, 6.958111e-001, -4.593744e-001,
-                            8.187166e-001, -5.719241e-001 ], method='BFGS',
-                            options={'gtol': 1e-6, 'disp': True})
-#slsqp = CONMIN()
+#result = minimize(objfunc, [6.817445e-001, -5.216475e-001, 9.029895e-001, 
+#                            8.726738e-001, 6.958111e-001, -4.593744e-001,
+#                            8.187166e-001, -5.719241e-001 ], method='BFGS',
+#                            options={'gtol': 1e-6, 'disp': True})
+#slsqp = SLSQP()
 #slsqp.setOption('MAXIT', 200)
 #slsqp(opt_prob)
 #print opt_prob.solution(0)

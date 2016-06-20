@@ -54,11 +54,12 @@ L_s = Data['L_s']
 
 I_list = []
 P_list = []
+W_list = []
 n = len(eps_s)
 for i in range(1, n):
     delta_sigma = sigma[i] - sigma[i-1]
     delta_T = T[i] - T[i-1]
-    
+    delta_eps = eps_s[i] - eps_s[i-1]
     delta_xi = xi[i] - xi[i-1]
     
     h = 0.               #invented (adiabatic)
@@ -88,8 +89,13 @@ for i in range(1, n):
     P = math.pi*r**2*L_s[i]*((T[i]*alpha*delta_sigma + \
         rho*c*delta_T + delta_xi*(-pi_t + rho_delta_s0*T[i]) )/delta_t + \
         2.*(h/r)*(T[i] - T_o))
+    
+    dW = math.pi*r**2*L_s[0]*0.5*(sigma[i]+sigma[i-1])*delta_eps
+    
     I_list.append(I)
     P_list.append(P)
+    W_list.append(dW)
+    
 t = np.linspace(0,(n-2)*delta_t, n-1)
 
 plt.figure()
