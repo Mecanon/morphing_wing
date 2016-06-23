@@ -84,17 +84,17 @@ elastic_check = 'N';
 % Integration Scheme
 integration_scheme = 'I';
 
-try
+%  try
 [eps_num, MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model_stress( T_100, sigma_100, P, elastic_check, integration_scheme );
 
-%     figure()
-%     box on
-%     hold on
-%     plot(T_100, eps_100,'b','LineWidth',1.5)
-%     plot(T_100, eps_num,'r','LineWidth',1.5)
+figure()
+box on
+hold on
+plot(T_100, eps_100,'b','LineWidth',1.5)
+plot(T_100, eps_num,'r','LineWidth',1.5)
 
 % Root-mean squared error:
 output = sqrt(sum((eps_100-eps_num).^2)/numel(eps_100));
-catch
-	output = 1.;
+%  catch
+% 	output = 1.;
 end

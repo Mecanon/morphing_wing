@@ -11,24 +11,24 @@ import numpy as np
 
 from xfoil_module import output_reader
 
-raw_data = output_reader("flexinol_isobaric_100MPa.csv", separator=",", 
+raw_data = output_reader("flexinol_isobaric_training_172MPa_2.csv", separator=",", 
                      rows_to_skip=4, header = ['Time', 'Extension',
                                                'Load', "Temperature",
                                                "Strain", "Stress"],)
 
-##Ignore initial data
-#for i in range(len(raw_data['Time'])):
-#    if raw_data['Time'][i] == 111471.60000:
-#        break
-#
-#data = {}
-#for key in raw_data:
-#    data[key] = raw_data[key][i:]
+#Ignore initial data
+for i in range(len(raw_data['Time'])):
+    if raw_data['Time'][i] == 111471.60000:
+        break
+
+data = {}
+for key in raw_data:
+    data[key] = raw_data[key][i:]
 
 data = raw_data
 #Ignore final data
 for i in range(len(data['Time'])):
-    if data['Time'][i] ==  5958.89500: #120745.90000:
+    if data['Time'][i] == 120745.90000 : #120745.90000: 5958.89500
         break
 
 old_data = data
