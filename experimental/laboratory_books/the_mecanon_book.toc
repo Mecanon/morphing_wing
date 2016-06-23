@@ -1,3 +1,5 @@
 \contentsline {chapter}{\nonumberline Wednesday, 22 June 2016}{1}{chapter*.2}
 \contentsline {experiment}{\numberline {1}Instron: Constant strain under heating}{1}{experiment.1.1}
 \contentsline {experiment}{\numberline {2}Instron: Shape memory effect}{2}{experiment.1.2}
+\contentsline {chapter}{\nonumberline Thursday, 23 June 2016}{3}{chapter*.3}
+\contentsline {experiment}{\numberline {1}Current Sensor: Calibration and first results of measurement.}{3}{experiment.2.1}
