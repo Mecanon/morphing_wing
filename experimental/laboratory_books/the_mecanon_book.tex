@@ -153,20 +153,52 @@ The wire was pre-heated to avoid any previous detwinning. From previous tensile 
 %-----------------------------------------
 \experiment{Current Sensor: Calibration and first results of measurement.}
 
-\textbf{File:} Current Sensor: Calibration.
+\textbf{File:} Current Sensor: Calibration. ???(IS THIS THE NAME OF THE FILE STORING THE DATA?!)
 
-\textbf{Objective:} Is the Sensor a good instrument for ours measurements?
+\textbf{Objective:} Are the sensor measurements reliable?
 
-\textbf{Procedure to calibrate the sensor:}
+\textbf{Procedure for sensor calibration:}
 
+\begin{itemize}
+\item \textit{First Step}: Calibrate the output offset, with zero current on the sense lines(???), using the $V_{ref}$ trimpot. (WHAT IS A TRIMPOT?)
 
-\hspace{2cm} 
-\textit{Frist Step}: Calibrate the output offset, with zero current on the sense lines, using the $V_{ref}$ trimpot.
-
-\hspace{2cm} 
-\textit{Second Step}: Using a known current, adjust the GAIN trimpot until the measured current showed in the monitor serial be similar to the current showed in the reference sensor.
-
+\item \textit{Second Step}: Using a known current, adjust the GAIN trimpot until the measured current showed in the monitor serial is similar to the current showed in the reference sensor.
+\end{itemize}
 \textbf{Conclusion:} 
+
+\experiment{Instron: Cyclic loading (200MPa,400MPa, 600MPa, 400MPa) at room temperature.}
+
+\textbf{Objective: } Verify influence of residual strain
+\textbf{File:} DYN1 cyclic loading T0
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{DYN1_cyclic_stress_T0.png}
+\end{figure}
+
+%------------------------------------------------------
+\labday{Friday, 24 June 2016}
+
+\experiment{Instron: Training - Cyclic heating at 200MPa.}
+
+\textbf{File:} DYN1 cyclic temperature 200MPa
+
+\textbf{Objective:} Train SMA wire
+
+Previous training at 172 MPa did not stabilize SMA for other stresses. Thermal cycling at 600 MPa.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{DYN1_cyclic_temperature_200MPa.png}
+\end{figure}
+
+\textbf{Conclusion:} With the current parameters, 30 cycles were successfully undertaken at 20MPa. The final cycles did not cool down because of lack of liquid nitrogen.
+
+%------------------------------------------------------
+\labday{Friday, 24 June 2016}
+
+\experiment{Instron: Thermal cycling at constant stress (50MPa, 100MPa, 150MPa, 172MPa).}
+
+A colocar imagens
 %----------------------------------------------------------------------------------------
 %	FORMULAE AND MEDIA RECIPES
 %----------------------------------------------------------------------------------------

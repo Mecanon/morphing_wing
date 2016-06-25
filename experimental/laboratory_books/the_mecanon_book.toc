@@ -3,3 +3,8 @@
 \contentsline {experiment}{\numberline {2}Instron: Shape memory effect}{2}{experiment.1.2}
 \contentsline {chapter}{\nonumberline Thursday, 23 June 2016}{3}{chapter*.3}
 \contentsline {experiment}{\numberline {1}Current Sensor: Calibration and first results of measurement.}{3}{experiment.2.1}
+\contentsline {experiment}{\numberline {2}Instron: Cyclic loading (200MPa,400MPa, 600MPa, 400MPa) at room temperature.}{3}{experiment.2.2}
+\contentsline {chapter}{\nonumberline Friday, 24 June 2016}{4}{chapter*.4}
+\contentsline {experiment}{\numberline {1}Instron: Training - Cyclic heating at 200MPa.}{4}{experiment.3.1}
+\contentsline {chapter}{\nonumberline Friday, 24 June 2016}{5}{chapter*.5}
+\contentsline {experiment}{\numberline {1}Instron: Thermal cycling at constant stress (50MPa, 100MPa, 150MPa, 172MPa).}{5}{experiment.4.1}
