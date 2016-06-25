@@ -1,4 +1,4 @@
-function [ MVF, eps_t, E, MVF_r, eps_t_r, sigma, Phi_fwd] = Implicit_fwd_transformation_correction( MVF, eps_t, E,MVF_r,eps_t_r,sigma, H_cur,eps, T, T_0,...
+function [ MVF, T, eps_t, E, MVF_r, eps_t_r, sigma, Phi_fwd] = Implicit_fwd_transformation_correction_TC( MVF, eps_t, E,MVF_r,eps_t_r,sigma, H_cur,eps, T, T_0,...
     Phi_fwd,P, TP )
 % Function to correct for forward transformation using implicit integration
 % scheme
@@ -23,23 +23,53 @@ for iter = 1:maxiter
     % (Phi) with respect to Martensitic volume fraction
     partial_Phi_fwd_MVF_k=partial_Phi_fwd_MVF(MVF,P.delta,P.n1,P.n2,TP.a1,TP.a2,TP.a3);
     
+    % Determine the partial derivative of transformation surface (Phi) with
+    % respect to Temperature
+    partial_Phi_fwd_T_k=TP.rho_delta_s0;
     % Use partial derivatives and MVF evolution to solve A^t
     A_t=partial_Phi_fwd_MVF_k-partial_Phi_fwd_sigma_k*E*((1/P.E_M-1/P.E_A)*sigma+Lambda);
+    % Determine the effective thermodynamic driving force pi^t for forward
+    % transformation
+    pi_t_fwd=TP.Y_0_t+TP.D*abs(sigma)*H_cur;
     
-    % Determine the correction for MVF for the current iteration
-    delta_MVF=-Phi_fwd/A_t;
+    % Determine the change in MVF and T for the iteration using the linear
+    % system of equations
+    % 2x2 Matrix 'L' representing the terms requiring the partial
+    % derivatives and material properties (x:MVF, T:Temperature)
+    L_xx=-partial_Phi_fwd_sigma_k*E*((1/P.E_M-1/P.E_A)*sigma+Lambda)+partial_Phi_fwd_MVF_k;
+    L_xT=-partial_Phi_fwd_sigma_k*E*P.alpha+partial_Phi_fwd_T_k;
+    L_Tx=-T*P.alpha*E*((1/P.E_M-1/P.E_A)*sigma+Lambda)+(-pi_t_fwd+TP.rho_delta_s0*T);
+    L_TT=P.rho*P.c-T*E*P.alpha^2;
+    L= [L_xx, L_xT;
+        L_Tx, L_TT];
+    % Assign matrix 'B' to the solutions to the system of equations
+    % (Transformation surface)
+    B=[-Phi_fwd; 0];
+    % Solve for change in MVF and T
+    D=inv(L)*B;
+    delta_MVF=D(1,1);
+    delta_T=D(2,1);
     
     % Hold the MVF value of the previous iteration in case of
     % MVF > 1 correction
     MVF_k=MVF;
-    % Update MVF using the delta MVF value
+    T_k=T;
+    % Update MVF and T using the calculated change over the iteration
     MVF=MVF+delta_MVF;
+    T=T+delta_T;
     
     % Correct if MVF reaches a bound of 1
     if MVF > 1
         MVF = 1;
+        delta_MVF=MVF-MVF_k;
         % Recalculate transformation strain for corrected MVF
-        eps_t=eps_t+(MVF-MVF_k)*Lambda;
+        eps_t=eps_t+delta_MVF*Lambda;
+        % Recalculate temperature for corrected MVF using the system of
+        % equations
+        L_Tx=-T_k*P.alpha*E*((1/P.E_M-1/P.E_A)*sigma+Lambda)+(-pi_t_fwd+TP.rho_delta_s0*T_k);
+        L_TT=P.rho*P.c-T_k*E*P.alpha^2;
+        delta_T=-L_Tx*delta_MVF/L_TT;
+        T=T_k+delta_T;
         % Youngs Modulus for completely martensite material
         E=P.E_M;
         % Calculate stress

@@ -25,7 +25,7 @@ class actuator():
     """
     #
     def __init__(self, geo_props, J, R = None, area = None, zero_stress_length = None,
-                 eps_0 = None, k = None, material = 'linear', design = 'B',
+                 eps_0 = None, k = None, material = 'linear', design = 'A',
                  actuator_type = 'spring'):
         """
         Initiate class and it's basic atributes:
@@ -151,12 +151,6 @@ class actuator():
             if abs(self.theta) > math.pi:
                 self.theta = self.theta % (2.*math.pi)
                 return self.theta
-<<<<<<< HEAD
-=======
-        
-        # TODO: Create this function, because i havent maked in winglet code
-        # See why the elif don´t work, but if works.
->>>>>>> master
         
         if self.design == "B":
             self.r_1 = (self.eps + 1)*self.zero_stress_length
@@ -178,7 +172,6 @@ class actuator():
         
             self.length_r = math.sqrt(self.r_1**2 + self.r_2**2)
             self.eps = self.length_r/self.zero_stress_length - 1.
-<<<<<<< HEAD
         
         elif self.design == 'B':
             delta_r = self.theta*self.R
@@ -188,14 +181,6 @@ class actuator():
                 self.r_1 = self.r_1_0 - delta_r
             self.r_2 = 0.
             self.eps = self.r_1/self.zero_stress_length - 1.
-=======
-        elif self.design == 'B':
-            self.theta = theta
-            delta_r = math.radians(self.theta)*self.R
-            self.r_1 = self.r_1 - delta_r
-            self.r_2 = 0.
-            self.eps = self.r_1/self.r_1_0 - 1.
->>>>>>> master
          
     def calculate_force(self, source = 'strain'):
         if self.design == 'A' or self.design == 'B':
@@ -228,11 +213,7 @@ class actuator():
             self.torque = - self.y_p*(-self.F)
         return self.torque
         
-<<<<<<< HEAD
     def plot_actuator(self):
-=======
-    def plot_actuator(self,cor=None):
->>>>>>> master
         
         if self.material == 'linear':
             colour = 'b'
@@ -248,19 +229,6 @@ class actuator():
            plt.plot([self.x_n + self.x_J, self.x_n + self.x_J + self.r_1], 
                     [self.y_n + self.y_J, self.y_n + self.y_J + self.r_2],
                     colour)
-            
-        # To this type of actuator, the points will be diferent than the type 
-        # above.
-            
-            if self.theta == 0:
-                pass
-            else:
-                plt.plot([0, abs(self.R*math.cos(self.theta))],
-                          [0, abs(self.R*math.sin(self.theta))],
-                colour)
-        
-        
-        
 
     def find_limits(self, y, theta_0 = 0):
         """The actuator has two major constraints:
