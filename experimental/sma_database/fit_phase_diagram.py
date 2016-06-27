@@ -13,7 +13,7 @@ def cost(x):
     Tf = x[1]
     C = x[2]
     
-    sigma_list = np.array([0, 50, 100, 172, 200])
+    sigma_list = np.array([50, 100, 150, 172, 200])
     Ts_array = sigma_list/C + Ts
     Tf_array = sigma_list/C + Tf
     
@@ -21,13 +21,23 @@ def cost(x):
            np.sqrt(np.sum((Tf_exp-Tf_array)**2)/len(Tf_array)) 
     
     return rmse
-    
-T_Ms_list = np.array([49.9, 73.55, 81.90, 83.6, 104.77])
-T_Mf_list = np.array([31.6, 47.71, 62.73, 78.10, 72.75])
-T_As_list = np.array([74.8, 79.04, 81.90, 100., 89.37])
-T_Af_list = np.array([79.8, 94.81,109.42, 105.6, 109.66])
 
-sigma_Ms_list = np.array([0, 50, 100, 172, 200])
+#T_Ms_list = np.array([49.9, 73.55, 81.90, 83.6, 104.77])
+#T_Mf_list = np.array([31.6, 47.71, 62.73, 78.10, 72.75])
+#T_As_list = np.array([74.8, 79.04, 81.90, 100., 89.37])
+#T_Af_list = np.array([79.8, 94.81,109.42, 105.6, 109.66])
+  
+#T_Ms_list = np.array([49.9, 80.48, 88.7, 95.05, 96.78, 104.00])
+#T_Mf_list = np.array([31.6, 58.48, 64.3, 71.6, 71.73, 70.04])
+#T_As_list = np.array([74.8,74.44, 79.42, 82.97, 84.39, 92.3])
+#T_Af_list = np.array([79.8, 95.28, 101.74, 107.33, 109.82, 114.73])
+
+T_Ms_list = np.array([ 80.48, 88.7, 95.05, 96.78, 104.00])
+T_Mf_list = np.array([58.48, 64.3, 71.6, 71.73, 70.04])
+T_As_list = np.array([74.44, 79.42, 82.97, 84.39, 92.3])
+T_Af_list = np.array([95.28, 101.74, 107.33, 109.82, 114.73])
+
+sigma_Ms_list = np.array([50, 100, 150, 172, 200])
 sigma_Mf_list = sigma_Ms_list
 sigma_As_list = sigma_Ms_list
 sigma_Af_list = sigma_Ms_list
