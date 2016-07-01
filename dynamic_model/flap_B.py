@@ -446,6 +446,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
             l.eps_0 = l.eps
             l.calculate_force(source = 'strain')
             l.calculate_torque()
+            print "torque: ", l.torque
             l.calculate_theta()
 #            print s.torque, s.eps_0, s.eps, l.eps, l.torque, s.torque + tau_w + \
 #                    tau_a + l.torque

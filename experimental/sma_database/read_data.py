@@ -11,38 +11,38 @@ import numpy as np
 
 from xfoil_module import output_reader
 
-#stress = "200MPa"
-#raw_data = output_reader("flexinol_isobaric_trained_" + stress + ".csv", separator=",", 
-#                     rows_to_skip=4, header = ['Time', 'Extension',
-#                                               'Load', "Temperature",
-#                                               "Strain", "Stress"],)
-raw_data = output_reader("flexinol_training_200MPa.csv", separator=",", 
+stress = "50MPa"
+raw_data = output_reader("flexinol_isobaric_trained_" + stress + ".csv", separator=",", 
                      rows_to_skip=4, header = ['Time', 'Extension',
                                                'Load', "Temperature",
                                                "Strain", "Stress"],)
-##Ignore initial data
-#for i in range(len(raw_data['Time'])):
-#    if raw_data['Time'][i] == 3405.32400:
-#        print 'hi'
-#        break
-#
-#data = {}
-#for key in raw_data:
-#    data[key] = raw_data[key][i:]
-#
-##data = raw_data
-##Ignore final data
-#for i in range(len(data['Time'])):
-#    if data['Time'][i] == 4928.52400: #120745.90000: 5958.89500
-#        print 'ho'
-#        break
-#
-#old_data = data
-#data = {}
-#for key in old_data:
-#    data[key] = old_data[key][:i+1]
+#raw_data = output_reader("flexinol_isobaric_trained_200MPa.csv", separator=",", 
+#                     rows_to_skip=4, header = ['Time', 'Extension',
+#                                               'Load', "Temperature",
+#                                               "Strain", "Stress"],)
+#Ignore initial data
+for i in range(len(raw_data['Time'])):
+    if raw_data['Time'][i] == 3542.19500  :
+        print 'hi'
+        break
 
-data = raw_data
+data = {}
+for key in raw_data:
+    data[key] = raw_data[key][i:]
+
+#data = raw_data
+#Ignore final data
+for i in range(len(data['Time'])):
+    if data['Time'][i] == 6960.09500: #120745.90000: 5958.89500
+        print 'ho'
+        break
+
+old_data = data
+data = {}
+for key in old_data:
+    data[key] = old_data[key][:i+1]
+
+#data = raw_data
 #==============================================================================
 # Filtering data
 #==============================================================================
@@ -72,7 +72,7 @@ for i in range(len(data["Stress"])):
 eps_0 = data["Strain"][i]
 
 eps_min = min(eps_interp)
-eps_interp = eps_interp - eps_min + eps_0
+eps_interp = eps_interp - eps_min
 
 #==============================================================================
 # Plotting
@@ -125,4 +125,4 @@ plt.ylabel("Strain")
 # Stroing data
 #==============================================================================
 data = np.array([T_interp, eps_interp, sigma_interp])
-#np.savetxt("filtered_data_"+ stress+".txt", data.T,fmt='%.18f')
+np.savetxt("filtered_data_"+ stress+".txt", data.T,fmt='%.18f')

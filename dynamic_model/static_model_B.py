@@ -72,7 +72,7 @@ def run(inputs, parameters = None):
     n_cycles = 0
     #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
-    all_outputs = True
+    all_outputs = False
     save_data = False
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
@@ -85,8 +85,8 @@ def run(inputs, parameters = None):
 
         import matplotlib.pyplot as plt
         plt.figure()
-        plt.plot(theta, eps_s, lw=2., label = "$\epsilon_s$")
-        plt.plot(theta, eps_l, 'b--',lw=2, label = "$\epsilon_l$")
+        plt.plot(np.rad2deg(theta), eps_s, lw=2., label = "$\epsilon_s$")
+        plt.plot(np.rad2deg(theta), eps_l, 'b--',lw=2, label = "$\epsilon_l$")
 #        plt.scatter(theta, eps_s, c = 'b')
 #        plt.scatter(theta, eps_l, c = 'b')
         plt.ylabel('$\epsilon$', fontsize=24)
@@ -96,7 +96,7 @@ def run(inputs, parameters = None):
         
         print len(T), len(eps_s), len(eps_l), len(theta), len(eps_t)
         plt.figure()
-        plt.plot(theta, eps_t, lw=2.)
+        plt.plot(np.rad2deg(theta), eps_t, lw=2.)
 #        plt.scatter(theta, eps_t, c = 'b')
         plt.ylabel('$\epsilon_t$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
@@ -104,7 +104,7 @@ def run(inputs, parameters = None):
         plt.grid()
         
         plt.figure()
-        plt.plot(theta, MVF, lw=2.)
+        plt.plot(np.rad2deg(theta), MVF, lw=2.)
 #        plt.scatter(theta, MVF, c = 'b')
         plt.ylabel('$MVF$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
@@ -138,7 +138,7 @@ def run(inputs, parameters = None):
         plt.grid()
         
         plt.figure()
-        plt.plot(T, theta, lw=2.)
+        plt.plot(T, np.rad2deg(theta), lw=2.)
 #        plt.scatter(T, theta, c = 'b')
         plt.xlabel('$T (K)$', fontsize=20)
         plt.ylabel(r'$\theta ({}^{\circ})$', fontsize=20)

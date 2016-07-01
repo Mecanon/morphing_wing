@@ -154,7 +154,7 @@ class actuator():
         
         if self.design == "B":
             self.r_1 = (self.eps + 1)*self.zero_stress_length
-            self.theta = abs(self.r_1 - self.r_1_0)/self.R
+            self.theta = (self.r_1 - self.r_1_0)/self.R
             if self.pulley_position == 'up':
                 self.theta = - self.theta
 
@@ -176,9 +176,9 @@ class actuator():
         elif self.design == 'B':
             delta_r = self.theta*self.R
             if self.pulley_position == "up":
-                self.r_1 = self.r_1_0 + delta_r
-            elif self.pulley_position == "down":
                 self.r_1 = self.r_1_0 - delta_r
+            elif self.pulley_position == "down":
+                self.r_1 = self.r_1_0 + delta_r
             self.r_2 = 0.
             self.eps = self.r_1/self.zero_stress_length - 1.
          
@@ -210,7 +210,13 @@ class actuator():
                           (self.y_p*math.cos(self.theta) + \
                            self.x_p*math.sin(self.theta))*F_1
         elif self.design == 'B':
-            self.torque = - self.y_p*(-self.F)
+            #Because SMA positive force is actually negative ( the contrary
+            # of the linear we need separate statements for calculating
+            # torque)
+            if self.material == "linear":
+                self.torque = - self.y_p*(self.F)
+            elif self.material == "SMA":
+                self.torque = - self.y_p*(-self.F)
         return self.torque
         
     def plot_actuator(self):
