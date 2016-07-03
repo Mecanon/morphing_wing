@@ -77,7 +77,7 @@ def run(inputs, parameters = None):
     # Number of steps and cycles
     n = 200
     n_cycles = 0
-    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
     all_outputs = True
     save_data = True
@@ -94,8 +94,8 @@ def run(inputs, parameters = None):
         plt.figure()
         plt.plot(theta, eps_s, lw=2., label = "$\epsilon_s$")
         plt.plot(theta, eps_l, 'b--',lw=2, label = "$\epsilon_l$")
-        plt.scatter(theta, eps_s, c = 'b')
-        plt.scatter(theta, eps_l, c = 'b')
+#        plt.scatter(theta, eps_s, c = 'b')
+#        plt.scatter(theta, eps_l, c = 'b')
         plt.ylabel('$\epsilon$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -104,7 +104,7 @@ def run(inputs, parameters = None):
         print len(T), len(eps_s), len(eps_l), len(theta), len(eps_t)
         plt.figure()
         plt.plot(theta, eps_t, lw=2.)
-        plt.scatter(theta, eps_t, c = 'b')
+#        plt.scatter(theta, eps_t, c = 'b')
         plt.ylabel('$\epsilon_t$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -112,7 +112,7 @@ def run(inputs, parameters = None):
         
         plt.figure()
         plt.plot(theta, MVF, lw=2.)
-        plt.scatter(theta, MVF, c = 'b')
+#        plt.scatter(theta, MVF, c = 'b')
         plt.ylabel('$MVF$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -120,7 +120,7 @@ def run(inputs, parameters = None):
 
         plt.figure()
         plt.plot(T, MVF, lw=2.)
-        plt.scatter(T, MVF, c = 'b')
+#        plt.scatter(T, MVF, c = 'b')
         plt.ylabel('$MVF$', fontsize=24)
         plt.xlabel('$T (K)$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -128,7 +128,7 @@ def run(inputs, parameters = None):
 
         plt.figure()
         plt.plot(T, sigma, lw=2.)
-        plt.scatter(T, sigma, c = 'b')
+#        plt.scatter(T, sigma, c = 'b')
         plt.ylabel('$\sigma$', fontsize=24)
         plt.xlabel('$T (K)$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -137,8 +137,8 @@ def run(inputs, parameters = None):
         plt.figure()
         plt.plot(T, eps_s, 'b', lw=2., label = "$\epsilon_s$")
         plt.plot(T, eps_l, 'b--',lw=2, label = "$\epsilon_l$")
-        plt.scatter(T, eps_s, c = 'b')
-        plt.scatter(T, eps_l, c = 'b')
+#        plt.scatter(T, eps_s, c = 'b')
+#        plt.scatter(T, eps_l, c = 'b')
         plt.xlabel('$T (K)$', fontsize=20)
         plt.ylabel('$\epsilon$', fontsize=24)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -146,7 +146,7 @@ def run(inputs, parameters = None):
         
         plt.figure()
         plt.plot(T, theta, lw=2.)
-        plt.scatter(T, theta, c = 'b')
+#        plt.scatter(T, theta, c = 'b')
         plt.xlabel('$T (K)$', fontsize=20)
         plt.ylabel(r'$\theta ({}^{\circ})$', fontsize=20)
         plt.grid()
@@ -160,6 +160,8 @@ def run(inputs, parameters = None):
         plt.figure()
         plt.plot(theta, F_s, 'b', lw=2., label = "$F_s$")
         plt.plot(theta, F_l, 'b--', lw=2., label = "$F_l$")
+#        plt.scatter(theta, F_s, c = 'b')
+#        plt.scatter(theta, F_l, c = 'b')
         plt.ylabel('$F (N)$', fontsize=20)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
@@ -183,33 +185,28 @@ if __name__ == '__main__':
     J = {'x':0.75, 'y':0.}
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
 
-    #Optimal for max deflection
-    sma = {'x-': 6.817445e-001, 'y-': -5.216475e-001, 
-           'x+': 9.029895e-001, 'y+': 8.726738e-001}
-    linear =  {'x-': 6.958111e-001, 'y-': -4.593744e-001, 
-               'x+': 8.187166e-001, 'y+': -5.719241e-001}
+    #Optimal from max deflection             
+    sma = {'x-': 0.46278, 'y-': -0.68322, 
+           'x+': 0.90261, 'y+': 0.79959}
+    linear = {'x-': 0.46278, 'y-': -0.68322, 
+           'x+': 0.90261, 'y+': 0.79959}
+	 	 
+    #Optimal from multiobjective
+#    sma = {'x-': 6.983658e-001, 'y-': -5.518018e-001, 
+#           'x+': 8.145638e-001, 'y+': 8.309352e-002}
+#    linear = {'x-': 6.978678e-001, 'y-': -5.474895e-001, 
+#           'x+': 8.147300e-001, 'y+': -8.607796e-001}
 
-#    #Optimal multiobjective               
-#    sma = {'x-': 6.161543e-001, 'y-': -6.631015e-001, 
-#           'x+': 8.697452e-001, 'y+': 3.962915e-001}
-#    linear =  {'x-': 4.593649e-001, 'y-': -7.127816e-001, 
-#               'x+': 8.269874e-001, 'y+': -1.587640e-001}
-
-#    #Extension test           
-#    sma = {'x-': 0.6, 'y-': -0.6, 
-#           'x+': 0.8, 'y+': -0.6}
-#    linear =  {'x-': 0.6, 'y-': 0.6, 
-#               'x+': 0.8, 'y+': 0.6}
-
-#    #Compression test with n_real = n              
-#    sma = {'x-': 0.6, 'y-': -0.6, 
-#           'x+': 0.8, 'y+': -0.6}
-#    linear = {'x-': 0.6, 'y-': -0.6, 
-#           'x+': 0.8, 'y+': -0.6}
+    #Optimal for max deflection, colinear            
+    sma = {'x-': 7.318781e-001	, 'y-': -3.871608e-001, 
+           'x+': 9.949996e-001, 'y+': 8.349697e-001}
+    linear = {'x-': 7.318781e-001	, 'y-': -3.871608e-001, 
+           'x+': 9.949996e-001, 'y+': 8.349697e-001}   
+	
     #SMA Pre-stress
     sigma_o = 400e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
-#    print  'theta: ', data['theta']
+    print  'k: ', data['k']
     DataFile = open('data.txt','a')
 							
 ##==============================================================================

@@ -15,6 +15,7 @@ delta_t = 0.05
 
 sigma_o = 400e6
 r = 0.00025
+d = 2*r
 T_o = 200.
 
 alpha = 0.           #set to zero on purpose
@@ -52,16 +53,56 @@ xi = Data['xi']
 eps_s = Data['eps_s']
 L_s = Data['L_s']
 
+#==============================================================================
+# # Heat Transfer parameters
+#==============================================================================
+# Gravity:
+g = 9.8 #ms-2
+# Atmospheric pressure
+P_air = 101325. # Pa
+# Molar
+M = 0.0289644  #kg/mol
+# Ideal gas constant
+R = 8.31447  #J/(mol K)
+# Air density:
+rho_air = P_air*M / (R*T_o)
+# Sutherland's law coefficients
+C1 = 1.458e-6 #kg/m.s.sqrt(K)
+C2 = 110.4 #K
+# Air dynamic viscosity:
+mu_air = (C1 * T_o**(3./2)) / (T_o+C2)
+# Air kinematic viscosity:
+nu_air = mu_air/rho_air
+# Air specific heat at constant pressure
+Cp_air = 1.005
+# Air conductivity
+k_air = 0.0264
+# Nusselt number coefficients
+alpha_1 = 1.
+alpha_2 = 0.287
+
+#==============================================================================
+# Calculate Power and current
+#==============================================================================
 I_list = []
 P_list = []
+W_list = []
 n = len(eps_s)
 for i in range(1, n):
     delta_sigma = sigma[i] - sigma[i-1]
     delta_T = T[i] - T[i-1]
-    
+    delta_eps = eps_s[i] - eps_s[i-1]
     delta_xi = xi[i] - xi[i-1]
+
+    # Grashof number for external flow around a cylinder
+    Gr = 2*abs(T[i] - T_o)/(T[i] + T_o)*(g*d**3)/(nu_air**2)
+    # Prandtl number definition
+    Pr = mu_air*Cp_air/k_air
+    # Nusselt number and parameter
+    Nu = (alpha_1 + alpha_2*(Gr*Pr/(1 + (0.56/Pr)**(9./16))**(16./9))**(1./6))**2
+    # Calculate convection coefficient h from definition of Nusselt number
+    h = k_air*Nu/d
     
-    h = 0.               #invented (adiabatic)
     rho_E = rho_E_M*xi[i] + (1-xi[i])*rho_E_A
     
     if abs(sigma[i]) <= sigma_crit:
@@ -88,8 +129,13 @@ for i in range(1, n):
     P = math.pi*r**2*L_s[i]*((T[i]*alpha*delta_sigma + \
         rho*c*delta_T + delta_xi*(-pi_t + rho_delta_s0*T[i]) )/delta_t + \
         2.*(h/r)*(T[i] - T_o))
+    
+    dW = math.pi*r**2*L_s[0]*0.5*(sigma[i]+sigma[i-1])*delta_eps
+    
     I_list.append(I)
     P_list.append(P)
+    W_list.append(dW)
+    
 t = np.linspace(0,(n-2)*delta_t, n-1)
 
 plt.figure()
