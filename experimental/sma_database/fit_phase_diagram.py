@@ -13,7 +13,7 @@ def cost(x):
     Tf = x[1]
     C = x[2]
     
-    sigma_list = np.array([50, 100, 150, 172, 200])
+    sigma_list = np.array([ 50, 100, 150, 172, 200])
     Ts_array = sigma_list/C + Ts
     Tf_array = sigma_list/C + Tf
     
@@ -32,11 +32,18 @@ def cost(x):
 #T_As_list = np.array([74.8,74.44, 79.42, 82.97, 84.39, 92.3])
 #T_Af_list = np.array([79.8, 95.28, 101.74, 107.33, 109.82, 114.73])
 
-T_Ms_list = np.array([ 80.48, 88.7, 95.05, 96.78, 104.00])
-T_Mf_list = np.array([58.48, 64.3, 71.6, 71.73, 70.04])
-T_As_list = np.array([74.44, 79.42, 82.97, 84.39, 92.3])
-T_Af_list = np.array([95.28, 101.74, 107.33, 109.82, 114.73])
+# Results for DYN1 (plastified wire)
+#T_Ms_list = np.array([ 80.48, 88.7, 95.05, 96.78, 104.00])
+#T_Mf_list = np.array([58.48, 64.3, 71.6, 71.73, 70.04])
+#T_As_list = np.array([74.44, 79.42, 82.97, 84.39, 92.3])
+#T_Af_list = np.array([95.28, 101.74, 107.33, 109.82, 114.73])
+#sigma_Ms_list = np.array([50, 100, 150, 172, 200])
 
+# Results for DYN2 (plastified wire)
+T_Ms_list = np.array([ 68.74, 75.71, 82.33, 84.77, 88.27])
+T_Mf_list = np.array([ 57.74, 65.39, 71.29, 74.07, 77.88])
+T_As_list = np.array([ 78.47, 83.82, 88.81, 91.38, 94.78])
+T_Af_list = np.array([ 88.75, 95.02, 102.15, 105.12, 108.85])
 sigma_Ms_list = np.array([50, 100, 150, 172, 200])
 sigma_Mf_list = sigma_Ms_list
 sigma_As_list = sigma_Ms_list
@@ -82,8 +89,16 @@ T_Mf_fit = (sigma_Mf_list)/C_M + T_Mf
 T_As_fit = (sigma_As_list)/C_A + T_As
 T_Af_fit = (sigma_Af_list)/C_A + T_Af
 
+print "T_Ms at 172MPa: ", T_Ms_fit[3]
+print "T_Mf at 172MPa: ", T_Mf_fit[3]
+print "T_As at 172MPa: ", T_As_fit[3]
+print "T_Af at 172MPa: ", T_Af_fit[3]
+
+
 plt.plot(T_Ms_fit, sigma_Ms_list, c='g')
 plt.plot(T_Mf_fit, sigma_Mf_list, c='g')
 plt.plot(T_As_fit, sigma_As_list, c='r')
 plt.plot(T_Af_fit, sigma_Af_list, c='r')
 plt.legend(loc = 'upper left')
+plt.xlabel("Temperature (C)")
+plt.ylabel("Stress (MPa)")

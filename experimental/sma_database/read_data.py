@@ -11,77 +11,77 @@ import numpy as np
 
 from xfoil_module import output_reader
 
-stress = "50MPa"
-raw_data = output_reader("flexinol_isobaric_trained_" + stress + ".csv", separator=",", 
-                     rows_to_skip=4, header = ['Time', 'Extension',
-                                               'Load', "Temperature",
-                                               "Strain", "Stress"],)
-#raw_data = output_reader("flexinol_isobaric_trained_200MPa.csv", separator=",", 
+#stress = "50MPa"
+#raw_data = output_reader("flexinol_isobaric_trained_" + stress + ".csv", separator=",", 
 #                     rows_to_skip=4, header = ['Time', 'Extension',
 #                                               'Load', "Temperature",
 #                                               "Strain", "Stress"],)
-#Ignore initial data
-for i in range(len(raw_data['Time'])):
-    if raw_data['Time'][i] == 3542.19500  :
-        print 'hi'
-        break
+raw_data = output_reader("flexinol_monotonic_loading_austenite.csv", separator=",", 
+                     rows_to_skip=4, header = ['Time', 'Extension',
+                                               'Load', 
+                                               "Strain", "Temperature", "Stress"],)
+##Ignore initial data
+#for i in range(len(raw_data['Time'])):
+#    if raw_data['Time'][i] == 3542.19500  :
+#        print 'hi'
+#        break
+#
+#data = {}
+#for key in raw_data:
+#    data[key] = raw_data[key][i:]
+#
+##data = raw_data
+##Ignore final data
+#for i in range(len(data['Time'])):
+#    if data['Time'][i] == 6960.09500: #120745.90000: 5958.89500
+#        print 'ho'
+#        break
 
-data = {}
-for key in raw_data:
-    data[key] = raw_data[key][i:]
+#old_data = data
+#data = {}
+#for key in old_data:
+#    data[key] = old_data[key][:i+1]
 
-#data = raw_data
-#Ignore final data
-for i in range(len(data['Time'])):
-    if data['Time'][i] == 6960.09500: #120745.90000: 5958.89500
-        print 'ho'
-        break
-
-old_data = data
-data = {}
-for key in old_data:
-    data[key] = old_data[key][:i+1]
-
-#data = raw_data
+data = raw_data
 #==============================================================================
 # Filtering data
 #==============================================================================
-xx = np.linspace(data['Time'][0], data['Time'][-1],500)
+#xx = np.linspace(data['Time'][0], data['Time'][-1],500)
+#
+#f = interpolate.interp1d(data['Time'],data['Strain'])
+#eps_interp = f(xx)
+#window = signal.gaussian(1, 1)
+#smoothed_eps = signal.convolve(eps_interp, window/window.sum(), mode = 'same')
 
-f = interpolate.interp1d(data['Time'],data['Strain'])
-eps_interp = f(xx)
-window = signal.gaussian(1, 1)
-smoothed_eps = signal.convolve(eps_interp, window/window.sum(), mode = 'same')
+#f = interpolate.interp1d(data['Time'],data['Temperature'])
+#T_interp = f(xx)
+#window = signal.gaussian(1, 1)
+#smoothed_T = signal.convolve(T_interp, window/window.sum(), mode = 'same')
 
-f = interpolate.interp1d(data['Time'],data['Temperature'])
-T_interp = f(xx)
-window = signal.gaussian(1, 1)
-smoothed_T = signal.convolve(T_interp, window/window.sum(), mode = 'same')
-
-f = interpolate.interp1d(data['Time'],data['Stress'])
-sigma_interp = f(xx)
-window = signal.gaussian(1, 1)
-smoothed_sigma = signal.convolve(sigma_interp, window/window.sum(), mode = 'same')
+#f = interpolate.interp1d(data['Time'],data['Stress'])
+#sigma_interp = f(xx)
+#window = signal.gaussian(1, 1)
+#smoothed_sigma = signal.convolve(sigma_interp, window/window.sum(), mode = 'same')
 
 #==============================================================================
 # Formatting data
 #==============================================================================
-for i in range(len(data["Stress"])):
-    if data["Stress"] > 100.:
-        break
-eps_0 = data["Strain"][i]
-
-eps_min = min(eps_interp)
-eps_interp = eps_interp - eps_min
+#for i in range(len(data["Stress"])):
+#    if data["Stress"] > 100.:
+#        break
+#eps_0 = data["Strain"][i]
+#
+#eps_min = min(eps_interp)
+#eps_interp = eps_interp - eps_min
 
 #==============================================================================
 # Plotting
 #==============================================================================
-plt.figure()
-plt.plot(data["Temperature"],data["Strain"])
-plt.xlabel("Temperature (C)")
-plt.ylabel("Strain (m/m)")
-plt.grid()
+#plt.figure()
+#plt.plot(data["Temperature"],data["Strain"])
+#plt.xlabel("Temperature (C)")
+#plt.ylabel("Strain (m/m)")
+#plt.grid()
 
 plt.figure()
 plt.plot(data["Strain"], data["Stress"])
@@ -125,4 +125,7 @@ plt.ylabel("Strain")
 # Stroing data
 #==============================================================================
 data = np.array([T_interp, eps_interp, sigma_interp])
-np.savetxt("filtered_data_"+ stress+".txt", data.T,fmt='%.18f')
+try:
+    np.savetxt("filtered_data_"+ stress+".txt", data.T,fmt='%.18f')
+except:
+    print "No output file"

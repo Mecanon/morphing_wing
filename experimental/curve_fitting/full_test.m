@@ -1,7 +1,10 @@
 % Before running code, remember to check if csv files are in correct
 % format, otherwise just open it in excel and save it.
-
-x = zeros(15);
+global initial_error
+global initial_delta_eps
+initial_error = 0;
+initial_delta_eps = 0;
+x = zeros(1,15);
 
 x(1) = 38.03E9;
 x(2) = 18.46E9;
@@ -18,10 +21,10 @@ x(7) = 7.64E6; %C_M
 x(8) = 8.15e6; %C_A
 
 % Maximum and minimum transformation strain
-x(9) =  0.09257; %H_min
-x(10) = 0.1265 -  0.09257; %H_max - H_min
+x(9) =  0.0924617829295; %H_min
+x(10) = 0.126325797371 -  0.0924617829295; %H_max - H_min
 
-x(11) = 0.0051676675315e-6; %k
+x(11) = 0.00524735758484e-6; %k
 % sigma_crit = 140E6;
 
 % Coefficient of thermal expansion
@@ -34,6 +37,6 @@ x(13) = 0.6; %0.313;
 x(14) = 0.6; %0.759;
 x(15) = 0.6; %0.358;
 
-r = cost(x)
+r = full_cost(x)
 
-plot_optimized(x)
+% full_plot_optimized(x)

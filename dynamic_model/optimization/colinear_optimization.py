@@ -56,6 +56,27 @@ def objfunc(x):
     fail = 0
     g = []
     return f,g,fail
+
+def objfunc_BFGS(x):
+    
+    inputs = {'sma':{'x-':x[0], 'y-':x[1], 'x+':x[2], 'y+':x[3]},
+              'linear':{'x-':x[4], 'y-':x[5], 'x+':x[6], 'y+':x[7]}}
+
+    DataFile = open('opt_data.txt','a')
+    for x_i in x:
+        DataFile.write( '\t %.5f' % (x_i) )
+    DataFile.close()
+            
+#    print inputs
+    outputs = run(inputs = inputs, parameters = [eng])
+    f = outputs['theta']
+#    print f
+    DataFile = open('opt_data.txt','a')
+    DataFile.write( '\t %.5f' % (f) )    
+    DataFile.write('\n')
+    DataFile.close()
+
+    return f  
     
 #==============================================================================
 # Start Matlab engine
@@ -108,6 +129,17 @@ nsga2.setOption('PopSize', 40)
 nsga2.setOption('maxGen', 50)
 nsga2(opt_prob)
 print opt_prob.solution(0)
+
+x0 = []
+for i in range(8):
+    x0.append(opt_prob.getVar(i).value)
+print x0    
+# Local Optimization Refinement
+result = minimize(objfunc_BFGS, x0, method='L-BFGS-B', options={'gtol': 1e-6,
+                  'disp': True}, bounds = ((x_hinge/2., x_hinge - safety),
+                  ( -.9,-0.), (x_hinge + safety, chord - safety), (0., .9),
+                  (x_hinge/2.,x_hinge - safety ), (-.9, 0.9), 
+                  (x_hinge + safety, chord - safety),(-.9, 0.)))
 
 # Local Optimization Refinement
 #result = minimize(objfunc, [6.817445e-001, -5.216475e-001, 9.029895e-001, 
