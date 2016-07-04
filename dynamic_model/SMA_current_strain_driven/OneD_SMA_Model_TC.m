@@ -14,33 +14,35 @@ n = 100;
 % Linear increments strain and temperature loading step assumed
 t_inp = [0; 20; 40; 60]; %s
 
-eps_inp = [0; .08; 0.08; 0.08];
+eps_inp = [0.10; .08; 0.04; 0.04];
 
-I_inp = [0; 0.; 0.6; 0.6]; %A
+I_inp = [0; 0.3; 0.6; 0.6]; %A
 
 % MATERIAL PARAMETERS (Structure: P)
 % Young's Modulus for Austenite and Martensite 
-P.E_A = 55E9;
-P.E_M = 46E9;
-
+P.E_A = 2.1496e+10;
+P.E_M = 3.3453e+10;
 % Transformation temperatures (M:Martensite, A:
 % Austenite), (s:start,f:final)
-P.M_s = -28+273.15+10.;
-P.M_f = -43+273.15+50.;
-P.A_s = -3+273.15+50.;
-P.A_f = 7+273.15+50.;
+P.M_s = 362.5851;
+P.M_f = 297.4771;
+P.A_s = 318.3625;
+P.A_f = 386.8458;
 
 % Slopes of transformation boundarings into austenite (C_A) and
 % martensite (C_M) at Calibration Stress 
-P.C_A = 7.4E6;
-P.C_M = 7.4e6;
+P.C_A = 8036800;
+P.C_M = 7123000;
 
 % Maximum and minimum transformation strain
-P.H_min = 0.056;
-P.H_sat = 0.056;
+P.H_min = 0.0924;
+P.H_sat = 0.1209;
 
-P.k = 1e3;
+P.k = 5.9713e-09;
 P.sig_crit = 0;
+
+% Coefficient of thermal expansion
+P.alpha = 0; %1E-5;
 
 %Energy Coefficients
 % Coefficient of thermal expansion
@@ -60,11 +62,11 @@ T_ambient=303.15; %K
 % d: Diameter of considered 1D model
 P.d = 0.381e-3;
 
-% Smoothness hardening parameters 
-P.n1 = .8;
-P.n2 = .8;
-P.n3 = .8;
-P.n4 = .8;
+% Smoothn hardening parameters 
+P.n1 = 0.1919; %0.618;
+P.n2 = 0.1823; %0.313;
+P.n3 = 0.1623; %0.759;
+P.n4 = 0.2188; %0.358;
 
 % Algorithmic delta for modified smooth hardening function
 P.delta=1e-5;

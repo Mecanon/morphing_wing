@@ -38,7 +38,7 @@ def run(inputs, parameters = None):
         
     sma = inputs['sma']
     linear = inputs['linear']
-    sigma_o = 400e6
+    sigma_o = 100e6
            
     airfoil = "naca0012"
     chord = 1.#0.6175
@@ -68,8 +68,8 @@ def run(inputs, parameters = None):
     altitude = 10000. #feet
     
     # Temperature
-    T_0 = 220.
-    T_final = 420.
+    T_0 = 273.15 + 30
+    T_final = 273.15 + 140
      
     #Initial martensitic volume fraction
     MVF_init = 1.
@@ -204,7 +204,7 @@ if __name__ == '__main__':
            'x+': 9.949996e-001, 'y+': 8.349697e-001}   
 	
     #SMA Pre-stress
-    sigma_o = 400e6
+    sigma_o = 100e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
     print  'k: ', data['k']
     DataFile = open('data.txt','a')

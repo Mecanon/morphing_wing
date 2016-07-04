@@ -53,9 +53,9 @@ P.E_A = y(2);
 % Transformation temperatures (M:Martensite, A:
 % Austenite), (s:start,f:final)
 P.M_s = y(3);
-P.M_f = y(3) - y(4);
+P.M_f = y(4);
 P.A_s = y(5);
-P.A_f = y(6) + y(5);
+P.A_f = y(6);
 
 % Slopes of transformation boundarings into austenite (C_A) and
 % martensite (C_M) at Calibration Stress 
@@ -64,7 +64,7 @@ P.C_A = y(8);
 
 % Maximum and minimum transformation strain
 P.H_min = y(9);
-P.H_sat = y(9) + y(10);
+P.H_sat = y(10);
 
 P.k = y(11);
 P.sig_crit = 0;

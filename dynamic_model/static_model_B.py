@@ -39,7 +39,7 @@ def run(inputs, parameters = None):
     sma = inputs['sma']
     linear = inputs['linear']
     R = inputs['R']
-    sigma_o = 400e6
+    sigma_o = 200e6
            
     airfoil = "naca0012"
     chord = 1.#0.6175
@@ -72,7 +72,7 @@ def run(inputs, parameters = None):
     n_cycles = 0
     #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
-    all_outputs = False
+    all_outputs = True
     save_data = False
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
@@ -210,7 +210,7 @@ if __name__ == '__main__':
 #           'actuator_type': 'wire',
 #           'pulley_position':'up'}   	
     #SMA Pre-stress
-    sigma_o = 400e6
+    sigma_o = 200e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o, 'R':R})
     print  'k: ', data['k']
     DataFile = open('data.txt','a')

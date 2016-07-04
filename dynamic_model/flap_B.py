@@ -281,12 +281,12 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
 # Material and flow properties
 #==============================================================================
     #SMA properties
-    E_M = 60E9
-    E_A = 60E9
-    sigma_crit = 140e6
-    H_max = 0.047
-    H_min = 0.
-    k = 0.021e-6
+    E_M = 3.3453e+10
+    E_A = 2.1496e+10
+    sigma_crit = 0
+    H_max = 0.1209
+    H_min = 0.0924
+    k = 5.9713e-09
     
     Air_props= air_properties(altitude, unit='feet')
     rho = Air_props['Density']

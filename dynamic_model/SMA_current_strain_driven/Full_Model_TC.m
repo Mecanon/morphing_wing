@@ -48,10 +48,10 @@ Phi_rev = zeros((size(t,1)),1);
 
 % Initialize outputs
 H_cur(1,1) = P.H_min;
-eps_t(1,1) = 0;
-sigma(1,1) = 0;
-MVF(1,1) = 0.;
-E(1,1)=P.E_A;
+eps_t(1,1) = P.H_min;
+sigma(1,1) = 100e6;
+MVF(1,1) = 1.;
+E(1,1)=P.E_M;
 
 % Array for number of iterations required for each load step
 increments = zeros((size(t,1)),1);
