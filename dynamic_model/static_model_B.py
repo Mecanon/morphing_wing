@@ -39,7 +39,7 @@ def run(inputs, parameters = None):
     sma = inputs['sma']
     linear = inputs['linear']
     R = inputs['R']
-    sigma_o = 200e6
+    sigma_o = 100e6
            
     airfoil = "naca0012"
     chord = 1.#0.6175
@@ -175,42 +175,33 @@ def run(inputs, parameters = None):
     return {'theta': theta, 'k': k}
     
 if __name__ == '__main__':
-    R = 0.025
     
+    R = 0.025
+    length_steel = 0.05
+   
     J = {'x':0.75, 'y':0.}
+    x_J = J['x']
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
 
-    #Optimal from max deflection             
-#    sma = {'x-': 0.46278, 'y-': -0.68322, 
-#           'x+': 0.90261, 'y+': 0.79959}
-#    linear = {'x-': 0.46278, 'y-': -0.68322, 
-#           'x+': 0.90261, 'y+': 0.79959}
-	 	 
-    #Optimal from multiobjective
-#    sma = {'x-': 6.983658e-001, 'y-': -5.518018e-001, 
-#           'x+': 8.145638e-001, 'y+': 8.309352e-002}
-#    linear = {'x-': 6.978678e-001, 'y-': -5.474895e-001, 
-#           'x+': 8.147300e-001, 'y+': -8.607796e-001}
-
-    #Optimal for max deflection, colinear            
-    sma = {'x-': 0.5, 'y-': -R, 
-           'x+': 0.7, 'y+': -R,
-           'pulley_position':'down'}
-
-    linear = {'x-': 0.5, 'y-': R, 
-           'x+': 0.7, 'y+': R,
-           'actuator_type': 'wire',
-           'pulley_position':'up'}   
-#    sma = {'x-': J['x'] - 0.1 - 0.32605, 'y-': -R, 
+#    #Optimal from max deflection                       
+#    sma = {'x-': 0.5, 'y-': -R, 
 #           'x+': 0.7, 'y+': -R,
 #           'pulley_position':'down'}
 #
-#    linear = {'x-': J['x'] - 0.1 - 0.19592, 'y-': R, 
+#    linear = {'x-': 0.5, 'y-': R, 
 #           'x+': 0.7, 'y+': R,
 #           'actuator_type': 'wire',
-#           'pulley_position':'up'}   	
+#           'pulley_position':'up'}   
+    x = [1,2,3]
+    sma = {'x-':x_J - length_steel - x[0], 'y-':-x[2], 
+           'x+':x_J - length_steel, 'y+':-x[2],
+            'pulley_position':'down'}
+    linear = {'x-':x_J - length_steel - x[1], 'y-':x[2],
+              'x+':x_J - length_steel, 'y+':x[2],
+              'actuator_type': 'wire', 'pulley_position':'up'}
+              
     #SMA Pre-stress
-    sigma_o = 200e6
+    sigma_o = 100e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o, 'R':R})
     print  'k: ', data['k']
     DataFile = open('data.txt','a')

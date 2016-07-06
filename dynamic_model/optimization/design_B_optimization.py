@@ -38,7 +38,7 @@ def objfunc(x):
     length_steel = 0.05
 
     #SMA Pre-stress
-    sigma_o = 400e6
+    sigma_o = 100e6
     
     inputs = {'sma':{'x-': x_J - length_steel - x[0], 'y-':-x[2],
                      'x+': x_J - length_steel, 'y+':-x[2],

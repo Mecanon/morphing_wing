@@ -92,8 +92,8 @@ def run(inputs, parameters = None):
 
         import matplotlib.pyplot as plt
         plt.figure()
-        plt.plot(theta, eps_s, lw=2., label = "$\epsilon_s$")
-        plt.plot(theta, eps_l, 'b--',lw=2, label = "$\epsilon_l$")
+        plt.plot(np.rad2deg(theta), eps_s, lw=2., label = "$\epsilon_s$")
+        plt.plot(np.rad2deg(theta), eps_l, 'b--',lw=2, label = "$\epsilon_l$")
 #        plt.scatter(theta, eps_s, c = 'b')
 #        plt.scatter(theta, eps_l, c = 'b')
         plt.ylabel('$\epsilon$', fontsize=24)
@@ -103,7 +103,7 @@ def run(inputs, parameters = None):
         
         print len(T), len(eps_s), len(eps_l), len(theta), len(eps_t)
         plt.figure()
-        plt.plot(theta, eps_t, lw=2.)
+        plt.plot(np.rad2deg(theta), eps_t, lw=2.)
 #        plt.scatter(theta, eps_t, c = 'b')
         plt.ylabel('$\epsilon_t$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
@@ -111,7 +111,7 @@ def run(inputs, parameters = None):
         plt.grid()
         
         plt.figure()
-        plt.plot(theta, MVF, lw=2.)
+        plt.plot(np.rad2deg(theta), MVF, lw=2.)
 #        plt.scatter(theta, MVF, c = 'b')
         plt.ylabel('$MVF$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
@@ -145,7 +145,7 @@ def run(inputs, parameters = None):
         plt.grid()
         
         plt.figure()
-        plt.plot(T, theta, lw=2.)
+        plt.plot(T, np.rad2deg(theta), lw=2.)
 #        plt.scatter(T, theta, c = 'b')
         plt.xlabel('$T (K)$', fontsize=20)
         plt.ylabel(r'$\theta ({}^{\circ})$', fontsize=20)
@@ -158,8 +158,8 @@ def run(inputs, parameters = None):
 #        for sigma_i in sigma:
 #            sigma_MPa.append(sigma_i/1e6)
         plt.figure()
-        plt.plot(theta, F_s, 'b', lw=2., label = "$F_s$")
-        plt.plot(theta, F_l, 'b--', lw=2., label = "$F_l$")
+        plt.plot(np.rad2deg(theta), F_s, 'b', lw=2., label = "$F_s$")
+        plt.plot(np.rad2deg(theta), F_l, 'b--', lw=2., label = "$F_l$")
 #        plt.scatter(theta, F_s, c = 'b')
 #        plt.scatter(theta, F_l, c = 'b')
         plt.ylabel('$F (N)$', fontsize=20)
@@ -185,24 +185,17 @@ if __name__ == '__main__':
     J = {'x':0.75, 'y':0.}
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
 
-    #Optimal from max deflection             
-    sma = {'x-': 0.46278, 'y-': -0.68322, 
-           'x+': 0.90261, 'y+': 0.79959}
-    linear = {'x-': 0.46278, 'y-': -0.68322, 
-           'x+': 0.90261, 'y+': 0.79959}
+    #Optimal A from max deflection             
+    sma = {'x-': 0.73678, 'y-': -0.33792, 
+           'x+': 0.94534, 'y+': 0.759}
+    linear = {'x-': 0.73761, 'y-': 0.8992, 
+           'x+': 0.9064, 'y+': -0.47317}
 	 	 
-    #Optimal from multiobjective
-#    sma = {'x-': 6.983658e-001, 'y-': -5.518018e-001, 
-#           'x+': 8.145638e-001, 'y+': 8.309352e-002}
-#    linear = {'x-': 6.978678e-001, 'y-': -5.474895e-001, 
-#           'x+': 8.147300e-001, 'y+': -8.607796e-001}
-
-    #Optimal for max deflection, colinear            
-    sma = {'x-': 7.318781e-001	, 'y-': -3.871608e-001, 
-           'x+': 9.949996e-001, 'y+': 8.349697e-001}
-    linear = {'x-': 7.318781e-001	, 'y-': -3.871608e-001, 
-           'x+': 9.949996e-001, 'y+': 8.349697e-001}   
-	
+    #Optimal C from max deflection             
+    sma = {'x-': 7.352753e-001, 'y-': -5.662062e-001 , 
+           'x+': 9.950000e-001  , 'y+': 8.987208e-001}
+    linear = sma
+     
     #SMA Pre-stress
     sigma_o = 100e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
