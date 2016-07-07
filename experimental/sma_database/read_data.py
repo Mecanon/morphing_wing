@@ -16,33 +16,36 @@ from xfoil_module import output_reader
 #                     rows_to_skip=4, header = ['Time', 'Extension',
 #                                               'Load', "Temperature",
 #                                               "Strain", "Stress"],)
-raw_data = output_reader("flexinol_monotonic_loading_austenite.csv", separator=",", 
+first_data = output_reader("flexinol_training_first.csv", separator=",", 
                      rows_to_skip=4, header = ['Time', 'Extension',
-                                               'Load', 
-                                               "Strain", "Temperature", "Stress"],)
-##Ignore initial data
-#for i in range(len(raw_data['Time'])):
-#    if raw_data['Time'][i] == 3542.19500  :
-#        print 'hi'
-#        break
-#
-#data = {}
-#for key in raw_data:
-#    data[key] = raw_data[key][i:]
-#
-##data = raw_data
-##Ignore final data
-#for i in range(len(data['Time'])):
-#    if data['Time'][i] == 6960.09500: #120745.90000: 5958.89500
-#        print 'ho'
-#        break
+                                               'Load',  "Temperature",
+                                               "Strain", "Stress"],)
 
-#old_data = data
-#data = {}
-#for key in old_data:
-#    data[key] = old_data[key][:i+1]
+#Ignore final data
+for i in range(len(first_data['Time'])):
+    if first_data['Time'][i] == 2908.75300: #120745.90000: 5958.89500
+        print 'ho'
+        break
 
-data = raw_data
+old_data = first_data
+data = {}
+for key in first_data:
+    data[key] = first_data[key][:i+1]
+
+first_data = data
+
+# Ignore inital data
+for i in range(len(first_data['Time'])):
+    if first_data['Time'][i] == 1130.15300:
+        print 'hi'
+        break
+
+data = {}
+for key in first_data:
+    data[key] = first_data[key][i:]
+
+
+          
 #==============================================================================
 # Filtering data
 #==============================================================================
@@ -77,55 +80,71 @@ data = raw_data
 #==============================================================================
 # Plotting
 #==============================================================================
+plt.figure()
+plt.plot(data["Temperature"],data["Strain"], label = 'First training')
+#plt.plot(second_data["Temperature"],second_data["Strain"], label = 'Second training')
+#plt.scatter(second_data["Temperature"][0],second_data["Strain"][0])
+plt.xlabel("Temperature (C)")
+plt.ylabel("Strain (m/m)")
+plt.grid()
+#plt.legend()
+
 #plt.figure()
 #plt.plot(data["Temperature"],data["Strain"])
 #plt.xlabel("Temperature (C)")
 #plt.ylabel("Strain (m/m)")
 #plt.grid()
-
-plt.figure()
-plt.plot(data["Strain"], data["Stress"])
-plt.xlabel("Strain (m/m)")
-plt.ylabel("Stress (MPa)")
-plt.grid()
-
-plt.figure()
-plt.plot(data["Temperature"], data["Stress"])
-#plt.plot(smoothed_T, smoothed_sigma, 'g')
-#plt.plot(T_interp, sigma_interp, 'r')
-plt.xlabel("Temperature (C)")
-plt.ylabel("Stress (MPa)")
-plt.grid()
-
-plt.figure()
-plt.plot( np.array(data["Time"]) - data["Time"][0],data["Temperature"])
-#plt.plot(xx, smoothed_T, 'g')
-#plt.plot(xx - xx[0], T_interp, 'r')
-plt.xlabel("Time (t)")
-plt.ylabel("Temperature (C)")
-plt.grid()
-
-plt.figure()
-plt.plot(data["Time"], data["Strain"])
-#plt.plot(xx, smoothed_eps, 'g')
-plt.plot(xx - xx[0], eps_interp, 'r')
-plt.xlabel("Time (t)")
-plt.ylabel("Strain")
-plt.grid()
-
-plt.figure()
-#plt.plot(data["Temperature"],data["Strain"])
-plt.plot( smoothed_T, smoothed_eps, 'g')
-plt.plot(T_interp, eps_interp, 'r')
-plt.grid()
-plt.xlabel("Temperature")
-plt.ylabel("Strain")
-
-#==============================================================================
-# Stroing data
-#==============================================================================
-data = np.array([T_interp, eps_interp, sigma_interp])
-try:
-    np.savetxt("filtered_data_"+ stress+".txt", data.T,fmt='%.18f')
-except:
-    print "No output file"
+#
+#plt.figure()
+#plt.plot(first_data["Strain"], first_data["Stress"], label = 'First training')
+#plt.plot(second_data["Strain"], second_data["Stress"], label = 'Second training')
+#plt.xlabel("Strain (m/m)")
+#plt.ylabel("Stress (MPa)")
+#plt.grid()
+#plt.legend()
+#
+#plt.figure()
+#plt.plot(first_data["Temperature"], first_data["Stress"], label = 'First training')
+#plt.plot(second_data["Temperature"], second_data["Stress"], label = 'Second training')
+##plt.plot(smoothed_T, smoothed_sigma, 'g')
+##plt.plot(T_interp, sigma_interp, 'r')
+#plt.xlabel("Temperature (C)")
+#plt.ylabel("Stress (MPa)")
+#plt.grid()
+#plt.legend()
+#
+#plt.figure()
+#plt.plot( np.array(first_data["Time"]) - data["Time"][0], first_data["Temperature"], label = 'First training')
+#plt.plot( np.array(second_data["Time"]) - first_data["Time"][0], second_data["Temperature"], label = 'Second training')
+##plt.plot(xx, smoothed_T, 'g')
+##plt.plot(xx - xx[0], T_interp, 'r')
+#plt.xlabel("Time (t)")
+#plt.ylabel("Temperature (C)")
+#plt.grid()
+#plt.legend()
+#
+#plt.figure()
+#plt.plot(first_data["Time"], first_data["Strain"], label = 'First training')
+#plt.plot(second_data["Time"], second_data["Strain"], label = 'Second training')
+##plt.plot(xx, smoothed_eps, 'g')
+##plt.plot(xx - xx[0], eps_interp, 'r')
+#plt.xlabel("Time (t)")
+#plt.ylabel("Strain")
+#plt.grid()
+#plt.legend(loc=4)
+#plt.figure()
+##plt.plot(data["Temperature"],data["Strain"])
+#plt.plot( smoothed_T, smoothed_eps, 'g')
+#plt.plot(T_interp, eps_interp, 'r')
+#plt.grid()
+#plt.xlabel("Temperature")
+#plt.ylabel("Strain")
+#
+##==============================================================================
+## Stroing data
+##==============================================================================
+#data = np.array([T_interp, eps_interp, sigma_interp])
+#try:
+#    np.savetxt("filtered_data_"+ stress+".txt", data.T,fmt='%.18f')
+#except:
+#    print "No output file"

@@ -18,6 +18,7 @@ import pickle
 
 import airfoil_module as af
 from flap import flap
+from flap_multiobjective import flap_multiobjective
 
 def run(inputs, parameters = None):
     """Function to be callled by DOE and optimization. Design Variables are 
@@ -180,6 +181,78 @@ def run(inputs, parameters = None):
         pickle.dump(Data, open( "data.p", "wb" ) )
     
     return {'theta': theta, 'k': k}
+
+def run_multiobjective(inputs, parameters = None):
+    """Function to be callled by DOE and optimization. Design Variables are 
+        the only inputs.
+        
+        :param inputs: {'sma', 'linear', 'sigma_o'}"""
+    def thickness(x, t, chord):
+        y = af.Naca00XX(chord, t, [x], return_dict = 'y')
+        thickness_at_x = y['u'] - y['l']
+        return thickness_at_x 
+
+    if parameters != None:
+        eng = parameters[0]
+        import_matlab = False
+    else:
+        eng = None
+        import_matlab = True
+        
+    sma = inputs['sma']
+    linear = inputs['linear']
+    sigma_o = 100e6
+           
+    airfoil = "naca0012"
+    chord = 1.#0.6175
+    t = 0.12*chord
+
+    J = {'x':0.75, 'y':0.}
+    
+    # need to transform normalized coordiantes in to global coordinates
+    sma['y+'] = sma['y+']*thickness(sma['x+'], t, chord)/2.
+    sma['y-'] = sma['y-']*thickness(sma['x-'], t, chord)/2.
+    
+    linear['y+'] = linear['y+']*thickness(linear['x+'], t, chord)/2.
+    linear['y-'] =  linear['y-']*thickness(linear['x-'], t, chord)/2.
+    
+    #Adding the area key to the dictionaries
+    sma['area'] = math.pi*0.00025**2
+    linear['area'] = 0.001
+    
+    # Design constants   
+    #arm length to center of gravity
+    r_w = 0.15
+    
+    #Aicraft weight (mass times gravity)
+    W = 0.2*9.8 #0.06*9.8
+    alpha = 0.
+    V = 10 #m/s
+    altitude = 10000. #feet
+    
+    # Temperature
+    T_0 = 273.15 + 30
+    T_final = inputs['T_f']
+     
+    #Initial martensitic volume fraction
+    MVF_init = 1.
+    
+    # Number of steps and cycles
+    n = 200
+    n_cycles = 0
+    #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #Parameters to select how to output stuff
+    all_outputs = True
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    if all_outputs:
+        eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s = flap_multiobjective(airfoil, 
+                               chord, J, sma, linear, sigma_o, 
+                               W, r_w, V, altitude, alpha, T_0, 
+                               T_final, MVF_init, n, all_outputs = True,
+                               import_matlab = import_matlab, eng=eng,
+                               n_cycles = n_cycles)
+
+        return theta, sigma, T, MVF, eps_s, L_s
     
 if __name__ == '__main__':
     J = {'x':0.75, 'y':0.}
@@ -191,10 +264,10 @@ if __name__ == '__main__':
     linear = {'x-': 0.73761, 'y-': 0.8992, 
            'x+': 0.9064, 'y+': -0.47317}
 	 	 
-    #Optimal C from max deflection             
-    sma = {'x-': 7.352753e-001, 'y-': -5.662062e-001 , 
-           'x+': 9.950000e-001  , 'y+': 8.987208e-001}
-    linear = sma
+#    #Optimal C from max deflection             
+#    sma = {'x-': 7.352753e-001, 'y-': -5.662062e-001 , 
+#           'x+': 9.950000e-001  , 'y+': 8.987208e-001}
+#    linear = sma
      
     #SMA Pre-stress
     sigma_o = 100e6

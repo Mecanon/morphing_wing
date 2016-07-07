@@ -48,9 +48,9 @@ P.alpha = 0; %1E-5;
 % Coefficient of thermal expansion
 P.alpha = 10E-6;
 % Mass density
-P.rho=6500; %kg/m^3
+P.rho= 6500; %kg/m^3
 % Specific Heat
-P.c=400;
+P.c= 837.36;
 % Heat convection coefficient
 P.h = 1; % 1 is True and 0 is False
 % Wire electric resistivity
