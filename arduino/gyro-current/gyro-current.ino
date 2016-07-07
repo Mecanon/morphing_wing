@@ -67,6 +67,7 @@ int step_time = 50;
 
 const int transistorPin = 9;    // connected to the base of the transistor
 int i = 0;
+float voltage_velocity = 1./50;
 
 //In the setup section of the sketch the serial port will be configured, the i2c communication will be initialized, and the itg-3200 will be configured.
 void setup()
@@ -117,15 +118,15 @@ void loop()
   //convert 0-360 angle to radian (needed for sin function)
   float rad = DEG_TO_RAD * i;
   //calculate sin of angle as number between 0 and 255
-  int sinOut = constrain((sin(rad) * 128) + 128, 0, 255);
+  int sinOut = constrain((sin(rad*voltage_velocity) * 128) + 128, 0, 255);
   // map the sensor value to a range from 0 - 255:
   // int outputValue = map(sensorValue, 0, 1023, 0, 255);
   // use that to control the transistor:
   analogWrite(transistorPin, sinOut);
   Serial.print(sinOut/255.);
   Serial.print('\t');
-  i = i + 1;
 
+    i = i + 1;
   //Create variables to hold the output rates.
   float xRate, yRate, zRate;
 
