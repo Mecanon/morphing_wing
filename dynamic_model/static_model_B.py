@@ -17,6 +17,7 @@ import numpy as np
 import pickle
 
 import airfoil_module as af
+from flap_B_multiobjective import flap_multiobjective
 from flap_B import flap
 
 def run(inputs, parameters = None):
@@ -61,8 +62,8 @@ def run(inputs, parameters = None):
     altitude = 10000. #feet
     
     # Temperature
-    T_0 = 220.
-    T_final = 420.
+    T_0 = 273.15 + 30.
+    T_final = inputs['T_f']
      
     #Initial martensitic volume fraction
     MVF_init = 1.
@@ -173,7 +174,74 @@ def run(inputs, parameters = None):
         pickle.dump(Data, open( "data.p", "wb" ) )
     
     return {'theta': theta, 'k': k}
+
+def run_multiobjective(inputs, parameters = None):
+    """Function to be callled by DOE and optimization. Design Variables are 
+        the only inputs.
+        
+        :param inputs: {'sma', 'linear', 'sigma_o'}"""
+    def thickness(x, t, chord):
+        y = af.Naca00XX(chord, t, [x], return_dict = 'y')
+        thickness_at_x = y['u'] - y['l']
+        return thickness_at_x 
+
+    if parameters != None:
+        eng = parameters[0]
+        import_matlab = False
+    else:
+        eng = None
+        import_matlab = True
+        
+    sma = inputs['sma']
+    linear = inputs['linear']
+    sigma_o = 100e6
+    R = inputs['R']
+           
+    airfoil = "naca0012"
+    chord = 1.#0.6175
+    t = 0.12*chord
+
+    J = {'x':0.75, 'y':0.}
     
+    #Adding the area key to the dictionaries
+    sma['area'] = math.pi*0.00025**2
+    linear['area'] = 0.001
+    
+    # Design constants   
+    #arm length to center of gravity
+    r_w = 0.15
+
+
+    #Aicraft weight (mass times gravity)
+    W = 0.2*9.8 #0.06*9.8
+    alpha = 0.
+    V = 10 #m/s
+    altitude = 10000. #feet
+    
+    # Temperature
+    T_0 = 273.15 + 30
+    T_final = inputs['T_f']
+     
+    #Initial martensitic volume fraction
+    MVF_init = 1.
+    
+    # Number of steps and cycles
+    n = 200
+    n_cycles = 0
+    #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #Parameters to select how to output stuff
+    all_outputs = True
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    if all_outputs:
+        eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s = flap_multiobjective(airfoil, 
+                               chord, J, sma, linear, sigma_o, 
+                               W, r_w, V, altitude, alpha, T_0, 
+                               T_final, MVF_init, n, R, all_outputs = True,
+                               import_matlab = import_matlab, eng=eng,
+                               n_cycles = n_cycles)
+
+        return theta, sigma, T, MVF, eps_s, L_s
+
 if __name__ == '__main__':
     
     R = 0.025
@@ -192,18 +260,19 @@ if __name__ == '__main__':
 #           'x+': 0.7, 'y+': R,
 #           'actuator_type': 'wire',
 #           'pulley_position':'up'}   
-    x = [1,2,3]
+    x = [0.1,0.1,R]
     sma = {'x-':x_J - length_steel - x[0], 'y-':-x[2], 
            'x+':x_J - length_steel, 'y+':-x[2],
             'pulley_position':'down'}
     linear = {'x-':x_J - length_steel - x[1], 'y-':x[2],
               'x+':x_J - length_steel, 'y+':x[2],
               'actuator_type': 'wire', 'pulley_position':'up'}
-              
+    T_f = 400.         
     #SMA Pre-stress
     sigma_o = 100e6
-    data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o, 'R':R})
-    print  'k: ', data['k']
+    theta, sigma, T, MVF, eps_s, L_s = run_multiobjective({'sma':sma, 'linear':linear, 'sigma_o':sigma_o, 'R':R, 
+               'T_f': T_f})
+    print  'theta: ', theta
     DataFile = open('data.txt','a')
 							
 ##==============================================================================

@@ -85,11 +85,11 @@ safety = 0.005*chord
 
 opt_prob = Optimization('Static model optimization', objfunc)
 #l_s
-opt_prob.addVar('x1', 'c', lower = 0.1 , upper = 0.5, value = 0.2)
+opt_prob.addVar('x1', 'c', lower = 0.1 , upper = 0.6, value = 0.2)
 #l_l
-opt_prob.addVar('x2', 'c', lower = 0.1, upper = 0.5, value = 0.2)
+opt_prob.addVar('x2', 'c', lower = 0.1, upper = 0.6, value = 0.2)
 #R
-opt_prob.addVar('x5', 'c',  lower = 0.001, upper = 0.025, value = 0.02)
+opt_prob.addVar('x5', 'c',  lower = 0.001, upper = 0.03, value = 0.02)
 # #yl_n
 # opt_prob.addVar('x6', 'c', lower = -.9, upper = 0.9, value = -4.593744e-001)
 # #xl_p

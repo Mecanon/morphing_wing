@@ -39,7 +39,7 @@ import matlab.engine
 lib_path = os.path.abspath(os.path.join('..'))
 sys.path.append(lib_path)
 
-from static_model import run, run_multiobjective
+from static_model_B import run_multiobjective
 #from power_usage import power
 
 #==============================================================================
@@ -188,31 +188,40 @@ def power(delta_t, sigma, T, xi, eps_s, L_s, output = "all"):
 # Objective function
 #==============================================================================
 def objfunc(x):
-    inputs = {'sma':{'x-':x[0], 'y-':x[1], 'x+':x[2], 'y+':x[3]},
-              'linear':{'x-':x[4], 'y-':x[5], 'x+':x[6], 'y+':x[7]},
-               'T_f': x[8]}
+    x_J = .75
+    length_steel = 0.05
+
+    #SMA Pre-stress
+    sigma_o = 100e6
+    
+    inputs = {'sma':{'x-': x_J - length_steel - x[0], 'y-':-x[2],
+                     'x+': x_J - length_steel, 'y+':-x[2],
+                     'pulley_position':'down'},
+              'linear':{'x-':x_J - length_steel - x[1], 'y-':x[2],
+                        'x+':x_J - length_steel, 'y+':x[2],
+                       'actuator_type': 'wire',
+                       'pulley_position':'up'},
+              'sigma_o':sigma_o, 'R':x[2], 'T_f': x[3]}
 
     DataFile = open('opt_data.txt','a')
     for x_i in x:
         DataFile.write( '\t %.5f' % (x_i) )
     DataFile.close()
             
-#    print inputs
     theta, sigma, T, MVF, eps_s, L_s = run_multiobjective(inputs = inputs, parameters = [eng])
     
     theta = theta[-1]
     
-    delta_t = 0.05    
+    delta_t = 0.05
     
     P= power(delta_t, sigma, T, MVF, eps_s, L_s, output = "power")
     
     DataFile = open('opt_data.txt','a')
-    DataFile.write( '\t %.5f \t %.5f' % (theta, P) )      
+    DataFile.write( '\t %.5f \t %.5f' % (theta, P) )
     DataFile.write('\n')
     DataFile.close()
     
     return theta, P
-
 #==============================================================================
 # Start Matlab engine
 #==============================================================================
@@ -233,12 +242,9 @@ chord = 1.
 x_hinge = 0.75
 safety = 0.005*chord
 # Problem definition
-BOUND_LOW = [x_hinge/2., -.9, x_hinge + safety, 0., x_hinge/2., -.9,
-             x_hinge + safety, -.9, 273.15+30.]
+BOUND_LOW = [0.1, 0.1, 0.001, 273.15+30.]
 
-BOUND_UP = [x_hinge - safety, -0., chord - safety, .9, x_hinge - safety, 
-            0.9, chord - safety, 0., 273.15+140.]
-
+BOUND_UP = [0.6, 0.6, 0.03, 273.15+140.]
 
 NDIM = 9
 
@@ -261,9 +267,9 @@ def main(seed=None):
     random.seed(seed)
 
     # Number of generations
-    NGEN = 50
+    NGEN = 1
     # Population size (has to be a multiple of 4)
-    MU = 40
+    MU = 4
     # Mating probability
     CXPB = 0.9
 
@@ -325,7 +331,7 @@ def main(seed=None):
 if __name__ == "__main__":
 
     DataFile = open('opt_data.txt','w')
-    key_list = ['xs-', 'ys-', 'xs+', 'ys+', 'xl-', 'yl-', 'xl+', 'yl+', 'T_f']
+    key_list = ['l_s', 'l_l', 'R', 'T_f']
     output_list = ['theta', 'power']
     for key in key_list + output_list:
         DataFile.write(key + '\t')

@@ -189,8 +189,8 @@ def power(delta_t, sigma, T, xi, eps_s, L_s, output = "all"):
 #==============================================================================
 def objfunc(x):
     inputs = {'sma':{'x-':x[0], 'y-':x[1], 'x+':x[2], 'y+':x[3]},
-              'linear':{'x-':x[4], 'y-':x[5], 'x+':x[6], 'y+':x[7]},
-               'T_f': x[8]}
+              'linear':{'x-':x[0], 'y-':x[1], 'x+':x[2], 'y+':x[3]},
+               'T_f': x[4]}
 
     DataFile = open('opt_data.txt','a')
     for x_i in x:
@@ -233,11 +233,9 @@ chord = 1.
 x_hinge = 0.75
 safety = 0.005*chord
 # Problem definition
-BOUND_LOW = [x_hinge/2., -.9, x_hinge + safety, 0., x_hinge/2., -.9,
-             x_hinge + safety, -.9, 273.15+30.]
+BOUND_LOW = [x_hinge/2., -.9, x_hinge + safety, 0., 273.15+30.]
 
-BOUND_UP = [x_hinge - safety, -0., chord - safety, .9, x_hinge - safety, 
-            0.9, chord - safety, 0., 273.15+140.]
+BOUND_UP = [x_hinge - safety, -0., chord - safety, .9, 273.15+140.]
 
 
 NDIM = 9
@@ -325,7 +323,7 @@ def main(seed=None):
 if __name__ == "__main__":
 
     DataFile = open('opt_data.txt','w')
-    key_list = ['xs-', 'ys-', 'xs+', 'ys+', 'xl-', 'yl-', 'xl+', 'yl+', 'T_f']
+    key_list = ['xs-', 'ys-', 'xs+', 'ys+', 'T_f']
     output_list = ['theta', 'power']
     for key in key_list + output_list:
         DataFile.write(key + '\t')
