@@ -40,7 +40,11 @@ def run(inputs, parameters = None):
     sma = inputs['sma']
     linear = inputs['linear']
     R = inputs['R']
+<<<<<<< HEAD
     sigma_o = 100e6
+=======
+    sigma_o = 200e6
+>>>>>>> updating material properties
            
     airfoil = "naca0012"
     chord = 1.#0.6175
@@ -269,10 +273,16 @@ if __name__ == '__main__':
               'actuator_type': 'wire', 'pulley_position':'up'}
     T_f = 400.         
     #SMA Pre-stress
+<<<<<<< HEAD
     sigma_o = 100e6
     theta, sigma, T, MVF, eps_s, L_s = run_multiobjective({'sma':sma, 'linear':linear, 'sigma_o':sigma_o, 'R':R, 
                'T_f': T_f})
     print  'theta: ', theta
+=======
+    sigma_o = 200e6
+    data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o, 'R':R})
+    print  'k: ', data['k']
+>>>>>>> updating material properties
     DataFile = open('data.txt','a')
 							
 ##==============================================================================
