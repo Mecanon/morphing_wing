@@ -11,40 +11,40 @@ import numpy as np
 
 from xfoil_module import output_reader
 
-#stress = "50MPa"
-#raw_data = output_reader("flexinol_isobaric_trained_" + stress + ".csv", separator=",", 
-#                     rows_to_skip=4, header = ['Time', 'Extension',
-#                                               'Load', "Temperature",
-#                                               "Strain", "Stress"],)
-first_data = output_reader("flexinol_training_first.csv", separator=",", 
+stress = "50MPa"
+raw_data = output_reader("flexinol_isobaric_trained_" + stress + ".csv", separator=",", 
                      rows_to_skip=4, header = ['Time', 'Extension',
-                                               'Load',  "Temperature",
+                                               'Load', "Temperature",
                                                "Strain", "Stress"],)
+#first_data = output_reader("flexinol_untrained_cyclic_temperature_0p.csv", separator=",", 
+#                     rows_to_skip=4, header = ['Time', 'Extension',
+#                                               'Load',  "Strain",
+#                                               "Stress", "Temperature"],)
 
-#Ignore final data
-for i in range(len(first_data['Time'])):
-    if first_data['Time'][i] == 2908.75300: #120745.90000: 5958.89500
-        print 'ho'
-        break
+##Ignore final data
+#for i in range(len(first_data['Time'])):
+#    if first_data['Time'][i] == 2908.75300: #120745.90000: 5958.89500
+#        print 'ho'
+#        break
+#
+#old_data = first_data
+#data = {}
+#for key in first_data:
+#    data[key] = first_data[key][:i+1]
+#
+#first_data = data
+#
+## Ignore inital data
+#for i in range(len(first_data['Time'])):
+#    if first_data['Time'][i] == 1130.15300:
+#        print 'hi'
+#        break
+#
+#data = {}
+#for key in first_data:
+#    data[key] = first_data[key][i:]
 
-old_data = first_data
-data = {}
-for key in first_data:
-    data[key] = first_data[key][:i+1]
-
-first_data = data
-
-# Ignore inital data
-for i in range(len(first_data['Time'])):
-    if first_data['Time'][i] == 1130.15300:
-        print 'hi'
-        break
-
-data = {}
-for key in first_data:
-    data[key] = first_data[key][i:]
-
-
+#data = first_data
           
 #==============================================================================
 # Filtering data
@@ -103,14 +103,14 @@ plt.grid()
 #plt.grid()
 #plt.legend()
 #
-#plt.figure()
-#plt.plot(first_data["Temperature"], first_data["Stress"], label = 'First training')
+plt.figure()
+plt.plot(data["Temperature"], data["Stress"], label = 'First training')
 #plt.plot(second_data["Temperature"], second_data["Stress"], label = 'Second training')
-##plt.plot(smoothed_T, smoothed_sigma, 'g')
-##plt.plot(T_interp, sigma_interp, 'r')
-#plt.xlabel("Temperature (C)")
-#plt.ylabel("Stress (MPa)")
-#plt.grid()
+#plt.plot(smoothed_T, smoothed_sigma, 'g')
+#plt.plot(T_interp, sigma_interp, 'r')
+plt.xlabel("Temperature (C)")
+plt.ylabel("Stress (MPa)")
+plt.grid()
 #plt.legend()
 #
 #plt.figure()

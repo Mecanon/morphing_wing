@@ -25,6 +25,21 @@ second_data = output_reader("flexinol_training_second.csv", separator=",",
                      rows_to_skip=4, header = ['Time', 'Extension',
                                                'Load',  "Temperature",
                                                "Strain", "Stress"],)
+#==============================================================================
+# CORRECTION FACTOR BECAUSE OF INCORRENT SAMPLE LENGTH AT INSTRON
+#==============================================================================
+first_data["Strain"] = list(np.array(first_data["Strain"])*( 0.045/0.10769))
+
+second_data["Strain"] = list(np.array(second_data["Strain"])*( 0.045/0.10769))
+
+#==============================================================================
+# 
+#==============================================================================
+#Ignore initial data
+for i in range(len(first_data['Time'])):
+    if first_data['Stress'][i] > 100.  :
+        break
+    
 #Ignore final data
 for i in range(len(first_data['Time'])):
     if first_data['Time'][i] == 54470.46: #120745.90000: 5958.89500

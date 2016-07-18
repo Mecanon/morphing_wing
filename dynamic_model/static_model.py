@@ -55,15 +55,15 @@ def run(inputs, parameters = None):
     linear['y-'] =  linear['y-']*thickness(linear['x-'], t, chord)/2.
     
     #Adding the area key to the dictionaries
-    sma['area'] = math.pi*0.00025**2
+    sma['area'] = math.pi*(0.000381/2.)**2
     linear['area'] = 0.001
     
     # Design constants   
     #arm length to center of gravity
-    r_w = 0.15
+    r_w = 0.1
     
     #Aicraft weight (mass times gravity)
-    W = 0.2*9.8 #0.06*9.8
+    W = 0.0523*9.8 #0.06*9.8
     alpha = 0.
     V = 10 #m/s
     altitude = 10000. #feet
@@ -80,10 +80,12 @@ def run(inputs, parameters = None):
     n_cycles = 0
     #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
-    all_outputs = False
+    all_outputs = True
     save_data = False
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
+#        print "SMA: real y dimensions: ", sma['y-'], sma['y+'],sma['y+']*thickness(sma['x+'], t, chord)/2., sma['y-']*thickness(sma['x-'], t, chord)/2.
+#        print "linear: real y dimensions: ", linear['y-'], linear['y+'], linear['y+']*thickness(linear['x+'], t, chord)/2., linear['y-']*thickness(linear['x-'], t, chord)/2.
         eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s = flap(airfoil, 
                                chord, J, sma, linear, sigma_o, 
                                W, r_w, V, altitude, alpha, T_0, 
@@ -217,15 +219,15 @@ def run_multiobjective(inputs, parameters = None):
     linear['y-'] =  linear['y-']*thickness(linear['x-'], t, chord)/2.
     
     #Adding the area key to the dictionaries
-    sma['area'] = math.pi*0.00025**2
+    sma['area'] = math.pi*(0.000381/2.)**2
     linear['area'] = 0.001
     
     # Design constants   
     #arm length to center of gravity
-    r_w = 0.15
+    r_w = 0.10
     
     #Aicraft weight (mass times gravity)
-    W = 0.2*9.8 #0.06*9.8
+    W = 0.0523*9.8 #0.06*9.8
     alpha = 0.
     V = 10 #m/s
     altitude = 10000. #feet
@@ -259,16 +261,17 @@ if __name__ == '__main__':
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
 
     #Optimal A from max deflection             
-    sma = {'x-': 0.73678, 'y-': -0.33792, 
-           'x+': 0.94534, 'y+': 0.759}
-    linear = {'x-': 0.73761, 'y-': 0.8992, 
-           'x+': 0.9064, 'y+': -0.47317}
-	 	 
+#    sma = {'x-': 6.766895e-001, 'y-': -6.424797e-001, 
+#           'x+': 8.644122e-001, 'y+': 7.101063e-001}
+#    linear = {'x-': 4.553924e-001,'y-': 7.311031e-001, 
+#           'x+': 8.406087e-001, 'y+': -4.211491e-001 }
+									 
 #    #Optimal C from max deflection             
-#    sma = {'x-': 7.352753e-001, 'y-': -5.662062e-001 , 
-#           'x+': 9.950000e-001  , 'y+': 8.987208e-001}
-#    linear = sma
-     
+    sma = {'x-': 6.933662e-001, 'y-': -3.680332e-001, 
+           'x+': 9.949992e-001, 'y+': 8.941427e-001}
+    linear = {'x-': 6.933662e-001, 'y-': -3.680332e-001, 
+           'x+': 9.949992e-001, 'y+': 8.941427e-001}
+           
     #SMA Pre-stress
     sigma_o = 100e6
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})

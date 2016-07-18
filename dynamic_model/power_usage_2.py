@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 delta_t = 0.005
 
 sigma_o = 400e6
-r = 0.00025
-T_o = 220.
+r = 0.000381/2.
+
 
 alpha = 0.           #set to zero on purpose
 c = 3.689               #invented
@@ -51,6 +51,8 @@ T = Data['T']
 xi = Data['xi']
 eps_s = Data['eps_s']
 L_s = Data['L_s']
+
+T_o = T[0]
 
 n = len(eps_s)
 

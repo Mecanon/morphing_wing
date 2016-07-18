@@ -281,12 +281,12 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
 # Material and flow properties
 #==============================================================================
     #SMA properties
-    E_M = 3.3453e+10
-    E_A = 2.1496e+10
+    E_M = 8.8888e+10
+    E_A = 3.7427e+10
     sigma_crit = 0
-    H_max = 0.1209
-    H_min = 0.0924
-    k = 5.9713e-09
+    H_max = 0.0550
+    H_min = 0.0387
+    k = 4.6849e-09
     
     Air_props= air_properties(altitude, unit='feet')
     rho = Air_props['Density']
@@ -295,7 +295,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
     #Spring properties(Squared or closed)
     C = 10. #Spring index
     Nt = 17. #Total number of springs
-    safety_factor = 1.2
+    safety_factor = 5.
     A = 2211e6*10**(0.435) #Mpa.mm**0.125
     
 #===========================================================================
@@ -356,7 +356,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
     s = actuator(sma, J, eps_0 = eps_0, material = 'SMA')
 
     #Check if crossing joint. If True do nothing
-    if s.check_crossing_joint(tol = 0.01):
+    if s.check_crossing_joint(tol = 0.005):
         if all_outputs:
             return 0., s.theta, 0., 200.
         else:
@@ -394,7 +394,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         l.theta = s.theta
 
         #Check if crossing joint. If True do nothing
-        if l.check_crossing_joint(tol = 0.001):
+        if l.check_crossing_joint(tol = 0.005):
             if all_outputs:
                 return 0., s.theta, 0., 200.
             else:

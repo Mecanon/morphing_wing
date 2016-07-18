@@ -281,12 +281,12 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
 # Material and flow properties
 #==============================================================================
     #SMA properties
-    E_M = 3.3453e+10
-    E_A = 2.1496e+10
+    E_M = 8.8888e+10
+    E_A = 3.7427e+10
     sigma_crit = 0
-    H_max = 0.1209
-    H_min = 0.0924
-    k = 5.9713e-09
+    H_max = 0.0550
+    H_min = 0.0387
+    k = 4.6849e-09
     
     Air_props= air_properties(altitude, unit='feet')
     rho = Air_props['Density']
@@ -295,7 +295,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
     #Spring properties(Squared or closed)
     C = 10. #Spring index
     Nt = 17. #Total number of springs
-    safety_factor = 1.2
+    safety_factor = 5.
     A = 2211e6*10**(0.435) #Mpa.mm**0.125
     
 #===========================================================================
@@ -403,7 +403,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
             #l.k = - (s.torque + tau_w + tau_a)/(l.eps*(l.y_p*l.r_1 - l.x_p*l.r_2))
 
             l.F =  (s.torque + tau_w + tau_a)/l.R
-            print 'force: ', l.F, s.torque, s.torque + tau_w + tau_a
+            print 'force: ', l.F, s.torque, s.torque + tau_w + tau_a, s.area
             #Spring components
             if l.F < 0:
                 l.d = (safety_factor*(2*C+1)*abs(1.5*l.F)/(0.1125*A*math.pi))**(1./1.855)

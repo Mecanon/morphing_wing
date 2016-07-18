@@ -53,34 +53,34 @@ def power(delta_t, sigma, T, xi, eps_s, L_s, output = "all"):
     - output: defines what is the function output (Power or all)
     """
     sigma_o = 100e6
-    r = 0.00025
+    r = 0.000381/2.
     d = 2*r
-    T_o = 200.
+    T_o = 273.15 + 30
     
     alpha = 0.           #set to zero on purpose
     c = 837.36              #invented
     rho = 6450.
     
     #Transformation strain properties
-    H_max = 0.1209
-    H_min = 0.0924
+    H_max = 0.0550
+    H_min = 0.0387
     sigma_crit = 0
-    k = 5.9713e-09 
+    k = 4.6849e-09
     
     rho_E_M = 0.8e-6         #Dynalloy
     rho_E_A = 1.0e-6         #Dynalloy
-    E_A = 2.1496e+10
-    E_M = 3.3453e+10
-    C_A = 8.0370e+06
-    C_M = 7.1233e+06
-    M_s = 362.5851
-    M_f = 297.4771
-    A_s = 318.3625
-    A_f = 386.8458
-    n1 = 0.1919
-    n2 = 0.1823
-    n3 = 0.1623
-    n4 = 0.2188
+    E_A = 3.7427e+10
+    E_M = 8.8888e+10
+    C_A = 7.9498e+06
+    C_M = 7.1986e+06
+    M_s = 363.5013
+    M_f = 297.9735
+    A_s = 324.6427
+    A_f = 385.0014
+    n1 = 0.1752
+    n2 = 0.1789
+    n3 = 0.1497
+    n4 = 0.2935
     sigma_cal = 200E6
     
     #==============================================================================
@@ -267,9 +267,9 @@ def main(seed=None):
     random.seed(seed)
 
     # Number of generations
-    NGEN = 1
+    NGEN = 50
     # Population size (has to be a multiple of 4)
-    MU = 4
+    MU = 40
     # Mating probability
     CXPB = 0.9
 
@@ -349,7 +349,7 @@ if __name__ == "__main__":
     
     pickle.dump( front, open( "front.p", "wb" ) )
     pickle.dump( pop, open( "pop.p", "wb" ) )
-    pickle.dump( pop, open( "stats.p", "wb" ) )
+    pickle.dump( stats, open( "stats.p", "wb" ) )
     plt.scatter(np.rad2deg(front[:,0]), front[:,1], c="b")
     plt.axis("tight")
     plt.grid()

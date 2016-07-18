@@ -20,25 +20,25 @@ I_inp = [0; 0.3; 0.6; 0.6]; %A
 
 % MATERIAL PARAMETERS (Structure: P)
 % Young's Modulus for Austenite and Martensite 
-P.E_A = 2.1496e+10;
-P.E_M = 3.3453e+10;
+P.E_A = 3.7427e+10;
+P.E_M = 8.8888e+10;
 % Transformation temperatures (M:Martensite, A:
 % Austenite), (s:start,f:final)
-P.M_s = 362.5851;
-P.M_f = 297.4771;
-P.A_s = 318.3625;
-P.A_f = 386.8458;
+P.M_s = 363.5013;
+P.M_f = 297.9735;
+P.A_s = 324.6427;
+P.A_f = 385.0014;
 
 % Slopes of transformation boundarings into austenite (C_A) and
 % martensite (C_M) at Calibration Stress 
-P.C_A = 8036800;
-P.C_M = 7123000;
+P.C_A = 7.1986e+06;
+P.C_M = 7.9498e+06;
 
 % Maximum and minimum transformation strain
-P.H_min = 0.0924;
-P.H_sat = 0.1209;
+P.H_min = 0.0387;
+P.H_sat = 0.0550;
 
-P.k = 5.9713e-09;
+P.k = 4.6849e-09;
 P.sig_crit = 0;
 
 % Coefficient of thermal expansion

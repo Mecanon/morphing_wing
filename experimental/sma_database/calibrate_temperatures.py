@@ -60,7 +60,7 @@ def tangent_lines(T, T_1, T_2, T_3, T_4, strain_1, strain_2, strain_3, strain_4)
     else:
         return (strain_4 - strain_3)/(T_4 - T_3)*(T - T_4) + strain_4
 
-raw_data = output_reader("filtered_data_200MPa.txt", header = ['Temperature',
+raw_data = output_reader("filtered_data_50MPa.txt", header = ['Temperature',
                                                "Strain", "Stress"],)
 
 temperature = raw_data['Temperature']

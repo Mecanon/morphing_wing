@@ -18,6 +18,11 @@ raw_data = output_reader("flexinol_monotonic_loading_martensite.csv", separator=
                                                "Strain",  "Stress"],)
 #                                               'Load', 
 #                                               "Strain", "Temperature", "Stress"],)
+
+#==============================================================================
+# CORRECTION FACTOR BECAUSE OF INCORRENT SAMPLE LENGTH AT INSTRON
+#==============================================================================
+raw_data["Strain"] = np.array(raw_data["Strain"])*( 0.045/0.10769)
 #Ignore initial data
 for i in range(len(raw_data['Time'])):
     if raw_data['Stress'][i] > 100.  :
@@ -35,7 +40,7 @@ data = raw_data
 (a, b)=polyfit(young_data["Strain"], young_data["Stress"], 1)
 print "Young Modulus: ", a, b
 
-fitted_strain = np.linspace(young_data["Strain"][0], 0.015)
+fitted_strain = np.linspace(young_data["Strain"][0], 0.010)
 fitted_stress = polyval([a,b], fitted_strain)
 #==============================================================================
 # Plotting

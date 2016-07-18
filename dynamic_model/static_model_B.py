@@ -40,11 +40,9 @@ def run(inputs, parameters = None):
     sma = inputs['sma']
     linear = inputs['linear']
     R = inputs['R']
-<<<<<<< HEAD
+
     sigma_o = 100e6
-=======
-    sigma_o = 200e6
->>>>>>> updating material properties
+
            
     airfoil = "naca0012"
     chord = 1.#0.6175
@@ -52,22 +50,22 @@ def run(inputs, parameters = None):
     J = {'x':0.75, 'y':0.}
     
     #Adding the area key to the dictionaries
-    sma['area'] = math.pi*0.00025**2
+    sma['area'] = math.pi*(0.000381/2.)**2
     linear['area'] = 0.001
     
     # Design constants   
     #arm length to center of gravity
-    r_w = 0.15
+    r_w = 0.10
     
     #Aicraft weight (mass times gravity)
-    W = 0.2*9.8 #0.06*9.8
+    W = 0.0523*9.8 #0.06*9.8
     alpha = 0.
     V = 10 #m/s
     altitude = 10000. #feet
     
     # Temperature
     T_0 = 273.15 + 30.
-    T_final = inputs['T_f']
+    T_final = 273.15 + 140.
      
     #Initial martensitic volume fraction
     MVF_init = 1.
@@ -78,7 +76,7 @@ def run(inputs, parameters = None):
     #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
     all_outputs = True
-    save_data = False
+    save_data = True
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
         eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s = flap(airfoil, 
@@ -208,16 +206,16 @@ def run_multiobjective(inputs, parameters = None):
     J = {'x':0.75, 'y':0.}
     
     #Adding the area key to the dictionaries
-    sma['area'] = math.pi*0.00025**2
+    sma['area'] = math.pi*(0.000381/2.)**2
     linear['area'] = 0.001
     
     # Design constants   
     #arm length to center of gravity
-    r_w = 0.15
+    r_w = 0.10
 
 
     #Aicraft weight (mass times gravity)
-    W = 0.2*9.8 #0.06*9.8
+    W = 0.0523*9.8 #0.06*9.8
     alpha = 0.
     V = 10 #m/s
     altitude = 10000. #feet
@@ -254,7 +252,6 @@ if __name__ == '__main__':
     J = {'x':0.75, 'y':0.}
     x_J = J['x']
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
-
 #    #Optimal from max deflection                       
 #    sma = {'x-': 0.5, 'y-': -R, 
 #           'x+': 0.7, 'y+': -R,
@@ -264,7 +261,8 @@ if __name__ == '__main__':
 #           'x+': 0.7, 'y+': R,
 #           'actuator_type': 'wire',
 #           'pulley_position':'up'}   
-    x = [0.1,0.1,R]
+    x = [5.966036e-001, 4.985885e-001, 3.000000e-002]
+    R = x[2]
     sma = {'x-':x_J - length_steel - x[0], 'y-':-x[2], 
            'x+':x_J - length_steel, 'y+':-x[2],
             'pulley_position':'down'}
@@ -273,17 +271,12 @@ if __name__ == '__main__':
               'actuator_type': 'wire', 'pulley_position':'up'}
     T_f = 400.         
     #SMA Pre-stress
-<<<<<<< HEAD
     sigma_o = 100e6
-    theta, sigma, T, MVF, eps_s, L_s = run_multiobjective({'sma':sma, 'linear':linear, 'sigma_o':sigma_o, 'R':R, 
-               'T_f': T_f})
-    print  'theta: ', theta
-=======
-    sigma_o = 200e6
+#    theta, sigma, T, MVF, eps_s, L_s = run_multiobjective({'sma':sma, 'linear':linear, 'sigma_o':sigma_o, 'R':R, 
+#               'T_f': T_f})
+#    print  'theta: ', theta
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o, 'R':R})
-    print  'k: ', data['k']
->>>>>>> updating material properties
-    DataFile = open('data.txt','a')
+#    DataFile = open('data.txt','a')
 							
 ##==============================================================================
 ## Run withou run function
