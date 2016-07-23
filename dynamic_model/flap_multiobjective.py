@@ -356,7 +356,7 @@ def flap_multiobjective(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
     s = actuator(sma, J, eps_0 = eps_0, material = 'SMA')
 
     #Check if crossing joint. If True do nothing
-    if s.check_crossing_joint(tol = 0.001):
+    if s.check_crossing_joint(tol = 0.005):
         if all_outputs:
             # eps_s_list, eps_l_list, theta_list, sigma_list, MVF_list, T, eps_t_list, theta_list, F_l_list, l.k, L_s_list
             return [s.eps_0], [0], [s.theta], [sigma_o], [1.], [T[0]], [eps_t_0], [s.theta], [0], [0], [s.length_r]
@@ -395,7 +395,7 @@ def flap_multiobjective(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         l.theta = s.theta
 
         #Check if crossing joint. If True do nothing
-        if l.check_crossing_joint(tol = 0.001):
+        if l.check_crossing_joint(tol = 0.005):
             if all_outputs:
                 # eps_s_list, eps_l_list, theta_list, sigma_list, MVF_list, T, eps_t_list, theta_list, F_l_list, l.k, L_s_list
                 return [s.eps_0], [0], [s.theta], [sigma_o], [1.], [T[0]], [eps_t_0], [s.theta], [0], [0], [s.length_r]
@@ -527,7 +527,7 @@ def flap_multiobjective(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                 f.close()
 #                print 'new theta: ', s.theta
                 #stop if actuator crosses joints, exceds maximum theta and theta is positively increasing
-                if s.theta <= max_theta or s.check_crossing_joint(tol = 0.001) or l.check_crossing_joint(tol = 0.001) or s.theta > 0.01 or l.length_r <= l.solid:
+                if s.theta <= max_theta or s.check_crossing_joint(tol = 0.005) or l.check_crossing_joint(tol = 0.005) or s.theta > 0.01 or l.length_r <= l.solid:
                     if n_cycles == 0:
                         iterations = n_real
                         T = T[:n_real]

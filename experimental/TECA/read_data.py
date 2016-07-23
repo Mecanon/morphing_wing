@@ -22,14 +22,14 @@ r = 0.000381/2.
 # Wire cross section area
 A = np.pi*r**2
 # Start austenite temperature
-A_s = 70.965
+A_s = 66.87
 # Finish austenite temperature
-A_f = 83.491
+A_f = 89.68
 
 strain_correction = True
 
 # Import data from IR camera
-filename = "untrained_wire_temperature_run3.txt"
+filename = "untrained_wire_temperature_run5.txt"
 Data_temperature = output_reader(filename, separator='\t', output=None, rows_to_skip=13,
                      header=['Date', 'Time', 'Miliseconds', 'Relative time', 
                      'Temperature'], column_types = [str, str, int, float,
@@ -43,8 +43,8 @@ for i in range(len(Data_temperature['Time'])):
                                   minutes=time_i.tm_min, 
                                   seconds=time_i.tm_sec).total_seconds()
 
-# Import data from Ir camera
-filename = "untrained_wire_voltage_current_run3.txt"
+# Import data from Arduino
+filename = "untrained_wire_voltage_current_run5.txt"
 Data_eletric = output_reader(filename, separator='\t', output=None, rows_to_skip=1,
                      header=['Date', 'Time',  'Voltage', 
                      'Current'], column_types = [str, str,  float,
@@ -65,7 +65,7 @@ for i in range(1800, len(Data_eletric["Voltage"])):
 
 # There is a voltage offset
 for i in range(len(Data_eletric["Voltage"])):
-    Data_eletric["Voltage"][i] -= 1210.07069871 + 474.710578241 -949.421156482
+    Data_eletric["Voltage"][i] -= 1210.07069871 + 474.710578241 -949.421156482 - 504.768862708
 
 # Since arduino time is included in IR time, to make both lists just
 start_time = Data_eletric["Time"][0]
@@ -122,7 +122,7 @@ for i in range(len(all_Data['Current'])):
 
 # Applying strain correction, L is a function of temperature.
 if strain_correction:
-    strain_data = output_reader("filtered_data_100MPa.txt", separator=",",
+    strain_data = output_reader("filtered_data_50MPa.txt", separator=",",
                                header = ['Temperature', "Strain", "Stress"],)
     f = interp1d(strain_data['Temperature'], strain_data["Strain"])
     

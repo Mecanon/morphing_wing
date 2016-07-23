@@ -242,8 +242,9 @@ def flap(airfoil, chord, J, sma, linear, spring, W, r_w, V,
         plt.plot(rotated_lower['x'], rotated_lower['y'],'k')
         plt.axes().set_aspect('equal')
         
-        s.plot_actuator()
         l.plot_actuator()
+        s.plot_actuator()
+        
         
         if y_J != None:
             for i in range(y_J):
@@ -326,7 +327,9 @@ def flap(airfoil, chord, J, sma, linear, spring, W, r_w, V,
     l = actuator(linear, J, material = 'linear')
     l.k = spring['k']
     #Check if crossing joint. If True do nothing
-    if l.check_crossing_joint(tol = 0.001):
+    if l.check_crossing_joint(tol = 0.005):
+        print "problem with linear"
+        plot_flap(x, y, J['x'], theta= 0)
         if all_outputs:
             return 0., 0, 0., 200.
         else:
@@ -371,7 +374,9 @@ def flap(airfoil, chord, J, sma, linear, spring, W, r_w, V,
         s.calculate_torque()  
         print s.eps, s.F, l.F, s.torque, l.torque, tau_w, s.sigma, sigma_o
         #Check if crossing joint. If True do nothing
-        if s.check_crossing_joint(tol = 0.01):
+        if s.check_crossing_joint(tol = 0.005):
+            print "problem with SMA"
+            plot_flap(x, y, J['x'], theta= 0)
             if all_outputs:
                 return 0., s.theta, 0., 200.
             else:

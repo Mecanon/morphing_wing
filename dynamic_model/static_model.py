@@ -15,6 +15,7 @@ Created on Wed Feb 17 13:10:30 2016
 import math
 import numpy as np
 import pickle
+from scipy.interpolate import interp1d
 
 import airfoil_module as af
 from flap import flap
@@ -76,8 +77,8 @@ def run(inputs, parameters = None):
     MVF_init = 1.
     
     # Number of steps and cycles
-    n = 200
-    n_cycles = 0
+    n = 400
+    n_cycles = 1
     #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
     all_outputs = True
@@ -203,7 +204,7 @@ def run_multiobjective(inputs, parameters = None):
         
     sma = inputs['sma']
     linear = inputs['linear']
-    sigma_o = 100e6
+    sigma_o = inputs['sigma_o']
            
     airfoil = "naca0012"
     chord = 1.#0.6175
@@ -255,29 +256,175 @@ def run_multiobjective(inputs, parameters = None):
                                n_cycles = n_cycles)
 
         return theta, sigma, T, MVF, eps_s, L_s
+
+def power(delta_t, sigma, T, xi, eps_s, L_s, output = "all"):
+    """
+    Calculate work, power and current.
     
+    - output: defines what is the function output (Power or all)
+    """
+    sigma_o = 100e6
+    r = 0.000381/2.
+    d = 2*r
+    T_o = 273.15 + 30
+    
+    alpha = 0.           #set to zero on purpose
+    c = 320.              #invented
+    rho = 6450.
+    
+    #Transformation strain properties
+    H_max = 0.0550
+    H_min = 0.0387
+    sigma_crit = 0
+    k = 4.6849e-09
+    
+    rho_E_M = 0.8e-6         #Dynalloy
+    rho_E_A = 1.0e-6         #Dynalloy
+    E_A = 3.7427e+10
+    E_M = 8.8888e+10
+    C_A = 7.9498e+06
+    C_M = 7.1986e+06
+    M_s = 363.5013
+    M_f = 297.9735
+    A_s = 324.6427
+    A_f = 385.0014
+    n1 = 0.1752
+    n2 = 0.1789
+    n3 = 0.1497
+    n4 = 0.2935
+    sigma_cal = 200E6
+    
+    #==============================================================================
+    # # Heat Transfer parameters
+    #==============================================================================
+    # Gravity:
+    g = 9.8 #ms-2
+    # Atmospheric pressure
+    P_air = 101325. # Pa
+    # Molar
+    M = 0.0289644  #kg/mol
+    # Ideal gas constant
+    R = 8.31447  #J/(mol K)
+    # Air density:
+    rho_air = P_air*M / (R*T_o)
+    # Sutherland's law coefficients
+    C1 = 1.458e-6 #kg/m.s.sqrt(K)
+    C2 = 110.4 #K
+    # Air dynamic viscosity:
+    mu_air = (C1 * T_o**(3./2)) / (T_o+C2)
+    # Air kinematic viscosity:
+    nu_air = mu_air/rho_air
+    # Air specific heat at constant pressure
+    CP_list = [1.0038, 1.0049, 1.0063, 1.0082, 1.0106, 1.0135, 1.0206]
+    T_list = [275., 300., 325., 350., 375., 400., 450.]
+    Cp_f = interp1d(T_list, CP_list)
+    # Air conductivity
+    k_list = [2.428e-5, 2.624e-5, 2.816e-5, 3.003e-5, 3.186e-5, 3.365e-5, 3.710e-5]
+    k_f = interp1d(T_list, k_list)
+    
+    # Nusselt number coefficients
+    alpha_1 = 1.
+    alpha_2 = 0.287
+    
+    #==============================================================================
+    # Calculate Power and current
+    #==============================================================================
+    I_list = []
+    P_list = []
+    W_list = []
+    n = len(eps_s)
+    for i in range(1, n):
+        delta_sigma = sigma[i] - sigma[i-1]
+        delta_T = T[i] - T[i-1]
+        delta_eps = eps_s[i] - eps_s[i-1]
+        delta_xi = xi[i] - xi[i-1]
+        
+        T_avg = (T[i] + T[i-1])/2.
+        Cp_air = Cp_f(T_avg)
+        k_air = k_f(T_avg)
+        # Grashof number for external flow around a cylinder
+        Gr = 2*abs(T[i] - T_o)/(T[i] + T_o)*(g*d**3)/(nu_air**2)
+        # Prandtl number definition
+        Pr = mu_air*Cp_air/k_air
+        # Nusselt number and parameter
+        Nu = (alpha_1 + alpha_2*(Gr*Pr/(1 + (0.56/Pr)**(9./16))**(16./9))**(1./6))**2
+        # Calculate convection coefficient h from definition of Nusselt number
+        h = k_air*Nu/d
+        
+        rho_E = rho_E_M*xi[i] + (1-xi[i])*rho_E_A
+        
+        if abs(sigma[i]) <= sigma_crit:
+            dH_cur = 0
+        else:
+            dH_cur = k*(H_max-H_min)*math.exp(-k*(abs(sigma[i])-sigma_crit))*np.sign(sigma[i])
+        H_cur = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
+        H_cur_cal = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_cal) - sigma_crit)))
+        
+        rho_delta_s0 = (-2*(C_M*C_A)*(H_cur_cal + sigma_cal*dH_cur + sigma_cal*(1/E_M - 1/E_A)))/(C_M + C_A)
+        a1 = rho_delta_s0*(M_f - M_s)
+        a2 = rho_delta_s0*(A_s - A_f)
+        a3 = -a1/4 * (1 + 1/(n1+1) - 1/(n2+1)) + a2/4 * (1+1/(n3+1) - 1/(n4+1))
+        Y_0_t = rho_delta_s0/2*(M_s - A_f) - a3
+        D = ((C_M - C_A)*(H_cur_cal + sigma_cal*dH_cur + sigma_cal*(1/E_M - 1/E_A)))/((C_M + C_A)*(H_cur_cal+ sigma_cal*dH_cur))
+    
+        pi_t = Y_0_t + D*abs(sigma[i])*H_cur
+    
+        #constant h
+        P = math.pi*r**2*L_s[i]*((T[i]*alpha*delta_sigma + \
+            rho*c*delta_T + delta_xi*(-pi_t + rho_delta_s0*T[i]) )/delta_t + \
+            2.*(h/r)*(T[i] - T_o))
+        
+        P_list.append(P)
+        
+        if output == 'all':
+            I = r*math.pi*math.sqrt((r/rho_E)*((r/delta_t)*((T[i]*alpha*delta_sigma + \
+                rho*c*delta_T + delta_xi*(-pi_t + rho_delta_s0*T[i]) ) + \
+                2.*h*(T[i] - T_o))))
+        
+            
+            dW = math.pi*r**2*L_s[0]*0.5*(sigma[i]+sigma[i-1])*delta_eps
+            
+            I_list.append(I)
+            W_list.append(dW)
+        
+    Total_power = 0
+    for i in range(len(P_list)-1):
+        Total_power += delta_t*(P_list[i] + P_list[i+1])/2.
+    if output == 'all':
+        return I_list, P_list, W_list, Total_power
+    elif output == "power":
+        return Total_power
+        
 if __name__ == '__main__':
     J = {'x':0.75, 'y':0.}
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
 
     #Optimal A from max deflection             
-#    sma = {'x-': 6.766895e-001, 'y-': -6.424797e-001, 
-#           'x+': 8.644122e-001, 'y+': 7.101063e-001}
-#    linear = {'x-': 4.553924e-001,'y-': 7.311031e-001, 
-#           'x+': 8.406087e-001, 'y+': -4.211491e-001 }
-									 
+    sma = {'x-': 4.389066e-001, 'y-': -8.311361e-001, 
+           'x+': 7.990382e-001, 'y+': 6.039162e-002}
+    linear = {'x-': 7.323110e-001, 'y-': 7.573718e-001, 
+           'x+': 8.543053e-001, 'y+': -2.499118e-001}
+																 
 #    #Optimal C from max deflection             
-    sma = {'x-': 6.933662e-001, 'y-': -3.680332e-001, 
-           'x+': 9.949992e-001, 'y+': 8.941427e-001}
-    linear = {'x-': 6.933662e-001, 'y-': -3.680332e-001, 
-           'x+': 9.949992e-001, 'y+': 8.941427e-001}
-           
-    #SMA Pre-stress
-    sigma_o = 100e6
-    data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o})
-    print  'k: ', data['k']
-    DataFile = open('data.txt','a')
-							
+#    sma = {'x-': 3.941320e-001, 'y-': -8.647118e-001, 
+#           'x+': 8.116175e-001, 'y+': 3.137898e-002 }
+#    linear = {'x-': 3.941320e-001, 'y-': -8.647118e-001, 
+#           'x+': 8.116175e-001, 'y+': 3.137898e-002 }
+
+#    sma = {'x-': 0.72316, 'y-': -0.75730, 
+#           'x+': 0.75844, 'y+': 0.06584}
+#    linear = {'x-': 0.43045, 'y-': 0.32455, 
+#           'x+': 0.81779, 'y+': -0.09255 }
+     
+    T_f = 358.66849
+    data = run({'sma':sma, 'linear':linear})
+#    theta, sigma, T, MVF, eps_s, L_s= run_multiobjective({'sma':sma, 'linear':linear, 'T_f':T_f})
+#    print 'theta: ', theta[-1], 'T:', T[-1]
+#    delta_t = 0.05   
+#    
+#    P = power(delta_t, sigma, T, MVF, eps_s, L_s, output = "power")
+#    print  'P: ', P
+    print 'theta:', data['theta'][-1]							
 ##==============================================================================
 ## Run withou run function
 ##==============================================================================

@@ -47,12 +47,12 @@ def run(inputs, parameters = None):
 
     J = {'x':0.75, 'y':0.}
     
-    # need to transform normalized coordiantes in to global coordinates
-    sma['y+'] = sma['y+']*thickness(sma['x+'], t, chord)/2.
-    sma['y-'] = sma['y-']*thickness(sma['x-'], t, chord)/2.
-    
-    linear['y+'] = linear['y+']*thickness(linear['x+'], t, chord)/2.
-    linear['y-'] =  linear['y-']*thickness(linear['x-'], t, chord)/2.
+#    # need to transform normalized coordiantes in to global coordinates
+#    sma['y+'] = sma['y+']*thickness(sma['x+'], t, chord)/2.
+#    sma['y-'] = sma['y-']*thickness(sma['x-'], t, chord)/2.
+#    
+#    linear['y+'] = linear['y+']*thickness(linear['x+'], t, chord)/2.
+#    linear['y-'] =  linear['y-']*thickness(linear['x-'], t, chord)/2.
     
     #Adding the area key to the dictionaries
     sma['area'] = math.pi*(0.000381/2)**2
@@ -187,22 +187,17 @@ def run(inputs, parameters = None):
 if __name__ == '__main__':
     J = {'x':0.75, 'y':0.}
 
-    #Optimal A from max deflection             
-    sma = {'x-': 0.73678, 'y-': -0.33792, 
-           'x+': 0.94534, 'y+': 0.759}
-    linear = {'x-': 0.73761, 'y-': 0.8992, 
-           'x+': 0.9064, 'y+': -0.47317}
-	 	 
-#    #Optimal C from max deflection             
-#    sma = {'x-': 7.352753e-001, 'y-': -5.662062e-001 , 
-#           'x+': 9.950000e-001  , 'y+': 8.987208e-001}
-#    linear = sma
+    # Real positioning on flap model (y coordinates are not normalized)          
+    sma = {'x-': J['x'] - 0.018, 'y-': -0.02, 
+           'x+': J['x'] + 0.168, 'y+': 0.006}
+    linear = {'x-': J['x'] - 0.018, 'y-': 0.03, 
+           'x+': J['x'] + 0.167, 'y+': -0.006}
+
      
-    #SMA Pre-stress
-    k = 100.
-    eps_l_0 = 2.
+    # Spring stiffness (N/m)
+    k = 127.33 
     
-    spring = {'k': k, 'eps_l_0': eps_l_0, 'L_0': 0.0588, 'L_solid': 0.05030}
+    spring = {'k': k, 'L_0': 0.0588, 'L_solid': 0.05030}
     data = run({'sma':sma, 'linear':linear, 'spring':spring})
     print  'k: ', data['k'], 'theta:', data['theta'][-1]
     DataFile = open('data.txt','a')

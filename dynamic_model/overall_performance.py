@@ -207,10 +207,10 @@ if __name__ == '__main__':
 #               'x+': 0.8, 'y+': 0.6}
 
     #Compression test with n_real = n              
-    sma = {'x-': 7.407724e-001, 'y-': -3.680615e-001, 
-           'x+': 9.933211e-001, 'y+': 6.004423e-001}
-    linear = {'x-': 7.290939e-001, 'y-': -7.584186e-001, 
-           'x+': 7.550874e-001, 'y+': -4.011175e-001}
+    sma = {'x-': 4.389066e-001, 'y-': -8.311361e-001, 
+           'x+': 7.990382e-001, 'y+': 6.039162e-002}
+    linear = {'x-': 7.323110e-001, 'y-': 7.573718e-001, 
+           'x+': 8.543053e-001, 'y+': -2.499118e-001}
 
     #SMA Pre-stress
     sigma_o = 400e6
@@ -240,7 +240,7 @@ if __name__ == '__main__':
 #        data_W['theta'].append(data['theta'])
 #        data_W['k'].append(data['k'])
         
-    pickle.dump([data_V, data_alpha, data_W], open( "data_overall.p", "wb" ) )    
+#    pickle.dump([data_V, data_alpha, data_W], open( "data_overall.p", "wb" ) )    
 ##==============================================================================
 ## Run withou run function
 ##==============================================================================

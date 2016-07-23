@@ -276,6 +276,7 @@ if __name__ == '__main__':
 #               'T_f': T_f})
 #    print  'theta: ', theta
     data = run({'sma':sma, 'linear':linear, 'sigma_o':sigma_o, 'R':R})
+    print 'k: ', data['k'], 'theta: ', data['theta'][-1]
 #    DataFile = open('data.txt','a')
 							
 ##==============================================================================
