@@ -11,9 +11,8 @@ import pickle
 import matplotlib.pyplot as plt
 
 #Time step
-delta_t = 0.005
+delta_t = 0.05
 
-sigma_o = 100e6
 r = 0.000381/2.
 d = 2*r
 
@@ -27,8 +26,8 @@ H_min = 0.0387
 sigma_crit = 0
 k = 4.6849e-09
 
-rho_E_M = 0.8e-6         #Dynalloy
-rho_E_A = 1.0e-6         #Dynalloy
+rho_E_M = 0.8352e-6
+rho_E_A = 0.9343e-6
 E_A = 3.7427e+10
 E_M = 8.8888e+10
 C_A = 7.9498e+06
@@ -83,10 +82,6 @@ Total_delta = Total_work
 deltaW_list = W_list
 #print Total_delta
 
-plt.figure()
-plt.plot(eps_s)
-plt.figure()
-plt.plot(sigma)
 #==============================================================================
 # Calculate input heat for different h
 #==============================================================================
@@ -97,7 +92,8 @@ total_power_list = []
 for j in range(len(h_list)):
     h = h_list[j]
     P_list = []
-    I_list = []
+    if j == 0:
+        I_list = []
     a = 0
     b = 0
     for i in range(1, n-1):
@@ -115,7 +111,7 @@ for j in range(len(h_list)):
             dH_cur = 0
         else:
             dH_cur = k*(H_max-H_min)*math.exp(-k*(abs(sigma[i])-sigma_crit))*np.sign(sigma[i])
-        H_cur = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
+        H_cur = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma[i]) - sigma_crit)))
         H_cur_cal = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_cal) - sigma_crit)))
         
         rho_delta_s0 = (-2*(C_M*C_A)*(H_cur_cal + sigma_cal*dH_cur + sigma_cal*(1/E_M - 1/E_A)))/(C_M + C_A)
@@ -140,11 +136,13 @@ for j in range(len(h_list)):
         
         P = 0.5*(H_f + H_b)*delta_t
         
-        I = (r**2)*math.pi*P/rho_E/L_s[i]
+        I = P*rho_E*L_s[i]/((r**2)*math.pi)
         print P
 
 #        print a,b
-        I_list.append(I)
+
+        if j == 0:
+            I_list.append(I)
         P_list.append(P)
         
     P_h_list.append(P_list)
@@ -153,15 +151,15 @@ for j in range(len(h_list)):
 
 t = np.linspace(0,(n-2)*delta_t, n-1)
 
-#plt.figure()
-#plt.plot(t, I_list, 'b')
-#plt.scatter(t, I_list, c = 'b')
-#plt.xlabel('Time (s)')
-#plt.ylabel('Current (A)')
-#plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
-#          min(I_list) - 0.02*(max(I_list)-min(I_list)),
-#          max(I_list) + 0.02*(max(I_list)-min(I_list))])
-#plt.grid()
+plt.figure()
+plt.plot(t[1:], I_list, 'b')
+plt.scatter(t[1:], I_list, c = 'b')
+plt.xlabel('Time (s)')
+plt.ylabel('Current (A)')
+plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
+          min(I_list) - 0.02*(max(I_list)-min(I_list)),
+          max(I_list) + 0.02*(max(I_list)-min(I_list))])
+plt.grid()
 
 plt.figure()
 for i in range(len(h_list)):
@@ -225,7 +223,7 @@ for i in range(len(h_list)):
                 dH_cur = 0
             else:
                 dH_cur = k*(H_max-H_min)*math.exp(-k*(abs(sigma[i])-sigma_crit))*np.sign(sigma[i])
-            H_cur = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
+            H_cur = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma[i]) - sigma_crit)))
             H_cur_cal = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_cal) - sigma_crit)))
             
             rho_delta_s0 = (-2*(C_M*C_A)*(H_cur_cal + sigma_cal*dH_cur + sigma_cal*(1/E_M - 1/E_A)))/(C_M + C_A)
@@ -297,7 +295,7 @@ for j in range(len(T_list)):
             dH_cur = 0
         else:
             dH_cur = k*(H_max-H_min)*math.exp(-k*(abs(sigma[i])-sigma_crit))*np.sign(sigma[i])
-        H_cur = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_o) - sigma_crit)))
+        H_cur = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma[i]) - sigma_crit)))
         H_cur_cal = H_min + (H_max - H_min)*(1. - math.exp(-k*(abs(sigma_cal) - sigma_crit)))
         
         rho_delta_s0 = (-2*(C_M*C_A)*(H_cur_cal + sigma_cal*dH_cur + sigma_cal*(1/E_M - 1/E_A)))/(C_M + C_A)

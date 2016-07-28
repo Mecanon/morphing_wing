@@ -19,9 +19,9 @@ L = math.sqrt((0.168 + 0.018)**2 +  (0.06 + 0.01)**2)
 # Number of point to ignore at each voltage
 N = 20
 # Import data from IR camera
-filename = "voltage_angle_run2.txt"
+filename = "voltage_angle_run4.txt"
 Data = output_reader(filename, separator='\t', output=None, rows_to_skip=1,
-                     header=['Date', 'Time', 'Voltage', 'X', 'Y', 'Z'], column_types = [str, str, float, float,
+                     header=['Date', 'Time', 'Voltage', 'X',  'Z'], column_types = [str, str, float, 
                      float, float])
 
 deflection = Data['Z']
@@ -29,7 +29,7 @@ voltage =  np.array(Data['Voltage'])
 delta_t = 0.05 # seconds
 time = delta_t * np.array(range(len(Data['Z'])))
 
-##Filter drift
+#Filter drift
 #(drift, drift_0) = polyfit(time[0:7000], deflection[0:7000],1)
 #
 #deflection = deflection - drift*time

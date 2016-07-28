@@ -77,7 +77,7 @@ def run(inputs, parameters = None):
     MVF_init = 1.
     
     # Number of steps and cycles
-    n = 400
+    n = 1000
     n_cycles = 1
     #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
@@ -87,7 +87,7 @@ def run(inputs, parameters = None):
     if all_outputs:
 #        print "SMA: real y dimensions: ", sma['y-'], sma['y+'],sma['y+']*thickness(sma['x+'], t, chord)/2., sma['y-']*thickness(sma['x-'], t, chord)/2.
 #        print "linear: real y dimensions: ", linear['y-'], linear['y+'], linear['y+']*thickness(linear['x+'], t, chord)/2., linear['y-']*thickness(linear['x-'], t, chord)/2.
-        eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s = flap(airfoil, 
+        eps_s, eps_l, theta, sigma, MVF, T, eps_t, theta, F_l, k, L_s, H_cur = flap(airfoil, 
                                chord, J, sma, linear, sigma_o, 
                                W, r_w, V, altitude, alpha, T_0, 
                                T_final, MVF_init, n, all_outputs = True,
@@ -111,6 +111,27 @@ def run(inputs, parameters = None):
 #        plt.scatter(theta, eps_t, c = 'b')
         plt.ylabel('$\epsilon_t$', fontsize=24)
         plt.xlabel(r'$\theta ({}^{\circ})$', fontsize=20)
+        plt.legend(loc = 'best', fontsize = 'x-large')
+        plt.grid()
+        
+        plt.figure()
+        plt.plot(T, H_cur, lw=2.)
+        plt.ylabel('$H_{cur}$', fontsize=24)
+        plt.xlabel('T', fontsize=20)
+        plt.legend(loc = 'best', fontsize = 'x-large')
+        plt.grid()
+
+        sigma_crit = 0
+        H_max = 0.0550
+        H_min = 0.0387
+        k = 4.6849e-09
+    
+        plt.figure()
+        plt.plot(sigma, H_cur, lw=2.)
+        plt.plot(sigma, H_min + (H_max - H_min)*(1. - np.exp(-k*(abs(np.array(sigma)) - \
+                                                     sigma_crit))), 'k', lw=2.)
+        plt.ylabel('$H_{cur}$', fontsize=24)
+        plt.xlabel('$\sigma$', fontsize=20)
         plt.legend(loc = 'best', fontsize = 'x-large')
         plt.grid()
         
@@ -400,16 +421,16 @@ if __name__ == '__main__':
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
 
     #Optimal A from max deflection             
-    sma = {'x-': 4.389066e-001, 'y-': -8.311361e-001, 
-           'x+': 7.990382e-001, 'y+': 6.039162e-002}
-    linear = {'x-': 7.323110e-001, 'y-': 7.573718e-001, 
-           'x+': 8.543053e-001, 'y+': -2.499118e-001}
+#    sma = {'x-': 4.389066e-001, 'y-': -8.311361e-001, 
+#           'x+': 7.990382e-001, 'y+': 6.039162e-002}
+#    linear = {'x-': 7.323110e-001, 'y-': 7.573718e-001, 
+#           'x+': 8.543053e-001, 'y+': -2.499118e-001}
 																 
 #    #Optimal C from max deflection             
-#    sma = {'x-': 3.941320e-001, 'y-': -8.647118e-001, 
-#           'x+': 8.116175e-001, 'y+': 3.137898e-002 }
-#    linear = {'x-': 3.941320e-001, 'y-': -8.647118e-001, 
-#           'x+': 8.116175e-001, 'y+': 3.137898e-002 }
+    sma = {'x-': 3.941320e-001, 'y-': -8.647118e-001, 
+           'x+': 8.116175e-001, 'y+': 3.137898e-002 }
+    linear = {'x-': 3.941320e-001, 'y-': -8.647118e-001, 
+           'x+': 8.116175e-001, 'y+': 3.137898e-002 }
 
 #    sma = {'x-': 0.72316, 'y-': -0.75730, 
 #           'x+': 0.75844, 'y+': 0.06584}

@@ -11,7 +11,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 #Time step
-delta_t = 0.005
+delta_t = 0.05
 
 r = 0.000381/2.
 d = 2*r

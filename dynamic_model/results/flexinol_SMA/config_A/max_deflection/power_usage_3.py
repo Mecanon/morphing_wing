@@ -11,7 +11,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 #Time step
-delta_t = 0.005
+delta_t = 0.05
 
 r = 0.000381/2.
 d = 2*r
@@ -26,8 +26,8 @@ H_min = 0.0387
 sigma_crit = 0
 k = 4.6849e-09
 
-rho_E_M = 0.8e-6         #Dynalloy
-rho_E_A = 1.0e-6         #Dynalloy
+rho_E_M = 0.8352e-6
+rho_E_A = 0.9343e-6
 E_A = 3.7427e+10
 E_M = 8.8888e+10
 C_A = 7.9498e+06
@@ -92,7 +92,8 @@ total_power_list = []
 for j in range(len(h_list)):
     h = h_list[j]
     P_list = []
-    I_list = []
+    if j == 0:
+        I_list = []
     a = 0
     b = 0
     for i in range(1, n-1):
@@ -135,11 +136,13 @@ for j in range(len(h_list)):
         
         P = 0.5*(H_f + H_b)*delta_t
         
-        I = (r**2)*math.pi*P/rho_E/L_s[i]
+        I = P*rho_E*L_s[i]/((r**2)*math.pi)
         print P
 
 #        print a,b
-        I_list.append(I)
+
+        if j == 0:
+            I_list.append(I)
         P_list.append(P)
         
     P_h_list.append(P_list)

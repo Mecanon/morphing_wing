@@ -54,11 +54,11 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         if k == n:
             data = eng.OneD_SMA_Model(k, eps, T, MVF_init, 
                                       eps_t_0, sigma_0, eps_0, n, plot,
-                                      nargout=6) 
+                                      nargout=7) 
         else:
             data = eng.OneD_SMA_Model(k, eps, T, MVF_init,
                                       eps_t_0, sigma_0, eps_0, n, 'False',
-                                      nargout=6)
+                                      nargout=7)
         return data
 
     def equilibrium(eps_s, s, l, T, MVF_init, sigma_0,
@@ -185,7 +185,11 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
         f.write('\t Inner loop 2\t'+ str(T[i]) + '\t' + str( eps_s) + '\t' + \
                 str( tau_s + tau_l + tau_w + tau_a) + '\t' + str( tau_s) + '\t' + str(tau_l) + '\t' + str(tau_w) + '\t' + str(tau_a) + '\t' + \
                 str(l.theta)  + '\n')
-        f.close()        
+        f.close()
+        try:
+            counter +=1
+        except:
+            counter = 0
         return eps_s
             
     def deformation_theta(theta = -math.pi/2., plot = False):
@@ -391,6 +395,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
 #===========================================================================
         #Linear actuator (l)
         l = actuator(linear, J, material = 'linear')
+
         l.theta = s.theta
 
         #Check if crossing joint. If True do nothing
@@ -496,6 +501,7 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                 #Linear prediction 
                 delta_eps = eps_s_prev[1] - eps_s_prev[0]
                 #Correction with fixed point iteration
+                counter = 0
                 try:
                     eps_s = fixed_point(eps_s_fixed_point, eps_s + delta_eps, args=((s, l, T, 
                                            MVF_init, sigma_o, i, n, r_w, W, x, y, alpha, 
@@ -513,9 +519,12 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                             break
                         except:
                             eps_s_start  = eps_s_start*float(j)/10.
+#                if counter == 2:
+#                    eps_s = eps_s_start
+#                else:
                 eps_s_prev[0] = eps_s_prev[1]
                 eps_s_prev[1] = eps_s
-
+                
                 s.eps = eps_s
                 s.calculate_theta(theta_0 = s.theta)
                 s.update()
@@ -608,7 +617,10 @@ def flap(airfoil, chord, J, sma, linear, sigma_o, W, r_w, V,
                     eps_t_list = []
                     for i in range(len(data[3])):
                         eps_t_list.append(data[3][i][0])
-                    return eps_s_list, eps_l_list, theta_list, sigma_list, MVF_list, T, eps_t_list, theta_list, F_l_list, l.k, L_s_list
+                    H_cur_list = []
+                    for i in range(len(data[6])):
+                        H_cur_list.append(data[6][i][0])
+                    return eps_s_list, eps_l_list, theta_list, sigma_list, MVF_list, T, eps_t_list, theta_list, F_l_list, l.k, L_s_list, H_cur_list
             else:
 #                print theta_list
                 return theta_list[-1], l.k

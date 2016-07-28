@@ -16,7 +16,7 @@ from xfoil_module import output_reader
 # Number of point to ignore at each voltage
 N = 20
 # Wire length
-L = 0.05
+L = 0.19
 # Wire radius
 r = 0.000381/2.
 # Wire cross section area
@@ -159,7 +159,7 @@ for i in range(len(temperature)):
 austenite_current = current[i:]
 austenite_voltage = voltage[i:]
 (a_A, b_A)=polyfit(austenite_voltage, austenite_current, 1)
-print "Austenite resistivity and resistance", (1/a_A)*(A/(L*(1-delta_eps))), (1/a_A)
+print "Austenite resistivity and resistance", (1/a_A)*(A/(L*(1-delta_eps))), (1/a_A), a_A
 
 # Linear regression for all
 (R, R_0)=polyfit(filtered_Data["Voltage"], filtered_Data["Current"], 1)

@@ -81,7 +81,7 @@ def run(inputs, parameters = None):
     #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
     all_outputs = True
-    save_data = False
+    save_data = True
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
 #        print "SMA: real y dimensions: ", sma['y-'], sma['y+'],sma['y+']*thickness(sma['x+'], t, chord)/2., sma['y-']*thickness(sma['x-'], t, chord)/2.
@@ -189,9 +189,9 @@ if __name__ == '__main__':
 
     # Real positioning on flap model (y coordinates are not normalized)          
     sma = {'x-': J['x'] - 0.018, 'y-': -0.02, 
-           'x+': J['x'] + 0.168, 'y+': 0.006}
+           'x+': J['x'] + 0.152, 'y+': 0.006}
     linear = {'x-': J['x'] - 0.018, 'y-': 0.03, 
-           'x+': J['x'] + 0.167, 'y+': -0.006}
+           'x+': J['x'] + 0.152, 'y+': -0.006}
 
      
     # Spring stiffness (N/m)

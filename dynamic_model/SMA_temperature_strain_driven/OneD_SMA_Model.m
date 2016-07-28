@@ -1,4 +1,4 @@
-function [sigma, MVF, T, eps_t, eps, E]=OneD_SMA_Model(k, eps_current, T, MVF_init, eps_t_0, sigma_0, eps_0,n, to_plot) %k, T_inp, eps_i,
+function [sigma, MVF, T, eps_t, eps, E, H_cur]=OneD_SMA_Model(k, eps_current, T, MVF_init, eps_t_0, sigma_0, eps_0,n, to_plot) %k, T_inp, eps_i,
 % Modified Edwins original code to calculate just for a given T and eps
 % Ideal: [sigma, MVF]=OneD_SMA_Model(T_inp, esp_inp)
 %Inputs:
@@ -110,7 +110,7 @@ elastic_check = 'N';
 % Integration Scheme
 integration_scheme = 'I';
 
-[sigma,MVF,eps_t,E,MVF_r,eps_t_r ] = Full_Model( k, T, eps, P, elastic_check, integration_scheme, MVF_init, eps_t_0, sigma_0, n );
+[sigma,MVF,eps_t,E,MVF_r,eps_t_r, H_cur ] = Full_Model( k, T, eps, P, elastic_check, integration_scheme, MVF_init, eps_t_0, sigma_0, n );
 
 if strcmp(to_plot,'True')
     figure()

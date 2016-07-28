@@ -7,6 +7,7 @@ Created on Wed Jul 06 12:33:31 2016
 import math
 import datetime
 import time
+import pickle
 import numpy as np
 from scipy import polyfit, polyval
 from scipy.interpolate import interp1d
@@ -14,17 +15,25 @@ import matplotlib.pyplot as plt
 
 from xfoil_module import output_reader
 
+
+#Data = {'theta': theta, 'eps_s': eps_s, 'eps_l': eps_l, 
+#                'sigma': sigma, 'xi': MVF, 'T': T, 'eps_t': eps_t,
+#                'F_l': F_l, 'k': k, 'L_s':L_s}
+Data = pickle.load( open( "data.p", "rb" ) )
+T_num = np.array(Data['T']) - 273.15 
+theta_num = np.rad2deg(np.array(Data['theta']))
+
 # Wire properties
 rho = 3.55041728247e-06
 A = math.pi*(0.000381/2.)**2
 L = math.sqrt((0.168 + 0.018)**2 +  (0.06 + 0.01)**2)
 
 # Number of point to ignore at each voltage
-N = 5
+N = 2
 # Import data from IR camera
-filename = "voltage_angle_run3.txt"
+filename = "voltage_angle_run4.txt"
 Data_arduino = output_reader(filename, separator='\t', output=None, rows_to_skip=1,
-                     header=['Date', 'Time', 'Voltage', 'X', 'Y', 'Z'], column_types = [str, str, float, float,
+                     header=['Date', 'Time', 'Voltage', 'delta t', 'Z'], column_types = [str, str, float,
                      float, float])
 
 # Convert time to total seconds
@@ -36,7 +45,7 @@ for i in range(len(Data_arduino['Time'])):
                                   seconds=time_i.tm_sec).total_seconds()
     
 # Import data from IR camera
-filename = "temperature_run3.txt"
+filename = "temperature_run4.txt"
 Data_temperature = output_reader(filename, separator='\t', output=None, rows_to_skip=13,
                      header=['Date', 'Time', 'Miliseconds', 'Relative time', 
                      'Temperature'], column_types = [str, str, int, float,
@@ -68,7 +77,7 @@ Data_temperature = new_Data
 #==============================================================================
 
 fig, ax1 = plt.subplots()
-ax1.plot(Data_temperature['Time'], Data_temperature['Temperature'], 'b-')
+ax1.plot(np.array(Data_temperature['Time']) - min(Data_temperature['Time']), Data_temperature['Temperature'], 'b-')
 ax1.set_xlabel('Time (s)')
 # Make the y-axis label and tick labels match the line color.
 ax1.set_ylabel("Temperature", color='b')
@@ -78,7 +87,7 @@ for tl in ax1.get_yticklabels():
 
 
 ax2 = ax1.twinx()
-ax2.plot(Data_arduino['Time'], Data_arduino['Voltage'], 'r')
+ax2.plot(np.array(Data_arduino['Time']) - min(Data_arduino['Time']), Data_arduino['Voltage'], 'r')
 ax2.set_ylabel("Voltage (mV)", color='r')
 for tl in ax2.get_yticklabels():
     tl.set_color('r')
@@ -87,7 +96,7 @@ plt.show()
 
 
 fig, ax1 = plt.subplots()
-ax1.plot(Data_temperature['Time'], Data_temperature['Temperature'], 'b-')
+ax1.plot(np.array(Data_temperature['Time']) - min(Data_temperature['Time']), Data_temperature['Temperature'], 'b-')
 ax1.set_xlabel('Time (s)')
 # Make the y-axis label and tick labels match the line color.
 ax1.set_ylabel("Temperature", color='b')
@@ -97,7 +106,7 @@ for tl in ax1.get_yticklabels():
 
 
 ax2 = ax1.twinx()
-ax2.plot(Data_arduino['Time'], Data_arduino['Z'], 'r')
+ax2.plot(np.array(Data_arduino['Time']) - min(Data_arduino['Time']), Data_arduino['Z'], 'r')
 ax2.set_ylabel("Deflection (mV)", color='r')
 for tl in ax2.get_yticklabels():
     tl.set_color('r')
@@ -163,10 +172,15 @@ all_Data['Deflection'] = averaged_arduino_data['Deflection']
 f = interp1d(averaged_temperature_data['Time'], averaged_temperature_data['Temperature'])
 all_Data['Temperature'] = f(np.array(averaged_arduino_data['Time']))
 
-print len(all_Data['Voltage']), len(all_Data['Deflection']), len(all_Data['Temperature'])   
+#print len(all_Data['Voltage']), len(all_Data['Deflection']), len(all_Data['Temperature'])   
 
 plt.figure()
-plt.scatter(all_Data['Temperature'],all_Data['Deflection'])
+plt.scatter(min(all_Data['Temperature']) + np.array(all_Data['Temperature'] - min(all_Data['Temperature']))*1.5,all_Data['Deflection'], label = 'Post-processed experiment')
+plt.plot(T_num, theta_num, label = 'Mathematical model')
+plt.xlabel("Temperature ($^{\circ}C$)")
+plt.ylabel("Flap deflection ($^{\circ}$)")
+plt.grid()
+plt.legend(loc = 'best')
 #==============================================================================
 # Ignore N first measurement for each voltage
 #==============================================================================
@@ -187,6 +201,7 @@ for i in range(len(all_Data['Deflection'])):
     print current_voltage, all_Data['Voltage'][i] 
     if all_Data['Voltage'][i] != current_voltage:
         if current_voltage != 0:
+            print sum(time_readings), len(time_readings), time_readings
             time.append(sum(time_readings)/len(time_readings))
             deflection.append(sum(deflection_readings)/len(deflection_readings))
             temperature.append(sum(temperature_readings)/len(temperature_readings))
