@@ -19,10 +19,9 @@ outputs_plotted = ['theta']
 p1 = lambda x: math.degrees(x)
 p = [p1]
 
-plot_generations(filename, p = p, n_generation = n_generation, 
-                outputs_plotted = outputs_plotted, last_best = False,
-#                 output_constrained = output_constrained,
-                 output_labels = [r'$\theta$'], plot_type = 'all and best',
-                 units = [r'${}^{\circ}$'], label_size = [14,18])
+plot_generations(filename,  p = p,n_generation = n_generation, 
+                 outputs_plotted = outputs_plotted, last_best = False,
+                 output_labels = [r'$\theta$'], plot_type = 'number of evaluations',
+                 units = [r'${}^{\circ}$'], label_size = [12,18])
 
 Data = output_reader(filename)

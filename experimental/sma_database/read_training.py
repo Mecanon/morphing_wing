@@ -33,6 +33,25 @@ first_data["Strain"] = list(np.array(first_data["Strain"])*( 0.045/0.10769))
 second_data["Strain"] = list(np.array(second_data["Strain"])*( 0.045/0.10769))
 
 #==============================================================================
+# Plot first and last with same scale
+#==============================================================================
+plt.figure()
+plt.plot(first_data["Temperature"][11600:29078], first_data["Strain"][11600:29078])
+plt.xlabel("Temperature ($^{\circ}C$)", fontsize = 16)
+plt.ylabel("$\epsilon$", fontsize = 26)
+
+plt.grid()
+plt.ylim(-0.045,0.02)
+plt.xlim(30,140)
+plt.figure()
+plt.plot(second_data["Temperature"][589527:615819], second_data["Strain"][589527:615819])
+plt.xlabel("Temperature ($^{\circ}C$)", fontsize = 16)
+plt.ylabel("$\epsilon$", fontsize = 26)
+plt.grid()
+plt.ylim(-0.045,0.02)
+plt.xlim(30,140)
+
+#==============================================================================
 # 
 #==============================================================================
 #Ignore initial data
@@ -109,8 +128,8 @@ for key in second_data:
 # Plotting
 #==============================================================================
 plt.figure()
-plt.plot(first_data["Temperature"],first_data["Strain"], label = 'First training')
-plt.plot(second_data["Temperature"],second_data["Strain"], label = 'Second training')
+plt.plot(first_data["Temperature"],first_data["Strain"], label = 'First part')
+plt.plot(second_data["Temperature"],second_data["Strain"], label = 'Second part')
 plt.scatter(first_data["Temperature"][-1],first_data["Strain"][-1])
 #plt.scatter(second_data["Temperature"][0],second_data["Strain"][0])
 plt.xlabel("Temperature (C)")
@@ -125,16 +144,16 @@ plt.ylabel("Strain (m/m)")
 plt.grid()
 
 plt.figure()
-plt.plot(first_data["Strain"], first_data["Stress"], label = 'First training')
-plt.plot(second_data["Strain"], second_data["Stress"], label = 'Second training')
+plt.plot(first_data["Strain"], first_data["Stress"], label = 'First part')
+plt.plot(second_data["Strain"], second_data["Stress"], label = 'Second part')
 plt.xlabel("Strain (m/m)")
 plt.ylabel("Stress (MPa)")
 plt.grid()
 plt.legend()
 
 plt.figure()
-plt.plot(first_data["Temperature"], first_data["Stress"], label = 'First training')
-plt.plot(second_data["Temperature"], second_data["Stress"], label = 'Second training')
+plt.plot(first_data["Temperature"], first_data["Stress"], label = 'First part')
+plt.plot(second_data["Temperature"], second_data["Stress"], label = 'Second part')
 #plt.plot(smoothed_T, smoothed_sigma, 'g')
 #plt.plot(T_interp, sigma_interp, 'r')
 plt.xlabel("Temperature (C)")
@@ -143,8 +162,8 @@ plt.grid()
 plt.legend()
 
 plt.figure()
-plt.plot( np.array(first_data["Time"]) - data["Time"][0], first_data["Temperature"], label = 'First training')
-plt.plot( np.array(second_data["Time"]) - first_data["Time"][0], second_data["Temperature"], label = 'Second training')
+plt.plot( np.array(first_data["Time"]) - data["Time"][0], first_data["Temperature"], label = 'First part')
+plt.plot( np.array(second_data["Time"]) - first_data["Time"][0], second_data["Temperature"], label = 'Second part')
 #plt.plot(xx, smoothed_T, 'g')
 #plt.plot(xx - xx[0], T_interp, 'r')
 plt.xlabel("Time (t)")
@@ -153,8 +172,8 @@ plt.grid()
 plt.legend()
 
 plt.figure()
-plt.plot(first_data["Time"], first_data["Strain"], label = 'First training')
-plt.plot(second_data["Time"], second_data["Strain"], label = 'Second training')
+plt.plot(first_data["Time"], first_data["Strain"], label = 'First part')
+plt.plot(second_data["Time"], second_data["Strain"], label = 'Second part')
 #plt.plot(xx, smoothed_eps, 'g')
 #plt.plot(xx - xx[0], eps_interp, 'r')
 plt.xlabel("Time (t)")

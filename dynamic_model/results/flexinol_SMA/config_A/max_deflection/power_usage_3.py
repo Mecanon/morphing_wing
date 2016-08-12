@@ -89,6 +89,11 @@ h_list = np.linspace(0,100., 6)
 P_h_list = []
 total_power_list = []
 
+thermoelasctic_comp = []
+specific_heat_comp = []
+transformation_force_comp = []
+transformation_entropy_comp = []
+xi_rate = []
 for j in range(len(h_list)):
     h = h_list[j]
     P_list = []
@@ -143,6 +148,23 @@ for j in range(len(h_list)):
 
         if j == 0:
             I_list.append(I)
+            front = math.pi*r**2*L_s[i+1]*(T[i+1]*alpha*delta_sigma_f)/delta_t
+            back = math.pi*r**2*L_s[i]*((T[i]*alpha*delta_sigma_b))/delta_t
+            thermoelasctic_comp.append(0.5*(front + back)*delta_t)
+            
+            front = math.pi*r**2*L_s[i+1]*(rho*c*delta_T_f)/delta_t
+            back = math.pi*r**2*L_s[i]*(rho*c*delta_T_b)/delta_t
+            specific_heat_comp.append(0.5*(front + back)*delta_t)
+            
+            front = math.pi*r**2*L_s[i+1]*(delta_xi_f*(-pi_t)/delta_t)
+            back = math.pi*r**2*L_s[i]*(delta_xi_b*(-pi_t) )/delta_t
+            transformation_force_comp.append(0.5*(front + back)*delta_t)
+            
+            front = math.pi*r**2*L_s[i+1]*(delta_xi_f*(rho_delta_s0*T[i+1]))/delta_t
+            back = math.pi*r**2*L_s[i]*(delta_xi_b*(rho_delta_s0*T[i]) )/delta_t
+            transformation_entropy_comp.append(0.5*(front + back)*delta_t)
+            
+            xi_rate.append((xi[i+1]-xi[i-1])/delta_t)
         P_list.append(P)
         
     P_h_list.append(P_list)
@@ -170,6 +192,84 @@ plt.plot(t[1:], deltaW_list, 'b', label = '$\dot{W}$')
 #plt.scatter(t, P_list, c = 'b')
 plt.xlabel('Time (s)')
 plt.ylabel('Power (W)')
+#plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
+#          min(P_list) - 0.02*(max(P_list)-min(P_list)),
+#          max(P_list) + 0.02*(max(P_list)-min(P_list))])
+plt.grid()
+plt.legend(loc= 'best')
+
+plt.figure()
+plt.subplot(211)
+for i in range(len(h_list)):
+    color=((1.-float(i)/(len(h_list)-1), float(i)/(len(h_list)-1),0, 1.))
+    plt.plot(t[1:], P_h_list[i],  label = 'h = ' + str(h_list[i]), color = color)
+plt.plot(t[1:], deltaW_list, 'b', label = '$\dot{W}$')
+#plt.plot(t, W_list, 'b', label = '$\dot{W}$')
+#plt.scatter(t, P_list, c = 'b')
+plt.xlabel('Time (s)')
+plt.ylabel('Power (W)')
+plt.grid()
+plt.subplot(212)
+plt.plot(t,xi[:-1])
+plt.xlabel('Time (s)')
+plt.ylabel(r'$\xi$')
+#plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
+#          min(P_list) - 0.02*(max(P_list)-min(P_list)),
+#          max(P_list) + 0.02*(max(P_list)-min(P_list))])
+plt.grid()
+plt.legend(loc= 'best')
+
+plt.figure()
+plt.subplot(711)
+plt.plot(t[1:], P_h_list[0])
+plt.plot(t[1:], deltaW_list, 'b', label = '$\dot{W}$')
+#plt.plot(t, W_list, 'b', label = '$\dot{W}$')
+#plt.scatter(t, P_list, c = 'b')
+plt.xlabel('Time (s)')
+plt.ylabel('Power (W)')
+plt.grid()
+plt.subplot(712)
+plt.plot(t,xi[:-1])
+plt.xlabel('Time (s)')
+plt.ylabel(r'$\xi$')
+plt.grid()
+#plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
+#          min(P_list) - 0.02*(max(P_list)-min(P_list)),
+#          max(P_list) + 0.02*(max(P_list)-min(P_list))])
+plt.subplot(713)
+plt.plot(t[1:],xi_rate)
+plt.xlabel('Time (s)')
+plt.ylabel(r'$\dot{\xi}$')
+plt.grid()
+
+plt.subplot(714)
+plt.plot(t[1:],thermoelasctic_comp)
+plt.xlabel('Time (s)')
+plt.ylabel(r'$A L_s T \alpha_T \dot{\sigma}$')
+plt.grid()
+#plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
+#          min(P_list) - 0.02*(max(P_list)-min(P_list)),
+#          max(P_list) + 0.02*(max(P_list)-min(P_list))])
+plt.subplot(715)
+plt.plot(t[1:],specific_heat_comp)
+plt.xlabel('Time (s)')
+plt.ylabel(r'$A L_s \rho c \dot{T}$')
+#plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
+#          min(P_list) - 0.02*(max(P_list)-min(P_list)),
+#          max(P_list) + 0.02*(max(P_list)-min(P_list))])
+plt.grid()
+plt.subplot(716)
+plt.plot(t[1:],transformation_force_comp)
+plt.xlabel('Time (s)')
+plt.ylabel(r'$ - A L_s \pi^t \dot{\xi}$')
+#plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
+#          min(P_list) - 0.02*(max(P_list)-min(P_list)),
+#          max(P_list) + 0.02*(max(P_list)-min(P_list))])
+plt.grid()
+plt.subplot(717)
+plt.plot(t[1:],transformation_entropy_comp)
+plt.xlabel('Time (s)')
+plt.ylabel(r'$A L_s \rho \Delta s_o T \dot{\xi}$')
 #plt.axis([min(t) - 0.02*(max(t)-min(t)), max(t)+ 0.02*(max(t)-min(t)),
 #          min(P_list) - 0.02*(max(P_list)-min(P_list)),
 #          max(P_list) + 0.02*(max(P_list)-min(P_list))])

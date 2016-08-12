@@ -118,8 +118,8 @@ for T_i in T:
     
 f = np.array(f)
     
-plt.plot(T,f, 'b', label = "Experimental data")
-plt.plot(temperature_A, strain_A, 'g', label = "Tangents")
+plt.plot(T,f, 'b', label = "Tangents")
+plt.plot(temperature_A, strain_A, 'g', label = "Experimental data")
 
 #==============================================================================
 #  Martenitic transformation

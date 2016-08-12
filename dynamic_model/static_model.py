@@ -77,12 +77,12 @@ def run(inputs, parameters = None):
     MVF_init = 1.
     
     # Number of steps and cycles
-    n = 1000
-    n_cycles = 1
+    n = 200
+    n_cycles = 0
     #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
     all_outputs = True
-    save_data = False
+    save_data = True
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if all_outputs:
 #        print "SMA: real y dimensions: ", sma['y-'], sma['y+'],sma['y+']*thickness(sma['x+'], t, chord)/2., sma['y-']*thickness(sma['x-'], t, chord)/2.
@@ -262,7 +262,7 @@ def run_multiobjective(inputs, parameters = None):
     MVF_init = 1.
     
     # Number of steps and cycles
-    n = 200
+    n = 2000
     n_cycles = 0
     #~~~~~~~~~~~~~~~~~~~~~bb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #Parameters to select how to output stuff
@@ -421,16 +421,16 @@ if __name__ == '__main__':
     # Position coordinates from holes. y coordinates are a fraction of thickness/2.
 
     #Optimal A from max deflection             
-#    sma = {'x-': 4.389066e-001, 'y-': -8.311361e-001, 
-#           'x+': 7.990382e-001, 'y+': 6.039162e-002}
-#    linear = {'x-': 7.323110e-001, 'y-': 7.573718e-001, 
-#           'x+': 8.543053e-001, 'y+': -2.499118e-001}
+    sma = {'x-': 4.389066e-001, 'y-': -8.311361e-001, 
+           'x+': 7.990382e-001, 'y+': 6.039162e-002}
+    linear = {'x-': 7.323110e-001, 'y-': 7.573718e-001, 
+           'x+': 8.543053e-001, 'y+': -2.499118e-001}
 																 
 #    #Optimal C from max deflection             
-    sma = {'x-': 3.941320e-001, 'y-': -8.647118e-001, 
-           'x+': 8.116175e-001, 'y+': 3.137898e-002 }
-    linear = {'x-': 3.941320e-001, 'y-': -8.647118e-001, 
-           'x+': 8.116175e-001, 'y+': 3.137898e-002 }
+#    sma = {'x-': 3.941320e-001, 'y-': -8.647118e-001, 
+#           'x+': 8.116175e-001, 'y+': 3.137898e-002 }
+#    linear = {'x-': 3.941320e-001, 'y-': -8.647118e-001, 
+#           'x+': 8.116175e-001, 'y+': 3.137898e-002 }
 
 #    sma = {'x-': 0.72316, 'y-': -0.75730, 
 #           'x+': 0.75844, 'y+': 0.06584}

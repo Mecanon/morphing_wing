@@ -80,7 +80,7 @@ fig, ax1 = plt.subplots()
 ax1.plot(np.array(Data_temperature['Time']) - min(Data_temperature['Time']), Data_temperature['Temperature'], 'b-')
 ax1.set_xlabel('Time (s)')
 # Make the y-axis label and tick labels match the line color.
-ax1.set_ylabel("Temperature", color='b')
+ax1.set_ylabel("Temperature ($^{\circ}C$)", color='b')
 ax1.set_xlim([min(Data_temperature['Time']), max(Data_temperature['Time'])])
 for tl in ax1.get_yticklabels():
     tl.set_color('b')
@@ -99,7 +99,7 @@ fig, ax1 = plt.subplots()
 ax1.plot(np.array(Data_temperature['Time']) - min(Data_temperature['Time']), Data_temperature['Temperature'], 'b-')
 ax1.set_xlabel('Time (s)')
 # Make the y-axis label and tick labels match the line color.
-ax1.set_ylabel("Temperature", color='b')
+ax1.set_ylabel("Temperature ($^{\circ}C$)", color='b')
 ax1.set_xlim([min(Data_temperature['Time']), max(Data_temperature['Time'])])
 for tl in ax1.get_yticklabels():
     tl.set_color('b')
@@ -107,7 +107,7 @@ for tl in ax1.get_yticklabels():
 
 ax2 = ax1.twinx()
 ax2.plot(np.array(Data_arduino['Time']) - min(Data_arduino['Time']), Data_arduino['Z'], 'r')
-ax2.set_ylabel("Deflection (mV)", color='r')
+ax2.set_ylabel("Deflection ($^{\circ}$)", color='r')
 for tl in ax2.get_yticklabels():
     tl.set_color('r')
 plt.grid()
