@@ -7,7 +7,7 @@ clear all; close all; clc
 %--------------------------------------------------------------------------
 
 % Maximum Number of increments n per loading step
-n = 100; 
+n = 100000; 
 
 % INPUT:
 % Temperature and time at the start and at the ends of each loading step
@@ -21,7 +21,7 @@ n = 100;
 % eps_inp = data(:,3);
 
 % Linear increments strain, temperature and current, using linspace function.
-t = linspace(0,120,n)';
+t = linspace(0,100,n)';
 %eps_inp = linspace(0.10,0.04,4)';
 
 % Pre-stress
@@ -29,14 +29,14 @@ sigma_o = 100e6; %Pa
 
 % MATERIAL PARAMETERS (Structure: P)
 % Young's Modulus for Austenite and Martensite 
-P.E_A = 2.1496e+10;
-P.E_M = 3.3453e+10;
+P.E_A = 3.743e+10;
+P.E_M = 8.888e+10;
 % Transformation temperatures (M:Martensite, A:
 % Austenite), (s:start,f:final)
-P.M_s = 362.5851;
-P.M_f = 297.4771;
-P.A_s = 318.3625;
-P.A_f = 386.8458;
+P.M_s = 88.44 + 273.15;%362.5851;
+P.M_f = 24.33 + 273.15;%297.4771;
+P.A_s = 45.21 + 273.15%318.3625;
+P.A_f = 113.70 + 273.15;%386.8458;
 
 % Slopes of transformation boundarings into austenite (C_A) and
 % martensite (C_M) at Calibration Stress 
@@ -44,10 +44,10 @@ P.C_A = 8036800;
 P.C_M = 7123000;
 
 % Maximum and minimum transformation strain
-P.H_min = 0.0924;
-P.H_sat = 0.1209;
+P.H_min = 0.0387;
+P.H_sat = 0.0550;
 
-P.k = 5.9713e-09;
+P.k = 0.00597;
 P.sig_crit = 0;
 
 %Energy Coefficients
@@ -69,10 +69,10 @@ T_ambient=303.15; %K
 P.d = 0.381e-3;
 
 % Smoothn hardening parameters 
-P.n1 = 0.1919; %0.618;
-P.n2 = 0.1823; %0.313;
-P.n3 = 0.1623; %0.759;
-P.n4 = 0.2188; %0.358;
+P.n1 = 0.1752; %0.618;
+P.n2 = 0.1789; %0.313;
+P.n3 = 0.1497; %0.759;
+P.n4 = 0.2935; %0.358;
 
 % Algorithmic delta for modified smooth hardening function
 P.delta=1e-5;
@@ -91,7 +91,7 @@ eps(1,1) = sigma_o/P.E_M + H_cursolver(sigma_o, P.sig_crit,P.k,P.H_min,P.H_sat);
 % I: current
 %I = zeros((size(t,1)),1);
 %I(1,1) = 0;
-I = linspace(0.,0.2,n)';
+I = linspace(0.,2.0,n)';
 % Elastic Prediction Check
 % prompt = {'Will the Elastic Prediction Check be Transformation Surface Rate-informed or not (Y/N)?'};
 % dlg_title = '1D SMA Model Elastic Prediction Check';
